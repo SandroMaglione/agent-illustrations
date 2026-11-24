@@ -1,0 +1,6 @@
+node_modules
+dist
+output
+.DS_Store
+# style references: third-party art, kept local
+public/refs

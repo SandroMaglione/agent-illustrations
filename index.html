@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch probe</title>
+<style>
+  :root { --ink:#18181b; --paper:#f3f3ef; --line:#18181b; --mute:#6f6f6a; --hot:#2b7fd0; font:14px/1.35 ui-sans-serif, "Avenir Next", "Helvetica Neue", sans-serif; color:var(--ink); background:var(--paper); }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--paper); }
+  #app { display:grid; grid-template-columns:minmax(0,1fr) 340px; height:100vh; height:100dvh; }
+  #stage { position:relative; overflow:hidden; background:var(--paper); touch-action:none; cursor:grab }
+  #stage:active { cursor:grabbing }
+  #stage canvas { display:block; width:100%; height:100% }
+  #bar { position:absolute; left:16px; bottom:16px; display:flex; gap:8px; flex-wrap:wrap }
+  button { font:inherit; color:inherit; background:#fbfbf8; border:1.5px solid var(--line); padding:8px 12px; cursor:pointer; border-radius:0 }
+  button[aria-pressed=true] { background:var(--ink); color:#fff }
+  button:focus-visible { outline:3px solid var(--hot); outline-offset:2px }
+  #panel { border-left:1.5px solid var(--line); overflow:auto; background:#fbfbf8; padding:16px }
+  h2 { font-size:14px; margin:18px 0 8px; font-weight:650 }
+  h2:first-child { margin-top:0 }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px }
+  .t { padding:0; border-width:1px; border-color:#c9c9c2; text-align:center; display:block; overflow:hidden }
+  .t canvas { display:block; width:100%; aspect-ratio:1 }
+  .t span { display:block; padding:3px 2px 5px; font-size:12px; background:#fbfbf8; color:var(--ink) }
+  .t[aria-pressed=true] { border-color:var(--ink); box-shadow:0 0 0 2px var(--ink); background:#fbfbf8 }
+  label { display:grid; grid-template-columns:72px 1fr; align-items:center; gap:8px; margin:6px 0 }
+  input[type=range] { width:100%; accent-color:var(--ink) }
+  @media (max-width:760px) { #app { grid-template-columns:1fr; grid-template-rows:56dvh 1fr } #panel { border-left:0; border-top:1.5px solid var(--line) } .grid { grid-template-columns:repeat(4,1fr) } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage"><canvas></canvas><div id="bar"></div></div>
+  <div id="panel"></div>
+</div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
