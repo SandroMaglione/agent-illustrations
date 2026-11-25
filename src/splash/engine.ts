@@ -14,7 +14,8 @@ import { stamper } from "../tools/stamp.ts"
 import type { Patch, Stamped } from "../tools/stamp.ts"
 import { strokesOf, thaw } from "../tools/strokes.ts"
 import type { Kind, RGB } from "../bold/tones.ts"
-import type { Form } from "../bold/volume.ts"
+import type { Hair } from "../bold/locks.ts"
+import type { Form } from "../bold/planes.ts"
 
 export type Level = "s1" | "s2" | "s3" | "form" | "lt" | "sheen" | "ring" | "hi" | "lift"
 /** A polygon by coordinates (`d`), or a statement about the drawn lines (`say`, see tools/say.ts) with a name of its own. */
@@ -36,8 +37,12 @@ export type Art = {
   /** Caster, receiver, how far it falls, and the share of that which is deep: things that stand off the surface. */
   casts: ReadonlyArray<readonly [ReadonlyArray<string>, ReadonlyArray<string>, number, number?]>
   light?: Light
-  /** Forms that get their turned and lit planes by themselves (bold/volume.ts). */
+  /** Forms that get their turned and lit planes by themselves (bold/planes.ts). */
   forms?: ReadonlyArray<Form>
+  /** Hair, shaded lock by lock (bold/locks.ts). */
+  hair?: ReadonlyArray<Hair>
+  /** How far back a part lies, 0 to 1: further back is paler, bluer and has less contrast. */
+  depth?: Readonly<Record<string, number>>
   /** Where the eye should land: further out, values close up and lines soften. */
   focus?: { x: number; y: number; rx: number; ry: number; dim: number }
   /** Parts that take the shade of what they lie on. */

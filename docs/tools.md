@@ -29,7 +29,11 @@ How shapes are placed and checked. Code in `src/tools` and `src/splash`. Why the
 | Thumbnails | `v=thumbs&who=name` | every plan in colour, three values and postage-stamp size, with the focus against the rest |
 | Look, side, pixel | `scripts/look.ts`, `side.ts`, `pixel.ts` | crops of one render, comparisons, luma at points |
 | Faults | `v=faults&who=name` | the lint as a picture |
-| Forms | `forms: [{ on: ["vest"], by: "patch", turn: 0.35 }]` | turned and lit planes by themselves; `turn` 0 late to 0.5 early, 1 none (`bold/volume.ts`) |
+| Forms | `forms: [{ on: ["vest"], by: "patch", turn: 0.35 }]` | turned and lit planes by themselves; `turn` 0 late to 0.5 early, 1 none (`bold/planes.ts`); `to` sets the direction across a limb |
+| Hair | `hair: [{ on, root, tip, ring, shade }]` | every lock in its own axes (`bold/locks.ts`); `shade: 0` keeps only the hue bands |
+| Depth | `depth: { tail: 0.45 }` | softer, paler, bluer at the back |
+| Clean | `node scripts/clean.ts in.png out.png` | grey fills to paper, before numbering |
+| Wedge | `wedge s12 away 14 .25` | a fold with straight runs and pointed ends |
 | Lineup | `node scripts/lineup.ts out.png render.png head cx,cy` | the drawing between the references, colour and grey |
 | Light | `light: { fall: [.64, .77], up: .58 }` in the drawing | one light; cast shadows, rims, `turn`, `ball`, `away`, `warp!` all ask it (`light.ts`) |
 | `away` / `near` | `band s495 away 0 18 0` | the side away from the light, thinner where the line runs along it |

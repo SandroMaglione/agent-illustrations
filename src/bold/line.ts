@@ -45,6 +45,8 @@ export type LineIn = {
   strokes: ReadonlyArray<Stroke>; fall: P2
   /** Round the eyes the artist's own ink is kept, at full weight. */
   eyes: ReadonlyArray<{ x: number; y: number; r: number }>
+  /** How far back each part lies. */
+  back: ReadonlyArray<number>
   /** 1 where a pixel is in shade. */
   dark: Float32Array
 }
@@ -65,7 +67,9 @@ export const lineLayer = (q: LineIn): { image: ImageData; half: number } => {
   q.strokes.forEach((s, n) => { for (const [x, y] of s.p) { const c = key(x, y); const e = cell.get(c); if (e) e.add(n); else cell.set(c, new Set([n])) } })
   const alone = (n: number, x: number, y: number): boolean => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) for (const m of cell.get(`${Math.floor(x / 4) + dx},${Math.floor(y / 4) + dy}`) ?? []) if (m !== n) return false; return true }
   const core = (x: number, y: number): boolean => { const X = Math.round(x * k), Y = Math.round(y * k); return X >= 0 && Y >= 0 && X < w && Y < h && solid[Y * w + X]! > 0 }
-  for (const [id, s] of q.strokes.entries()) {
+  // a drawing whose lines are already fine is left as the artist inked it
+  const fine = half < head * k * 0.0105
+  for (const [id, s] of fine ? [] : [...q.strokes.entries()]) {
     // an end that no ink supports was guessed by the tracer
     const inked = ([x, y]: P2): boolean => (ink[Math.round(y * k) * w + Math.round(x * k)] ?? 0) > 0.4
     let from = 0, to = s.p.length
@@ -99,14 +103,15 @@ export const lineLayer = (q: LineIn): { image: ImageData; half: number } => {
   for (let i = 0; i < N; i++) {
     const n = map[i]!, v = ink[i]!, t0 = T[i * 4 + 3]! / 255
     if (v < 0.06 && t0 < 0.01) continue
-    const raw = smooth(0.22, 0.6, v), near = q.eyes.some((e) => ((i % w) / k - e.x) ** 2 + (((i / w) | 0) / k - e.y) ** 2 < e.r * e.r), mine = near || n === q.face, keep = mine || !F[i * 4 + 3] ? 1 : solid[i]!, a = mine ? raw : Math.max(t0, raw * keep)
+    const raw = fine ? smooth(0.1, 0.8, v) : smooth(0.22, 0.6, v), near = q.eyes.some((e) => ((i % w) / k - e.x) ** 2 + (((i / w) | 0) / k - e.y) ** 2 < e.r * e.r), mine = fine || near || n === q.face, keep = mine || !F[i * 4 + 3] ? 1 : solid[i]!, a = mine ? raw : Math.max(t0, raw * keep)
     if (a < 0.01) continue
     const x = i % w, y = (i / w) | 0, r = Math.max(2, Math.round(wide[i]! + 2))
     let page = n === bg, lo = z[n] ?? 0, hi = lo, skin = kinds[n] === "skin", other = -1
     for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r], [r, r], [-r, r], [r, -r], [-r, -r]] as const) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= w || Y >= h) continue; const m = map[Y * w + X]!; if (m !== n) other = m; if (m === bg) page = true; else if (m) { lo = Math.min(lo, z[m] ?? 0); hi = Math.max(hi, z[m] ?? 0); if (kinds[m] === "skin") skin = true } }
     const lit = (page || hi > lo ? 0 : 1) * (1 - smooth(0.25, 0.7, shade[i]!)) * (1 - solid[i]!), t = tones[n] ?? tones[other < 0 ? 0 : other] ?? null
     let c: RGB = BLACK
-    if (t && n !== q.face) c = mix(BLACK, skin ? [112, 54, 56] : t.ink, lit * (skin ? 0.8 : kinds[n] === "hair" ? 0.85 : 0.7))
+    if (t && n !== q.face) c = mix(mix(BLACK, t.ink, 0.3), skin ? [112, 54, 56] : t.ink, lit * (skin ? 0.8 : kinds[n] === "hair" ? 0.85 : 0.75))
+    { const d = page ? Math.max(0, ...[n, other].filter((m) => m >= 0 && m !== bg).map((m) => q.back[m] ?? 0)) : Math.min(q.back[n] ?? 0, other < 0 || other === bg ? 1 : q.back[other] ?? 0); if (d) c = mix(c, [150, 148, 186], d * 0.55) }
     im.data[i * 4] = c[0]; im.data[i * 4 + 1] = c[1]; im.data[i * 4 + 2] = c[2]; im.data[i * 4 + 3] = a * 255
   }
   return { image: im, half }

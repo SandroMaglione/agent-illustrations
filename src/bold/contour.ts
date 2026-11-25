@@ -1,7 +1,7 @@
 /** Turn a soft-looking mask into the shape a hand would cut: few straight runs and corners. */
 type Box = { x: number; y: number; w: number; h: number }
 /** Boundaries of a mask as closed loops on pixel corners. */
-const loops = (m: Uint8Array, w: number, h: number): Array<Array<readonly [number, number]>> => {
+export const loops = (m: Uint8Array, w: number, h: number): Array<Array<readonly [number, number]>> => {
   const at = (x: number, y: number): number => (x < 0 || y < 0 || x >= w || y >= h ? 0 : m[y * w + x]!), out: Array<Array<readonly [number, number]>> = []
   // edges run with the mask on the right: start points of horizontal top edges
   const seen = new Uint8Array((w + 1) * (h + 1))

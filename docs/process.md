@@ -20,7 +20,7 @@ Lengths are line-art px; sizes that matter are shares of head height.
 - Same part names on every character.
 
 ## Order
-1. **Regions.** `scripts/new.ts`, patch sheet, names by number, `scripts/name.ts`, until `show=pools&named=1` has no red "?" and no leak. A wall splits a patch that two parts share. Set `head` and, in `defs`, each part's material and height in the stack (`z`).
+1. **Regions.** `scripts/clean.ts` if the line art has grey fills, `scripts/new.ts`, patch sheet, names by number, `scripts/name.ts`, until `show=pools&named=1` has no red "?" and no leak. A wall splits a patch that two parts share. Set `head` and, in `defs`, each part's material and height in the stack (`z`).
 2. **Thumbnails: light and value.** Four to six plans in `<name>-plans.ts` that differ in more than hue: where the light comes from, which mass is lightest, which is darkest, where the accent sits. Look at `v=thumbs`: at the small size, in three values, where does the eye land? The numbers under it say the focus against the rest. Value is luma, not HSV V or HSL L. Someone with taste picks one; then its `light`, `focus` and colours go into the drawing.
 3. **Lines and eyes.** Freeze the line numbers, print numbered sheets per area. Nothing after this uses a coordinate grid. Eyes from their named lines.
 4. **Cast list.** Every overlap pair gets a cast: caster, receiver, distance, deep share. A cast must reach further than the shade of any closer part, or it cannot be seen.

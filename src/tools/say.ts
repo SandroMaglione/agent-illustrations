@@ -5,6 +5,7 @@
  *   turn A B [.12]                  the shaded part of a tube between two rails, worked out from the light
  *   crest l r t b .9               the lit cap of the same ball; the number is how close to the light
  *   ball l r t b [.12]              the shaded part of a ball through four points, worked out from the light
+ *   wedge s1[0..1] away 14 [.25]   a fold: pointed at both ends, two straight runs, widest at that share of the line
  *   line s330@.9 s415@0 > s439@.5   draw the missing boundary (a curve through the points), fill the side where the last point is
  *   run s1[0..1] s2[1..0] ~.2 ...   a closed outline made of stretches of line and free curves (~ bulge, share of the chord)
  *   flow s29[0..1] s35[.2..1] .4 0 .3 0   a tapered strand that runs between two lines, at a share of the gap; widths as shares of the gap
@@ -53,6 +54,13 @@ export const make = (say: string, R: Refs, light: Light = UPPER_LEFT): Made => {
     }
     const far = r.p.map((q, i): P2 => { const c = auto ? Math.min(1, 0.25 + 1.1 * Math.max(0, (n[i]![0] * side[0] + n[i]![1] * side[1]) * sign)) : 1, d = wide(i) * c; const e = d + r.half[i]! * Math.min(1, d / 3); return [q[0] + n[i]![0] * sign * e, q[1] + n[i]![1] * sign * e] })
     return { poly: [...r.p, ...far.reverse()], base: r.p.map((q, i): P2 => [q[0] + n[i]![0] * sign * (r.half[i]! + 1), q[1] + n[i]![1] * sign * (r.half[i]! + 1)]) }
+  }
+  if (verb === "wedge") {
+    const r = R.run(w[0]!), auto = w[1] === "away" || w[1] === "near", side = auto ? ([L.x * (w[1] === "away" ? 1 : -1), L.y * (w[1] === "away" ? 1 : -1)] as P2) : SIDE[w[1]!]!, wide = Number(w[2]), at = Number(w[3] ?? 0.25), n = normals(r.p, 8), last = r.p.length - 1, i = Math.round(at * last)
+    let sum = 0
+    for (const q of n) sum += q[0] * side[0] + q[1] * side[1]
+    const sign = sum < 0 ? -1 : 1, d = wide + r.half[i]!
+    return { poly: [...r.p, [r.p[i]![0] + n[i]![0] * sign * d, r.p[i]![1] + n[i]![1] * sign * d]], base: r.p.map((q, j): P2 => [q[0] + n[j]![0] * sign * (r.half[j]! + 1), q[1] + n[j]![1] * sign * (r.half[j]! + 1)]) }
   }
   if (verb === "turn") {
     const A = rail(w[0]!, R), B = rail(w[1]!, R), t = Number(w[2] ?? 0.12), P: Array<P2> = [], Q: Array<P2> = []

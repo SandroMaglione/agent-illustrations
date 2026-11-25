@@ -30,6 +30,7 @@ export const RIG: Art = {
   /* key light: upper left, a little in front. Nothing in this file may contradict it */
   light: { fall: [0.64, 0.77], up: 0.58 },
   focus: { x: 610, y: 540, rx: 300, ry: 260, dim: 0.16 },
+  hair: [{ on: ["hairF"], root: [600, 260], tip: -14, shade: 0 }, { on: ["hairB", "braid"], root: [420, 420], tip: -10, shade: 0 }],
   forms: [
     { on: ["frame", "strap", "buckle", "pull", "btn", "tie"], by: "patch", turn: 0.3 }, { on: ["hw", "rim", "screw", "zip"], by: "patch" }, { on: ["collar", "trim", "colIn"], by: "part", turn: 0.2 }, { on: ["cap", "patch"], by: "mass", turn: 0.34 }, { on: ["sleeve", "stripe"], by: "patch", turn: 0.3 }, { on: ["inner"], by: "part", turn: 0.3 }, { on: ["jack", "panel", "band", "tape", "zip", "seam"], by: "mass", turn: 0.2 }, { on: ["braid"], by: "patch", turn: 0.3 }, { on: ["hairB"], by: "part", turn: 0.4 }, { on: ["lens"], by: "part", turn: 1 }, { on: ["ear", "neck"], by: "part", turn: 0.3 },
   ],

@@ -65,3 +65,17 @@ New renderer `src/bold`, tried on `crate` (reworked) and `rig` (materials and fo
 Measured, share of the figure: low saturation crate 49 to 37, rig 87 to 53 (references 35 to 58). Near black crate 1.0 to 11.9, rig 3.1 to 10.8 (references 6 to 14).
 Learned: a rule taken from one set of references must not outlive that set. Line weight and the cut of the shapes did more than any colour change.
 Also fixed: casts, eye light and rims now follow a light from any side; blur and distance are 3 to 8 times faster.
+
+## Second round, `visor` (a finer line art), all trial
+| Client's note | Kind | Answer |
+|---|---|---|
+| reflection on an orange is never a round glint | do | peel has no glint: a broad warm light and irregular pores near the turn |
+| "details are all a blob, off the lines" | do | a tooling fault, not seeing: planes came from blurred pillows. Now measured along the light from drawn line to drawn line (`bold/planes.ts`), then cut straight inside their own part. What lies on top of a form is no edge of it |
+| blacks too intense | do | no pure black fill under things, inner lines take the colour of what they lie on |
+| hair not sleek | do | each lock has its own axes, root to tip and lit side to dark side (`bold/locks.ts`); shade, light, hue and ring are said in those axes |
+| things at the back softer | do | `depth`, 0 to 1 per part: paler, bluer, softer line |
+| maybe the line art | both | yes, also: a fine line art is now kept as the artist inked it instead of redrawn. The redraw broke thin lines into dashes |
+
+Also: `scripts/clean.ts` turns grey fills into paper before anything is numbered (it must not change afterwards: it renumbers patches). `wedge` and hand-cut polygons for cloth the artist left open.
+Learned: the line art decides a lot. The head is about 205 px in both drawings; the fine one carries more form.
+Open: cloth folds are typed coordinates; large cloth stays plain; wide hair areas with open lines (bun) still muddy; small metal is busy; no glow or colour fringing; sleeve and jacket edges a little jagged at 400%.
