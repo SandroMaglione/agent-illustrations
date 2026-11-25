@@ -92,7 +92,7 @@ if (process.argv.includes("--field")) {
   // nx ny, depth, distance to what casts on it, enclosure, sky: one byte each
   const o = new Uint8Array(w * h * 7)
   for (let i = 0; i < w * h; i++) if (f.has[i]) { o[i * 7] = 1; o[i * 7 + 1] = Math.round(f.n[i * 3]! * 127 + 128); o[i * 7 + 2] = Math.round(f.n[i * 3 + 1]! * 127 + 128); o[i * 7 + 3] = Math.max(0, Math.min(255, Math.round(f.z[i]! / 2 + 128))); o[i * 7 + 4] = f.hit[i]! > 0 ? Math.max(1, Math.min(255, Math.round(f.hit[i]!))) : 0; o[i * 7 + 5] = Math.round(Math.min(1, f.shut[i]!) * 255); o[i * 7 + 6] = f.sky[i]! * 255 }
-  writeFileSync(`public/wip/${name}-field.bin`, o)
+  mkdirSync("public/wip", { recursive: true }); writeFileSync(`public/wip/${name}-field.bin`, o)
   const L3: V3 = [(-q.fall[0]! / l) * flat, (-q.fall[1]! / l) * flat, q.up], pic = (fn: (i: number) => number): { rgb: Uint8Array; W: number; H: number } => { const rgb = new Uint8Array(w * h * 3).fill(255); for (let i = 0; i < w * h; i++) if (f.has[i]) { const k = 1 - ink[i]! / 255; rgb[i * 3] = rgb[i * 3 + 1] = rgb[i * 3 + 2] = fn(i) * k } return { rgb, W: w, H: h } }, lam = (i: number): number => f.n[i * 3]! * L3[0] + f.n[i * 3 + 1]! * L3[1] + f.n[i * 3 + 2]! * L3[2]
   writeFileSync(`${dir}/tones.png`, row([pic((i) => (lam(i) < 0.1 ? 110 : lam(i) < 0.34 ? 190 : 250)), pic((i) => (lam(i) < 0.1 ? 110 : f.hit[i]! > 0 ? (f.hit[i]! < 14 ? 60 : 150) : 250)), pic((i) => 250 - f.shut[i]! * 240)]))
 }

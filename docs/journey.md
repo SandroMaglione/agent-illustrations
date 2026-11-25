@@ -282,6 +282,26 @@ Grain was measured and rebuilt: fine, coloured, strongest in darks, gathered tow
 
 **Learned:** a check that passes is not a picture that works. Look.
 
+## 17. The same process on another drawing
+
+**Asked:** apply it to the headphones character.
+
+From the line art, with the documented steps. It carried over; what fell short were tools, and one colour rule. A slip: the gate failed on the hair and the hair was taken off its list, until the greyscale sheet showed the same fault.
+
+![Maren](../gallery/maren.jpg)
+
+**Learned:** never edit the plan to pass.
+
+## 18. Out as layers
+
+**Asked:** the render as layers, with Maren as a `.clip` to open.
+
+Every paint step became a layer with the blend mode that says what it does. The `.clip` format has no public spec, so a reader and checker came first, tested on files CLIP STUDIO PAINT had saved; then the writer. The client opened Maren's file: modes, folders and names as expected.
+
+![Layers](../gallery/layers-maren.jpg)
+
+**Learned:** check a format on real files before writing one. [How it is done](layers.md).
+
 ## What it cost
 
 Counted when each of the first three was first finished.

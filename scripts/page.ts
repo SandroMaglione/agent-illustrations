@@ -4,7 +4,7 @@ import type { Browser, Page } from "playwright"
 
 export const base = `http://localhost:${process.env.PORT ?? "5440"}/`
 export const open = async (): Promise<{ b: Browser; p: Page }> => {
-  const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 400, height: 400 } })
+  const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}), p = await b.newPage({ viewport: { width: 400, height: 400 } })
   p.setDefaultTimeout(300000)
   p.on("console", (m) => { if (m.type() === "error" && !m.text().startsWith("Failed to load resource")) console.log(m.text()) })
   p.on("pageerror", (e) => console.log("page:", e.stack))
