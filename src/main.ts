@@ -9,6 +9,7 @@ import { render as renderSplash } from "./bold/render.ts"
 import { PASSES as SPASSES } from "./splash/engine.ts"
 import type { Art } from "./splash/engine.ts"
 import { artOf } from "./splash/index.ts"
+import { Recorder } from "./layers/record.ts"
 import { TAPE } from "./splash/tape.ts"
 import { lint } from "./tools/lint.ts"
 import { thumbs } from "./tools/thumbs.ts"
@@ -112,7 +113,10 @@ const still = (v: string): void => {
   }
   if (Object.keys(DRAWINGS).includes(`./splash/${v}.ts`)) {
     const k = Number(q.get("k") ?? 2)
-    void artOf(v).then((found) => renderSplash(q.has("marks") ? { ...found!, clicks: undefined } as Art : found!, k, Number(q.get("upto") ?? SPASSES.length - 1), (q.get("view") ?? "normal") as View)).then(({ canvas, stats }) => {
+    // `layers=1`: every paint step is kept as a layer too, for scripts/layers.ts (window.__layers)
+    const rec = q.has("layers") ? new Recorder() : undefined
+    if (rec) (window as unknown as { __layers?: Recorder }).__layers = rec
+    void artOf(v).then((found) => renderSplash(q.has("marks") ? { ...found!, clicks: undefined } as Art : found!, k, Number(q.get("upto") ?? SPASSES.length - 1), (q.get("view") ?? "normal") as View, false, rec)).then(({ canvas, stats }) => {
       if (q.has("raw")) { document.body.innerHTML = ""; document.body.append(canvas); if (q.has("stats")) console.error(JSON.stringify(stats)); flag.__ready = true; return }
       const z = Number(q.get("zoom") ?? (W * k) / canvas.width)
       g.imageSmoothingQuality = "high"

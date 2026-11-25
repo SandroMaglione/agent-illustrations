@@ -29,6 +29,18 @@ Illustrations coloured entirely by code (TypeScript and Canvas 2D). No image gen
 
 Full rules: [`docs/process.md`](docs/process.md). The form stage: [`docs/form-guide.md`](docs/form-guide.md). Every tool: [`docs/tools.md`](docs/tools.md).
 
+## Layers, PSD and CLIP STUDIO PAINT
+
+Every step of the paint also comes out as a layer, so the result can be refined in a drawing program: flats one layer per part, shading as multiply layers, lights, second light, finish, line art on top, all in pass-through folders. Written as a layered PSD and as a `.clip` for CLIP STUDIO PAINT, either as a new canvas or added on top of a canvas you are working on. The render itself does not change, and the stack composited gives it back (0.5% of pixels differ by more than 8 levels, all on the outer edge of the contour, where the line art now lies on top of the background).
+
+```sh
+node scripts/layers.ts rig output/layers/rig --clip
+```
+
+![Layers of the goggles drawing, each alone](gallery/layers-sheet.jpg)
+
+The `.clip` keeps every rule others found by opening files in CSP, and reads back clean with this repository's checker, which was tested on 22 files CSP saved. It has not been opened in CSP here, as there is none in this environment: the PSD is the safe way in. What was checked, what was learned from others, what to look at in CSP: [`docs/layers.md`](docs/layers.md).
+
 ## What was learned
 
 1. **Understand the form before shading it.** Answering notes spot by spot only moved the problem. A blockout ended that.
@@ -67,6 +79,7 @@ The headphones character also has two announcement cards (own fictional brand, t
 ```sh
 pnpm install && pnpm exec playwright install chromium
 pnpm dev                                                             # port 5440, or PORT=5441 pnpm dev (and PORT for the scripts too)
+# CHROMIUM=/path/to/chromium node scripts/…                         # the scripts on a Chromium that is already installed
 node scripts/look.ts "v=rig" whole.png face.png:430,330,440,440:3    # render once, crop as often as you like
 node scripts/side.ts out.png 800 a.png b.png                         # compare
 node scripts/pixel.ts whole.png 2 662,515 740,520                    # colour and luma at points
@@ -75,6 +88,8 @@ node scripts/form.ts <name> output/form/a 4 head:385,0,330,330       # blockout:
 node scripts/guide.ts <name> output/form/g 5 20 arm:375,295,180,150  # form guide under the line art (after form.ts --field)
 node scripts/gate.ts <name>                                          # value plan and second light, per stage
 node scripts/finish.ts <name> render.png 2 410 1070,410              # the last check, always: scale, head height and head centre in render px
+node scripts/layers.ts <name> output/layers/<name> --clip           # the render as layers: PSD and .clip, with a check that they give it back
+node scripts/clipcheck.ts file.clip --tree                          # read a .clip: rules, layer tree, composite against its preview
 ```
 
 | Query | Shows |
@@ -83,6 +98,7 @@ node scripts/finish.ts <name> render.png 2 410 1070,410              # the last 
 | `&upto=0..10` | stop after a pass |
 | `&view=value`, `grey`, `masks`, `regions` | three values, greyscale, shadow design, regions |
 | `&k=2` or `3` | scale, an integer. At 1 a few regions can leak |
+| `&layers=1` | every paint step also kept as a layer (`window.__layers`), for `scripts/layers.ts` |
 | `v=sheet&who=rig&box=x,y,w,h&z=4` | numbered lines; `&show=facets&part=…`; `&probe=x,y` names what is there; `&show=shapes`, `&show=pools` (patches), `&show=pools&named=1` |
 | `v=thumbs&who=rig` | ideas for light, value and colour from `rig-plans.ts` |
 | `v=faults&who=rig` | slivers red, edges beside lines blue |
@@ -108,6 +124,7 @@ Then follow [`docs/process.md`](docs/process.md) and, for the blockout and shado
 - [`docs/form-guide.md`](docs/form-guide.md): from line art to shadow shapes, with the 3D blockout
 - [`docs/lessons.md`](docs/lessons.md): every note on a result, sorted by cause
 - [`docs/tools.md`](docs/tools.md): how shapes are said, placed and checked
+- [`docs/layers.md`](docs/layers.md): the render as layers, PSD and CLIP STUDIO PAINT's .clip
 - [`docs/findings.md`](docs/findings.md): what works, what does not, numbers
 - [`docs/journey.md`](docs/journey.md): the full story with images, step by step
 - [`docs/history.md`](docs/history.md): measurements, mistakes and disagreements

@@ -23,6 +23,8 @@ import { formField } from "./formfield.ts"
 import { path } from "./shadows.ts"
 import { BLACK, hexRgb, hsv, luma, mix, SKY, SUN, tone, turnHue } from "./tones.ts"
 import type { Kind, RGB } from "./tones.ts"
+import type { Recorder } from "../layers/record.ts"
+import { STEPS } from "../layers/steps.ts"
 
 /** Straightens masks part by part. Outside the part the mask is continued first, so nothing is rounded off where it meets a line. */
 const cutAll = (masks: ReadonlyArray<Float32Array>, map: Uint8Array, kinds: ReadonlyArray<Kind | undefined>, n: number, boxes: ReadonlyArray<readonly [number, number, number, number]>, w: number, h: number, eps: number, round = eps * 2.2, skip?: Uint8Array): void => {
@@ -66,7 +68,8 @@ const stipple = (P: Planes, map: Uint8Array, kinds: ReadonlyArray<Kind | undefin
   }
   return o
 }
-export const render = async (art: Art, k: number, upto: number, view: View = "normal", cut = false): Promise<{ canvas: HTMLCanvasElement; stats: Record<string, number> }> => {
+/** With a recorder, every step of the paint also comes out as a layer (`src/layers`). The picture itself does not change. */
+export const render = async (art: Art, k: number, upto: number, view: View = "normal", cut = false, rec?: Recorder): Promise<{ canvas: HTMLCanvasElement; stats: Record<string, number> }> => {
   const base = await fixedOf(art), { ink, w, h, names, map } = k === FIXED ? base : await regionsOf(art, k), N = w * h, light = art.light ?? UPPER_LEFT, sun = aim(light), H = art.head * k
   const refs = await linesOf(art), eyes = (art.eyes ?? []).map((e) => eye(e, refs, base.ink, base.w, FIXED, -sun.x))
   const mk = (): { c: HTMLCanvasElement; g: CanvasRenderingContext2D } => { const c = document.createElement("canvas"); c.width = w; c.height = h; return { c, g: c.getContext("2d", { willReadFrequently: true })! } }
@@ -85,8 +88,22 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     const t = tones[map[i]!], c: RGB = !t || upto === 0 || map[i] === bg ? [255, 255, 255] : t.base
     R[i] = c[0]; G[i] = c[1]; B[i] = c[2]
   }
-  const to = (i: number, c: RGB, a: number): void => { R[i] = R[i]! + (c[0] - R[i]!) * a; G[i] = G[i]! + (c[1] - G[i]!) * a; B[i] = B[i]! + (c[2] - B[i]!) * a }
-  const times = (i: number, m: RGB, a: number): void => { R[i] = R[i]! * (1 + (m[0] - 1) * a); G[i] = G[i]! * (1 + (m[1] - 1) * a); B[i] = B[i]! * (1 + (m[2] - 1) * a) }
+  rec?.size(w, h)
+  /* layers: every paint step has a name (`on`). Recording, a loop runs once per step, each time doing only that step */
+  let gate: string | null = null, tag = "", stray = 0
+  const cover = rec ? new Float32Array(N) : null, on = (t: string): void => { tag = t }
+  const off = (a: number): boolean => { if (gate === null) { if (rec) stray++; return false } if (tag !== gate) return true; if (a > cover![idx]!) cover![idx] = a; return false }
+  let idx = 0
+  const to = (i: number, c: RGB, a: number): void => { if (rec) { idx = i; if (off(a)) return } R[i] = R[i]! + (c[0] - R[i]!) * a; G[i] = G[i]! + (c[1] - G[i]!) * a; B[i] = B[i]! + (c[2] - B[i]!) * a }
+  const times = (i: number, m: RGB, a: number): void => { if (rec) { idx = i; if (off(a)) return } R[i] = R[i]! * (1 + (m[0] - 1) * a); G[i] = G[i]! * (1 + (m[1] - 1) * a); B[i] = B[i]! * (1 + (m[2] - 1) * a) }
+  const stage = async (tags: ReadonlyArray<string>, body: () => void): Promise<void> => {
+    if (!rec) { tag = tags[0]!; body(); return }
+    for (const t of tags) {
+      const before = [R.slice(), G.slice(), B.slice()], s = STEPS[t]!
+      cover!.fill(0); gate = t; tag = tags[0]!; body(); gate = null
+      await rec.step(s.name, s.group, s.hint, before, [R, G, B], cover!)
+    }
+  }
   /** A mask with one clean, sharp edge: pixel steps go, the shape stays. */
   const crisp = (m: Float32Array, r = 0.4): Float32Array => { const b = blur(m, w, h, Math.max(1, r * k), 2); for (let i = 0; i < N; i++) b[i] = smooth(0.4, 0.6, b[i]!); return b }
   const wash = (late: boolean): void => {
@@ -97,16 +114,24 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     }
   }
   /* 2: local colour. Slow gradients, and the hue of the hair */
+  if (rec && view === "normal") for (let q = 1; q < names.length; q++) {
+    // flats: one layer per part, as a colourist would keep them
+    const t = tones[q]
+    if (!t || q === bg || upto === 0) continue
+    const f = new Uint8ClampedArray(N * 4)
+    for (let i = 0; i < N; i++) if (map[i] === q) { f[i * 4] = t.base[0]; f[i * 4 + 1] = t.base[1]; f[i * 4 + 2] = t.base[2]; f[i * 4 + 3] = 255 }
+    await rec.keep(names[q]!, "Flats", "normal", f)
+  }
   if (upto >= 2 && view !== "regions") {
-    for (const q of art.grads) { const ok = set(q.on), l2 = (q.b[0] - q.a[0]) ** 2 + (q.b[1] - q.a[1]) ** 2; for (let i = 0; i < N; i++) if (ok[map[i]!]) to(i, q.to, smooth(0, 1, (((i % w) / k - q.a[0]) * (q.b[0] - q.a[0]) + (((i / w) | 0) / k - q.a[1]) * (q.b[1] - q.a[1])) / l2) * q.k) }
-    if (hairs) for (let i = 0; i < N; i++) {
+    await stage(["grads"], () => { for (const q of art.grads) { const ok = set(q.on), l2 = (q.b[0] - q.a[0]) ** 2 + (q.b[1] - q.a[1]) ** 2; for (let i = 0; i < N; i++) if (ok[map[i]!]) to(i, q.to, smooth(0, 1, (((i % w) / k - q.a[0]) * (q.b[0] - q.a[0]) + (((i / w) | 0) / k - q.a[1]) * (q.b[1] - q.a[1])) / l2) * q.k) } })
+    await stage(["hairHue"], () => { if (hairs) for (let i = 0; i < N; i++) {
       if (!hairs.any[i]) continue
       const turn = hairTip[map[i]!]!, v = hairs.v[i]!
       if (turn) { const t = cached([R[i]!, G[i]!, B[i]!], turn, 1.06); to(i, t, smooth(0.15, 0.95, v)) }
       const g = hairs.hue[i]!
       if (g) { const c: RGB = [R[i]!, G[i]!, B[i]!]; const t = cached(c, g > 0 ? 9 : -12, 1.06); to(i, g > 0 ? [t[0] * 1.02, t[1] * 1.02, t[2] * 1.02] : [t[0] * 0.97, t[1] * 0.965, t[2] * 0.98], Math.abs(g) * 0.7) }
-    }
-    wash(false)
+    } })
+    await stage(["washes"], () => wash(false))
   }
   const said = await stampsOf(art, k, { map, names, w, h })
   const mask = (lv: ReadonlyArray<Level>): Float32Array => {
@@ -251,32 +276,34 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     }
     const calm = P ? calmShare(P, w, h, H * 0.03) : null
     const bk = upto >= 5 ? crisp(back, 0.5) : zero
-    for (let i = 0; i < N; i++) {
+    await stage(["scatter", "half", "shade", "inner", "lift", "warm", "reflected", "bounce", "deep", "black"], () => { for (let i = 0; i < N; i++) {
       const n = map[i]!, t = tones[n]
       if (!t || n === bg || metal[n]) continue
       const e = e1[i]!, kd = kinds[n]
       if (upto >= 5 && e < 0.99 && kd && SCATTER[kd]) {
         const q = SCATTER[kd]!
+        on("scatter")
         if (q.wide) times(i, q.wide, smooth(0.015, 0.5, near[i]!) * (1 - e))
         times(i, q.band, smooth(0.05, 0.42, rim[i]!) * (1 - e))
       }
-      if (eh[i]! > 0.01) times(i, t.half, eh[i]! * (1 - e))
-      times(i, t.s1, e)
+      on("half"); if (eh[i]! > 0.01) times(i, t.half, eh[i]! * (1 - e))
+      on("shade"); times(i, t.s1, e)
       // inside a shade: darkest just behind its edge, then lighter and cooler again, where the surroundings answer. Never as light as the light
-      if (upto >= 5 && e > 0.5 && kd !== "dark" && kd !== "hair") { const d = depthIn[i]!; times(i, [0.95, 0.91, 0.96], 1 - smooth(0.5, 0.86, d)); if (calm && P?.id[i]) { const C = P.far[i]! + P.near[i]!; if (C > H * 0.12) times(i, kd === "skin" || kd === "pale" ? [1.07, 1.1, 1.15] : [1.0, 1.03, 1.1], smooth(0.8, 1, d) * smooth(0.6, 0.95, calm[i]!)) } }
-      else if (upto >= 5 && e < 0.5 && calm && P?.id[i] && P.far[i]! + P.near[i]! > H * 0.08) times(i, [1.03, 1.0, 0.95], (1 - calm[i]!) * 0.6)
-      if (er[i]! > 0.01) times(i, kd === "pale" ? [1.07, 1.1, 1.16] : kd === "dark" || kd === "leather" ? [1.12, 1.13, 1.22] : [1.06, 1.07, 1.12], er[i]!)
-      if (bk[i]! > 0.01) to(i, t.bounce, bk[i]! * (kd === "skin" ? 0.5 : 0.62))
-      if (e2[i]! > 0.01) times(i, [t.s2[0] / t.s1[0], t.s2[1] / t.s1[1], t.s2[2] / t.s1[2]], e2[i]!)
-      if (e3[i]! > 0.01) times(i, [0.6, 0.56, 0.68], e3[i]!)
-    }
+      on("inner")
+      if (upto >= 5 && e > 0.5 && kd !== "dark" && kd !== "hair") { const d = depthIn[i]!; times(i, [0.95, 0.91, 0.96], 1 - smooth(0.5, 0.86, d)); if (calm && P?.id[i]) { const C = P.far[i]! + P.near[i]!; on("lift"); if (C > H * 0.12) times(i, kd === "skin" || kd === "pale" ? [1.07, 1.1, 1.15] : [1.0, 1.03, 1.1], smooth(0.8, 1, d) * smooth(0.6, 0.95, calm[i]!)) } }
+      else if (upto >= 5 && e < 0.5 && calm && P?.id[i] && P.far[i]! + P.near[i]! > H * 0.08) { on("warm"); times(i, [1.03, 1.0, 0.95], (1 - calm[i]!) * 0.6) }
+      on("reflected"); if (er[i]! > 0.01) times(i, kd === "pale" ? [1.07, 1.1, 1.16] : kd === "dark" || kd === "leather" ? [1.12, 1.13, 1.22] : [1.06, 1.07, 1.12], er[i]!)
+      on("bounce"); if (bk[i]! > 0.01) to(i, t.bounce, bk[i]! * (kd === "skin" ? 0.5 : 0.62))
+      on("deep"); if (e2[i]! > 0.01) times(i, [t.s2[0] / t.s1[0], t.s2[1] / t.s1[1], t.s2[2] / t.s1[2]], e2[i]!)
+      on("black"); if (e3[i]! > 0.01) times(i, [0.6, 0.56, 0.68], e3[i]!)
+    } })
   }
   /* 7: materials and light */
   if (upto >= 7 && view !== "regions") {
     const lt = mask(["lt"]), ring = crisp(mask(["ring"]), 0.5), hi = crisp(mask(["hi"]), 0.35), L = crisp(Float32Array.from(lt, (v) => (v > 0.02 ? 1 : 0)), 0.5), rm = crisp(Float32Array.from(rims, (v) => (v > 0.02 ? 1 : 0)), 0.35)
     const gw = crisp(gloss, 0.5), share = P ? calmShare(P, w, h, 1.5 * k) : null
     const pores = P ? stipple(P, map, kinds, w, h, H) : zero
-    for (let i = 0; i < N; i++) {
+    await stage(["metal", "metalShade", "sheen", "lights", "rims", "hairLight", "gloss", "highlights"], () => { for (let i = 0; i < N; i++) {
       const n = map[i]!, t = tones[n], kd = kinds[n]
       if (!t || n === bg) continue
       const lit = 1 - e1[i]!, on = P !== null && P.id[i]! > 0, C = on ? P!.far[i]! + P!.near[i]! : 0, s = on ? share![i]! : 0, p = on ? P!.side[i]! : 0
@@ -284,14 +311,18 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       const band = (a: number, b: number): number => Math.max(0, Math.min(1, (s - a) * C + 0.5)) * Math.max(0, Math.min(1, (b - s) * C + 0.5))
       if (kd === "metal") {
         const m = t.metal
+        tag = "metal"
         if (!on || C < 3.2 * k) to(i, s < 0.5 ? m.light : s < 0.75 ? m.mid : m.dark, 1)
         else { to(i, m.light, 1); to(i, m.hi, band(0.12, 0.3) * (p > 0.04 && p < 0.84 ? 1 : 0)); to(i, m.mid, band(0.44, 2)); to(i, m.dark, band(0.6, 0.84)); if (C > H * 0.05) to(i, m.deep, band(0.66, 0.76)); to(i, mix(m.light, SKY, 0.22), band(0.9, 2)) }
+        tag = "metalShade"
         if (e1[i]! > 0.01) times(i, t.s1, e1[i]! * 0.7)
         if (e2[i]! > 0.01) times(i, [0.66, 0.64, 0.74], e2[i]!)
+        tag = "rims"
         if (rm[i]! > 0.01) to(i, m.hi, rm[i]! * lit)
       } else {
         // a reflection is a piece of a plane: its sides run with the form's own edges
         const slant = p + (s - 0.2) * 0.35
+        tag = "sheen"
         if (on && C > H * 0.035) {
           if (kd === "leather") { if (C > H * 0.055 && !own[n]) to(i, t.gloss, band(0.1, 0.22) * (slant > 0.12 && slant < 0.62 ? 1 : 0) * lit * 0.45) }
           else if (kd === "plastic" || kd === "glass") { to(i, t.gloss, band(0.07, 0.3) * ((slant > 0.1 && slant < 0.34) || (slant > 0.39 && slant < 0.45) ? 1 : 0) * lit * 0.5); to(i, t.lt, band(-1, 0.05) * lit * 0.7) }
@@ -300,16 +331,21 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
           else if (kd === "peel") to(i, t.lt, smooth(0.62, 0.1, Math.hypot(s - 0.3, (p - 0.45) * 0.9) * 1.6) * lit * 0.8)
         }
         if (pores[i]! > 0) { if (e1[i]! > 0.5) times(i, [0.84, 0.72, 0.84], pores[i]!); else to(i, mix(t.lt, SUN, 0.35), pores[i]! * 0.55) }
+        tag = "lights"
         if (el[i]! > 0.01) to(i, t.lt, el[i]! * lit * 0.85)
         if (L[i]! > 0.01) to(i, t.lt, L[i]! * Math.max(0.5, lt[i]!) * lit)
+        tag = "rims"
         if (rm[i]! > 0.01) to(i, kd === "skin" ? t.lt : mix(t.base, SUN, 0.7), rm[i]! * lit * 0.85)
+        tag = "hairLight"
         if (hairs && hairs.any[i]) { if (hairs.light[i]! > 0.01) to(i, t.lt, hairs.light[i]! * lit * 0.5); if (hairs.ring[i]! > 0.01) to(i, mix(t.base, [255, 254, 252], 0.72), hairs.ring[i]! * 0.8 * (1 - e1[i]! * 0.85)) }
+        tag = "gloss"
         if (gw[i]! > 0.01) to(i, mix(t.base, [255, 253, 246], 0.66), gw[i]! * 0.72 * (1 - e1[i]! * 0.8))
         if (ring[i]! > 0.01) to(i, mix(t.base, [255, 253, 248], 0.62), ring[i]! * (1 - e1[i]! * 0.85))
       }
       // a rough skin has no glint
+      tag = "highlights"
       if (hi[i]! > 0.01 && kd !== "peel") to(i, [255, 253, 248], hi[i]! * (1 - e1[i]! * 0.6))
-    }
+    } })
   }
   const bounce: Record<string, number> = {}
   /* reflected light. Open air behind an edge: the cold second light, as a plane with a darker step inside it. Another surface behind it: that surface's own colour, as a soft bleed */
@@ -347,40 +383,44 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     for (const i of far) { const n = names[map[i]!]!, t = tally.get(n) ?? [0, 0]; t[0]++; if (sky[i]! > 0.5 || skyIn[i]! > 0.5) t[1]++; tally.set(n, t) }
     for (const [n, [a, b]] of tally) { bounce[`far:${n}`] = Math.round(a / (k * k)); bounce[`lit:${n}`] = Math.round(b / (k * k)) }
     const s1 = crisp(sky, 0.5), s2 = crisp(skyIn, 0.5), bl = blur(bleed, w, h, Math.max(1, H * 0.009), 2)
-    for (let i = 0; i < N; i++) {
+    await stage(["bleed", "skyIn", "sky"], () => { for (let i = 0; i < N; i++) {
       const n = map[i]!, t = tones[n]
       if (!t || n === bg || metal[n]) continue
       const kd = kinds[n], u = from[i] ? tones[from[i]!] : null
+      tag = "bleed"
       if (u && bl[i]! > 0.02 && e1[i]! > 0.5) {
         // only a surface brighter than this shade gives anything, and the shade stays a shade
         const now: RGB = [R[i]!, G[i]!, B[i]!], give = smooth(8, 70, luma(u.base) - luma(now)), cap = luma(t.base) * 0.86
         if (give > 0) { const g = bl[i]! * give * (kd === "dark" || kd === "leather" ? 0.5 : 0.62), c: RGB = [now[0] * (1 + (g * u.base[0]) / 255) + g * u.base[0] * 0.05, now[1] * (1 + (g * u.base[1]) / 255) + g * u.base[1] * 0.05, now[2] * (1 + (g * u.base[2]) / 255) + g * u.base[2] * 0.05], l = luma(c); to(i, l > cap ? [(c[0] * cap) / l, (c[1] * cap) / l, (c[2] * cap) / l] : c, 1) }
       }
+      tag = "skyIn"
       if (s2[i]! > 0.01) to(i, mix([R[i]!, G[i]!, B[i]!], mix(t.neon, [112, 84, 190], 0.35), 0.42), s2[i]!)
+      tag = "sky"
       if (s1[i]! > 0.01) to(i, t.neon, s1[i]! * 0.92)
-    }
+    } })
   }
-  if (upto >= 8 && view !== "regions") wash(true)
+  if (upto >= 8 && view !== "regions") await stage(["blush"], () => wash(true))
   const stats: Record<string, number> = { ...bounce }
   for (const e of eyes) console.error(`eye: ${e.note}`)
   { const area: Record<string, number> = {}; for (let i = 0; i < N; i++) { const n = names[map[i]!]!; area[n] = (area[n] ?? 0) + 1; if (e1[i]! > 0.5) stats[n] = (stats[n] ?? 0) + 1 } for (const n of Object.keys(stats)) if (area[n]) stats[n] = Math.round((100 * stats[n]!) / area[n]!) }
   if (view === "masks") for (let i = 0; i < N; i++) { const v = map[i] === bg ? 170 : e3[i]! > 0.5 ? 0 : e2[i]! > 0.5 ? 50 : e1[i]! > 0.5 ? 110 : 250; R[i] = G[i] = B[i] = v }
   /* 10: the air. The lit side of the whole picture a breath warmer, the far side cooler */
-  if (upto >= 10 && view !== "masks" && view !== "regions") {
+  if (upto >= 10 && view !== "masks" && view !== "regions") await stage(["airWarm", "airCool", "focus"], () => {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const i = y * w + x
       if (map[i] === bg) continue
       const t = ((x / w - 0.5) * sun.x + (y / h - 0.5) * sun.y) * 1.5, a = Math.min(0.13, Math.abs(t) * 0.16)
-      if (t < 0) times(i, [1.06, 1.015, 0.93], a * 5) // air tints, it never lifts a dark
-      else times(i, [0.86, 0.88, 1.02], a * 2.2)
+      if (t < 0) { tag = "airWarm"; times(i, [1.06, 1.015, 0.93], a * 5) } // air tints, it never lifts a dark
+      else { tag = "airCool"; times(i, [0.86, 0.88, 1.02], a * 2.2) }
+      tag = "focus"
       if (art.focus) { const q = art.focus, f = smooth(0.85, 2.3, Math.hypot((x / k - q.x) / q.rx, (y / k - q.y) / q.ry)) * q.dim; if (f > 0) times(i, [0.8, 0.82, 0.92], f) }
     }
-  }
+  })
   // air between the viewer and what lies behind: paler, bluer, less contrast
   const back = defs.map((_, n) => art.depth?.[names[n]!] ?? 0), AIR: RGB = [196, 198, 226]
-  if (upto >= 10 && view === "normal") for (let i = 0; i < N; i++) { const d = back[map[i]!]!; if (d) { const l = luma([R[i]!, G[i]!, B[i]!]); to(i, mix([l * 0.96, l * 0.98, l * 1.12], AIR, smooth(60, 190, l)), d * 0.34) } }
+  if (upto >= 10 && view === "normal") await stage(["haze"], () => { for (let i = 0; i < N; i++) { const d = back[map[i]!]!; if (d) { const l = luma([R[i]!, G[i]!, B[i]!]); to(i, mix([l * 0.96, l * 0.98, l * 1.12], AIR, smooth(60, 190, l)), d * 0.34) } } })
   // a painter's last layer on warm shades: overlay with orange. Skin in shade is never grey and never cold
-  if (upto >= 5 && view === "normal") {
+  if (upto >= 5 && view === "normal") await stage(["warmSkin"], () => {
     const OVER: RGB = [255, 146, 72], lay = (a: number, b: number): number => (a < 128 ? (2 * a * b) / 255 : 255 - (2 * (255 - a) * (255 - b)) / 255)
     const deepen = blur(e1, w, h, Math.max(1, H * 0.012), 2)
     for (let i = 0; i < N; i++) {
@@ -389,8 +429,10 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       const a = kd === "skin" ? Math.max(e1[i]! * 0.3, eh[i]! * 0.18) + (1 - e1[i]!) * smooth(0.02, 0.5, deepen[i]!) * 0.16 : e1[i]! * (tones[map[i]!]!.base[0] > tones[map[i]!]!.base[2] * 1.2 ? 0.05 : 0)
       if (a > 0.005) to(i, [lay(R[i]!, OVER[0]), lay(G[i]!, OVER[1]), lay(B[i]!, OVER[2])], a)
     }
-  }
-  if (upto >= 8 && view !== "regions") for (const q of art.brows ?? []) { tmp.g.clearRect(0, 0, w, h); trace(tmp.g, q.d); tmp.g.fill(); const d = alphaOf(), c = hexRgb(q.color), f = names.indexOf("face"); for (let i = 0; i < N; i++) if (d[i * 4 + 3]) to(i, c, (d[i * 4 + 3]! / 255) * (map[i] === f ? 1 : kinds[map[i]!] === "hair" ? 0.38 : 0)) }
+  })
+  // the shapes are worked out once; recording runs the loop for each step
+  const browMasks = upto >= 8 && view !== "regions" ? (art.brows ?? []).map((q) => { tmp.g.clearRect(0, 0, w, h); trace(tmp.g, q.d); tmp.g.fill(); return { d: alphaOf().slice(), c: hexRgb(q.color) } }) : []
+  await stage(["brows"], () => { const f = names.indexOf("face"); for (const { d, c } of browMasks) for (let i = 0; i < N; i++) if (d[i * 4 + 3]) to(i, c, (d[i * 4 + 3]! / 255) * (map[i] === f ? 1 : kinds[map[i]!] === "hair" ? 0.38 : 0)) })
   const img = new ImageData(w, h)
   if (upto >= 10 && view === "normal") {
     const r = rng("grain"), cell = (art.head * k * 0.72) / 290, gw = Math.ceil(w / cell) + 2, gh = Math.ceil(h / cell) + 2, bell = (): number => (r() + r() + r() + r() - 2) * 1.73, ch = [0, 1, 2, 3].map(() => Float32Array.from({ length: gw * gh }, bell)), speck = Float32Array.from({ length: gw * gh }, () => r())
@@ -411,11 +453,27 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       const m = at(ch[0]!) * a, k1 = a * 1.5, p = sp && speck[q]! < sp ? 11 : 0
       img.data[i * 4] = R[i]! + m + at(ch[1]!) * k1 + p; img.data[i * 4 + 1] = G[i]! + m + at(ch[2]!) * k1 * 0.55 + p; img.data[i * 4 + 2] = B[i]! + m + at(ch[3]!) * k1 + p * 0.5; img.data[i * 4 + 3] = 255
     }
+    if (rec) { const after = [0, 1, 2].map((c) => Float32Array.from({ length: N }, (_, i) => img.data[i * 4 + c]!)); await rec.step(STEPS.grain!.name, STEPS.grain!.group, STEPS.grain!.hint, [R, G, B], after, new Float32Array(N).fill(1)) }
   } else for (let i = 0; i < N; i++) { img.data[i * 4] = R[i]!; img.data[i * 4 + 1] = G[i]!; img.data[i * 4 + 2] = B[i]!; img.data[i * 4 + 3] = 255 }
   const col = mk()
   col.g.putImageData(img, 0, 0)
   const drawn = view !== "masks" && view !== "regions"
-  if (upto >= 8 && drawn) { col.g.save(); col.g.scale(k, k); art.face(col.g); for (const e of eyes) e.under(col.g); col.g.restore() }
+  /** What is drawn on the canvas. Recording, it is drawn alone as well: when that layer over the canvas gives the same picture it is kept as it is, otherwise a layer is fitted from before and after. */
+  const paint = async (step: string, draw: (g: CanvasRenderingContext2D) => void, own?: Uint8ClampedArray): Promise<void> => {
+    if (!rec) { draw(col.g); return }
+    const st = STEPS[step]!, before = col.g.getImageData(0, 0, w, h).data
+    draw(col.g)
+    const after = col.g.getImageData(0, 0, w, h).data
+    let L = own
+    if (!L) { const c = mk(); draw(c.g); L = c.g.getImageData(0, 0, w, h).data }
+    let bad = 0
+    for (let i = 0; i < N * 4; i += 4) { const a = L[i + 3]! / 255; for (let c = 0; c < 3; c++) if (Math.abs(before[i + c]! + (L[i + c]! - before[i + c]!) * a - after[i + c]!) > 4) { bad++; break } }
+    if (!bad) { await rec.keep(st.name, st.group, "normal", L); return }
+    rec.notes.push(`${st.name}: drawn with other blend modes (${bad} px), fitted as normal`)
+    const f = (d: Uint8ClampedArray): Array<Float32Array> => [0, 1, 2].map((c) => Float32Array.from({ length: N }, (_, i) => d[i * 4 + c]!))
+    await rec.step(st.name, st.group, { mode: "normal" }, f(before), f(after), new Float32Array(N))
+  }
+  if (upto >= 8 && drawn) await paint("face", (g) => { g.save(); g.scale(k, k); art.face(g); for (const e of eyes) e.under(g); g.restore() })
 
   const line = lineLayer({ ink, map, w, h, k, head: art.head, bg, kinds, z: zs, tones, face: names.indexOf("face"), dark: e1, strokes: refs.strokes, fall: [sun.x, sun.y], print: set(art.print ?? []), eyes: eyes.map((e) => e.at), back: upto >= 10 ? back : back.map(() => 0) }), li = line.image
   if (upto < 9) for (let i = 0; i < N; i++) { li.data[i * 4] = BLACK[0]; li.data[i * 4 + 1] = BLACK[1]; li.data[i * 4 + 2] = BLACK[2]; li.data[i * 4 + 3] = smooth(0.2, 0.64, ink[i]!) * 255 }
@@ -430,16 +488,19 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   const ic = mk()
   ic.g.putImageData(li, 0, 0)
   if (view === "masks") col.g.globalAlpha = 0.5
-  col.g.drawImage(ic.c, 0, 0); col.g.globalAlpha = 1
+  await paint("line", (g) => g.drawImage(ic.c, 0, 0), li.data); col.g.globalAlpha = 1
   if (cut) { const d = col.g.getImageData(0, 0, w, h); for (let i = 0; i < N; i++) if (map[i] === bg) for (let c = 0; c < 4; c++) d.data[i * 4 + c] = li.data[i * 4 + c]!; col.g.putImageData(d, 0, 0) }
-  if (upto >= 9 && drawn) { col.g.save(); col.g.scale(k, k); art.over(col.g); for (const e of eyes) e.over(col.g); col.g.restore() }
+  if (upto >= 9 && drawn) await paint("over", (g) => { g.save(); g.scale(k, k); art.over(g); for (const e of eyes) e.over(g); g.restore() })
   if (upto >= 10 && view !== "masks" && !cut) {
     const bk = mk()
     bk.g.fillStyle = "#fff"; bk.g.fillRect(0, 0, w, h); bk.g.save(); bk.g.scale(k, k); art.back(bk.g); bk.g.restore()
     const d = bk.g.getImageData(0, 0, w, h)
+    // recording, the background goes to the bottom of the stack, whole, under the line art
+    if (rec) { const b = new Uint8ClampedArray(d.data); for (let i = 0; i < N; i++) b[i * 4 + 3] = map[i] !== bg ? 0 : 255; await rec.keep(STEPS.back!.name, STEPS.back!.group, "normal", b, 0) }
     for (let i = 0; i < N; i++) d.data[i * 4 + 3] = map[i] !== bg ? 0 : 255 - li.data[i * 4 + 3]!
-    bk.g.putImageData(d, 0, 0); col.g.drawImage(bk.c, 0, 0); col.g.save(); col.g.scale(k, k); art.front(col.g); col.g.restore()
+    bk.g.putImageData(d, 0, 0); col.g.drawImage(bk.c, 0, 0); await paint("front", (g) => { g.save(); g.scale(k, k); art.front(g); g.restore() })
   }
+  if (rec && stray) rec.notes.push(`${stray} paint operations ran outside a named step: the layers miss them`)
   { const d = col.g.getImageData(0, 0, w, h).data; let n = 0, low = 0, dark = 0; for (let i = 0; i < N; i++) if (map[i] !== bg) { const p: RGB = [d[i * 4]!, d[i * 4 + 1]!, d[i * 4 + 2]!]; n++; if (hsv(p) < 0.3) low++; if (luma(p) < 30) dark++ } stats._lowSat = Math.round((100 * low) / n); stats._dark = Math.round((1000 * dark) / n) / 10; stats._line = Math.round((20 * line.half) / k) / 10 }
   if (art.focus) {
     const d = col.g.getImageData(0, 0, w, h).data, Lm = (i: number): number => d[i * 4]! * 0.3 + d[i * 4 + 1]! * 0.59 + d[i * 4 + 2]! * 0.11, q = art.focus, v: [Array<number>, Array<number>] = [[], []], e: [number, number] = [0, 0], st = Math.max(1, Math.round((k * art.h) / 620))
