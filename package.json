@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "pnpm@10.17.1",
   "scripts": {
-    "dev": "vite --port 5440",
+    "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.json --pretty false",
     "shots": "node scripts/shots.ts",

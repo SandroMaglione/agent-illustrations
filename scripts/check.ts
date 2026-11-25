@@ -34,8 +34,8 @@ for (const name of names) {
   for (const [label, ok, show] of rules) { const good = ok(s); failed ||= !good; console.log(`  ${good ? "ok  " : "FAIL"} ${label}: ${show(s)}`) }
   if (s._pull !== undefined) for (const [label, ok, show] of values) { const good = ok(s); failed ||= !good; console.log(`  ${good ? "ok  " : "FAIL"} ${label}: ${show(s)}`) }
   // only drawings whose shapes are said in terms of lines are held to this
-  await page.goto(`http://localhost:${port}/${name}.png`)
-  const f = await page.evaluate(async (n) => { const M = await import(/* @vite-ignore */ `/src/splash/${n}.ts`), art = Object.values(M).find((v) => (v as { defs?: object }).defs) as { lines?: string }, L = await import(/* @vite-ignore */ "/src/tools/lint.ts" as string); if (!art.lines) return null; const { picture: _, ...q } = await L.lint(art); return q }, name) as Faults | null
+  await page.goto(`http://localhost:${port}/favicon.ico`)
+  const f = await page.evaluate(async (n) => { const { artOf } = await import(/* @vite-ignore */ "/src/splash/index.ts" as string), art = await artOf(n) as { lines?: string }, L = await import(/* @vite-ignore */ "/src/tools/lint.ts" as string); if (!art.lines) return null; const { picture: _, ...q } = await L.lint(art); return q }, name) as Faults | null
   if (f) { for (const [label, ok, show] of placed) { const good = ok(f); failed ||= !good; console.log(`  ${good ? "ok  " : "FAIL"} ${label}: ${show(f)}`) } if (f.at.length) console.log(`       ${f.at.join(" | ")}`) }
   else console.log("  --   placement not checked: shapes are typed coordinates")
   await page.close()

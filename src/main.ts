@@ -6,10 +6,12 @@ import { render } from "./cel/engine.ts"
 import { PASSES, render as renderPasses } from "./passes/engine.ts"
 import type { View } from "./passes/engine.ts"
 import { PASSES as SPASSES, render as renderSplash } from "./splash/engine.ts"
-import { TWIN } from "./splash/twin.ts"
-import { BELL } from "./splash/bell.ts"
-import { RIG } from "./splash/rig.ts"
+import type { Art } from "./splash/engine.ts"
+import { artOf } from "./splash/index.ts"
 import { TAPE } from "./splash/tape.ts"
+import { lint } from "./tools/lint.ts"
+import { thumbs } from "./tools/thumbs.ts"
+import type { Masses, Plan } from "./tools/thumbs.ts"
 import { bucketView } from "./bucket/main.ts"
 import { sheetView } from "./tools/sheet.ts"
 import { LOOKS, poster } from "./poster/tape.ts"
@@ -29,6 +31,7 @@ import { SKINS, skin } from "./skins/index.ts"
 const q = new URLSearchParams(location.search)
 const flag = window as unknown as { __ready?: boolean; __reel?: (n: number) => string; __frames?: number }
 const FPS = 8
+const DRAWINGS = import.meta.glob(["./splash/*.ts", "!./splash/*-*.ts", "!./splash/{engine,tones,shapes,index}.ts"])
 
 type Shot = { who: string; act: Acting; skin: string; frame: number; reveal?: number }
 const paint = (ctx: CanvasRenderingContext2D, s: Shot, w: number, h: number): void => {
@@ -89,9 +92,12 @@ const still = (v: string): void => {
     g.font = `600 ${Math.round(w / 26)}px "Avenir Next", sans-serif`
     g.fillText(STEPS[i]!.label, x + 18, y + h - 20)
   })
-  if (v === "sheet") {
-    const who = q.get("who")
-    void sheetView(who === "rig" ? RIG : who === "bell" ? BELL : who === "twin" ? TWIN : TAPE, q).then((c) => { document.body.innerHTML = ""; c.style.cssText = `display:block;width:${c.width}px;height:${c.height}px`; document.body.style.margin = "0"; document.body.append(c); flag.__ready = true })
+  const show = (c: HTMLCanvasElement): void => { document.body.innerHTML = ""; c.style.cssText = `display:block;width:${c.width}px;height:${c.height}px`; document.body.style.margin = "0"; document.body.append(c); flag.__ready = true }
+  if (v === "sheet") { void artOf(q.get("who") ?? "tape").then((a) => sheetView(a!, q)).then(show); return }
+  if (v === "faults") { void artOf(q.get("who") ?? "tape").then((a) => lint(a!)).then((f) => { const { picture, ...rest } = f; console.error(JSON.stringify(rest)); show(picture) }); return }
+  if (v === "thumbs") {
+    const name = q.get("who") ?? "", plans = import.meta.glob("./splash/*-plans.ts")
+    void Promise.all([artOf(name), plans[`./splash/${name}-plans.ts`]!()]).then(([a, m]) => { const M = m as { PLANS: ReadonlyArray<Plan>; MASSES: Masses }; return thumbs(a!, M.PLANS, M.MASSES, Number(q.get("size") ?? 620)) }).then((t) => { for (const n of t.notes) console.error(n); show(t.canvas) })
     return
   }
   if (v === "bucket") {
@@ -103,12 +109,11 @@ const still = (v: string): void => {
     void poster(LOOKS[q.get("look") ?? "jacket"]!, W / 1200, Number(q.get("k") ?? 2)).then((p) => { document.body.innerHTML = ""; p.style.cssText = "display:block;width:100vw;height:100vh"; document.body.append(p); flag.__ready = true })
     return
   }
-  if (v === "twin" || v === "tape" || v === "bell" || v === "rig") {
-    const art = v === "rig" ? RIG : v === "bell" ? BELL : v === "tape" ? (q.has("marks") ? { ...TAPE, clicks: undefined } : TAPE) : TWIN
+  if (Object.keys(DRAWINGS).includes(`./splash/${v}.ts`)) {
     const k = Number(q.get("k") ?? 2)
-    void renderSplash(art, k, Number(q.get("upto") ?? SPASSES.length - 1), (q.get("view") ?? "normal") as View).then(({ canvas, stats }) => {
+    void artOf(v).then((found) => renderSplash(q.has("marks") ? { ...found!, clicks: undefined } as Art : found!, k, Number(q.get("upto") ?? SPASSES.length - 1), (q.get("view") ?? "normal") as View)).then(({ canvas, stats }) => {
       if (q.has("raw")) { document.body.innerHTML = ""; document.body.append(canvas); if (q.has("stats")) console.error(JSON.stringify(stats)); flag.__ready = true; return }
-      const z = Number(q.get("zoom") ?? W / art.w)
+      const z = Number(q.get("zoom") ?? (W * k) / canvas.width)
       g.imageSmoothingQuality = "high"
       g.drawImage(canvas, Number(q.get("x") ?? 0) * k, Number(q.get("y") ?? 0) * k, (W / z) * k, (H / z) * k, 0, 0, W, H)
       if (q.has("stats")) console.error(JSON.stringify(stats))

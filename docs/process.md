@@ -18,10 +18,9 @@ Lengths are line-art px on a head of about 430 px; scale them with `head`. Ratio
 - Same part names on every character.
 
 ## Order
-0. **Light and value.** Write `light` (one direction, one height) and `focus` in the drawing. Give the big parts three values so the key area is the lightest, or holds the only strong contrast. Look at `view=value`. Value is luma, not HSV V or HSL L.
-1. **Regions.** Print the numbered patches, name them by number, add a wall where two names share a patch.
-2. **Lines.** Freeze the line numbers (`scripts/freeze.ts`), print numbered sheets per area. Nothing after this uses a coordinate grid.
-3. **Eyes** from their named lines, then flats.
+1. **Regions.** `scripts/new.ts`, patch sheet, names by number, `scripts/name.ts`, until `show=pools&named=1` has no red "?" and no leak. A wall splits a patch that two parts share. Set `head` and, in `defs`, each part's material and height in the stack (`z`).
+2. **Thumbnails: light and value.** Four to six plans in `<name>-plans.ts` that differ in more than hue: where the light comes from, which mass is lightest, which is darkest, where the accent sits. Look at `v=thumbs`: at the small size, in three values, where does the eye land? The numbers under it say the focus against the rest. Value is luma, not HSV V or HSL L. Someone with taste picks one; then its `light`, `focus` and colours go into the drawing.
+3. **Lines and eyes.** Freeze the line numbers, print numbered sheets per area. Nothing after this uses a coordinate grid. Eyes from their named lines.
 4. **Cast list.** Every overlap pair gets a cast: caster, receiver, distance, deep share. A cast must reach further than the shade of any closer part, or it cannot be seen.
 5. **Turning planes** of each part, computed from the light (`turn`, `ball`). Then hair by lock, folds and seams from the kits, deep shade inside parents. Judge it in `view=masks`.
 6. **Children.** Trim, buttons and piping inherit the shade they lie on. Bevels on hard parts, never where something lies on top.

@@ -60,29 +60,38 @@ All numbers, what failed, and what is still open: [`docs/findings.md`](docs/find
 ## Run
 
 ```sh
-pnpm install
-pnpm dev                                                     # port 5440
-node scripts/snap.ts out.png "v=rig&k=2&zoom=2" 2172 2896    # render one
-pnpm check                                                   # hold figures against the reference numbers
+pnpm install && pnpm exec playwright install chromium
+pnpm dev                                                             # port 5440, or PORT=5441 pnpm dev (and PORT for the scripts too)
+node scripts/look.ts "v=rig" whole.png face.png:430,330,440,440:3    # render once, crop as often as you like
+node scripts/side.ts out.png 800 a.png b.png                         # compare
+node scripts/pixel.ts whole.png 2 662,515 740,520                    # colour and luma at points
+pnpm check rig                                                       # alarms: numbers measured on the references
 ```
 
 | Query | Shows |
 |---|---|
-| `v=rig` | a drawing: `rig`, `tape`, `bell`, `twin` |
-| `upto=0..10` | stop after a pass |
-| `view=value`, `grey`, `masks`, `regions` | checks |
-| `k=2` or `3` | scale, an integer. At 1 a few regions can leak |
-| `v=sheet&who=rig&box=x,y,w,h&z=4` | numbered lines; add `show=shapes` or `show=pools` |
+| `v=<drawing>` | any drawing in `src/splash`: `rig`, `tape`, `bell`, `twin` |
+| `&upto=0..10` | stop after a pass |
+| `&view=value`, `grey`, `masks`, `regions` | three values, greyscale, shadow design, regions |
+| `&k=2` or `3` | scale, an integer. At 1 a few regions can leak |
+| `v=sheet&who=rig&box=x,y,w,h&z=4` | numbered lines; `&probe=x,y` names what is there; `&show=shapes`, `&show=pools` (patches), `&show=pools&named=1` |
+| `v=thumbs&who=rig` | ideas for light, value and colour from `rig-plans.ts` |
+| `v=faults&who=rig` | slivers red, edges beside lines blue |
 | `v=poster&look=jacket` or `hair` | an announcement card |
 
-Text uses Avenir Next, so it looks different off macOS. `pnpm check` needs the dev server.
+Text uses Avenir Next, so it looks different off macOS. A full render takes about 15 seconds or more; give commands room.
 
 ## New drawing
 
-1. Put clean line art in `public/`, closed lines, lower lids drawn.
-2. Copy `src/splash/rig.ts` and its parts (`rig-*.ts`), set `src`, `w`, `h`, `head`, `light` and `focus`, register the name in `src/main.ts`.
-3. Name the patches from `show=pools&list=1`, then `node scripts/freeze.ts name` and print the line sheets.
-4. Follow [`docs/process.md`](docs/process.md).
+```sh
+node scripts/new.ts name line-art.png                                 # files in src/splash, line art in public/wip (not in Git)
+node scripts/look.ts "v=sheet&who=name&show=pools&z=2" patches.png    # number the patches, write them in name-names.txt
+node scripts/name.ts name                                             # names to regions
+node scripts/look.ts "v=thumbs&who=name" thumbs.png                   # ideas in name-plans.ts, after parts have a material in name.ts
+node scripts/freeze.ts name                                           # number the lines, once, when the regions are final
+```
+
+Then follow [`docs/process.md`](docs/process.md). `rig*.ts` is the example to read.
 
 ## Documents
 

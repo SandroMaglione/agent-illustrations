@@ -4,3 +4,5 @@ output
 .DS_Store
 # style references: third-party art, kept local
 public/refs
+# line art in progress, not published until the owner says so
+public/wip

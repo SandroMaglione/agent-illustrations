@@ -63,7 +63,7 @@ export const sheetView = async (art: Art, q: URLSearchParams): Promise<HTMLCanva
 }
 /** Closed patches, numbered, before any of them has a name; once named, coloured by name. `list=1` prints where each one is. */
 const poolSheet = async (art: Art, X: number, Y: number, W: number, H: number, z: number, q: URLSearchParams): Promise<HTMLCanvasElement> => {
-  const k = 2, { ink, w, h } = await loadInk(art.src, k), B = paper(ink, w, h, art.clicks?.walls ?? [], k), P = B.P, f = fill(B, w, h, art.clicks?.at ?? {}, k), named = q.has("named")
+  const k = 2, { ink, w, h } = await loadInk(art.src, k), B = paper(ink, w, h, q.has("named") ? (art.clicks?.walls ?? []) : [], k), P = B.P, f = fill(B, w, h, art.clicks?.at ?? {}, k), named = q.has("named")
   const c = document.createElement("canvas"), t = document.createElement("canvas")
   c.width = W * z; c.height = H * z; t.width = w; t.height = h
   const g = c.getContext("2d")!, im = new ImageData(w, h), hue = (n: number, o: number): number => 190 + 60 * Math.cos(((n * 137.5 + o) * Math.PI) / 180)

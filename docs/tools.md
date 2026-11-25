@@ -24,7 +24,11 @@ How shapes are placed and checked. Code in `src/tools` and `src/splash`. Why the
 | `warp` | `warp A B \| 0,.2! .5,.3 1,.6! …` | a free shape drawn in the space between two lines, with corners |
 | Lock kit | `lock("bang", "s29", "s35", { side: ["b", .4], ring: [.3, .09], lit: .4 })` | what every lock of hair carries: toothed side plane, root, tip, piece of the ring, lit strand, hairs, deep shade (`shapes.ts`) |
 | Patch sheet | `?v=sheet&show=pools&list=1` | every closed patch numbered before it has a name; `named=1` shows the result |
-| Freeze | `node scripts/freeze.ts name` | writes the line numbers of a new drawing |
+| Freeze | `node scripts/freeze.ts name` | writes the line numbers of a new drawing, once |
+| Name | `node scripts/name.ts name` | patch numbers in `<name>-names.txt` to region clicks |
+| Thumbnails | `v=thumbs&who=name` | every plan in colour, three values and postage-stamp size, with the focus against the rest |
+| Look, side, pixel | `scripts/look.ts`, `side.ts`, `pixel.ts` | crops of one render, comparisons, luma at points |
+| Faults | `v=faults&who=name` | the lint as a picture |
 | Light | `light: { fall: [.64, .77], up: .58 }` in the drawing | one light; cast shadows, rims, `turn`, `ball`, `away`, `warp!` all ask it (`light.ts`) |
 | `away` / `near` | `band s495 away 0 18 0` | the side away from the light, thinner where the line runs along it |
 | `turn`, `ball`, `crest` | `turn A B`, `ball l r t b` | shaded side of a tube or a ball, lit cap of a ball, computed |
