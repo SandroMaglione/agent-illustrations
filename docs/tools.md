@@ -34,6 +34,8 @@ How shapes are placed and checked. Code in `src/tools` and `src/splash`. Why the
 | Depth | `depth: { tail: 0.45 }` | softer, paler, bluer at the back |
 | Clean | `node scripts/clean.ts in.png out.png` | grey fills to paper, before numbering |
 | Wedge | `wedge s12 away 14 .25` | a fold with straight runs and pointed ends |
+| Solids | `solids: [{ on: ["armL"], tube: "484,360,44 466,390,32" }, { on: ["fruitA"], ball: "512,648,74" }]` | the base shade of a form; radius measured from the outline when left out |
+| Gate | `node scripts/gate.ts name` | values per stage and group against the plan; exit 1 on a miss |
 | Facets | `?v=sheet&who=name&show=facets&part=legR` | every facet of a piece, numbered (`tools/facets.ts`) |
 | Tones | `node scripts/tone.ts name` | facet numbers in `<name>-tones.txt` to points in `<name>-tones.ts`; `tones` in the drawing |
 | Review | `node scripts/review.ts name dir piece:x,y,w,h …` | line art, colour, shadow design, grey of each piece |

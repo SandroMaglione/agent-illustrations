@@ -106,3 +106,13 @@ Read off the references: skin `#fcf0f2` > `#ebced2` > `#bb95a6`; cloth grey > `#
 Step between planes 38 to 33 (references 19 to 23).
 Learned: a smoothing that suits a big shade erases a thin strip, so each mask needs its own. Before calling a comparison, check that the file was really rewritten: one render failed and the old image was compared with itself.
 Open: the cold light has one fixed colour per material, not a declared light with a place; skin half tones still wander on the shoulder; metal, crate, hands, face not fine-rendered.
+
+## Fifth round, `visor`: form first, values gated (trial)
+| Client's note | Kind | Answer |
+|---|---|---|
+| shoulder shade does not follow the form; an arm is a cylinder; base from geometry, exceptions on top | do | `solids` (`bold/solids.ts`): tubes and balls give shade, half tone and far side from one smooth field. Casts, folds and facets come after and may only add, or cut light back with `L` |
+| contrast went off in the darks again; check it at every step, it gates a final piece | see, forgot | `scripts/gate.ts`: a value plan (`values`: dark, mid, light parts) and measurements after flats, form, deep shade, bounce, final. It found the leak at once: the air pass lifted the darks from 21 to 18% |
+
+Measured (fills, against e f g): dark 14 to 24% (9, 37, 33), p5 41 to 30 (47, 22, 41). Gate: all pass but two fruits 1 and 3 points over the mid band.
+Learned: the lumps on the shoulder were an old facet tone drawing over the solid; isolate one layer at a time before changing a shape. A measured radius runs through what lies on top: next to the body give the radius. Nothing that comes late may mix towards a light colour; tint by multiplying.
+Open: solids placed by typed axis points; only limbs, fruit, bust, bun have them. Face, hair mass, crate, shoes, metal do not. Steps between planes 34 (19 to 23).

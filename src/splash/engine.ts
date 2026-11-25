@@ -16,6 +16,7 @@ import { strokesOf, thaw } from "../tools/strokes.ts"
 import type { Kind, RGB } from "../bold/tones.ts"
 import type { Hair } from "../bold/locks.ts"
 import type { Form } from "../bold/planes.ts"
+import type { Solid } from "../bold/solids.ts"
 
 export type Level = "s1" | "s2" | "s3" | "form" | "lt" | "sheen" | "ring" | "hi" | "lift"
 /** A polygon by coordinates (`d`), or a statement about the drawn lines (`say`, see tools/say.ts) with a name of its own. */
@@ -45,6 +46,10 @@ export type Art = {
   tones?: Readonly<Record<string, string>>
   /** Parts whose inner lines are printed on them: they stay ink. */
   print?: ReadonlyArray<string>
+  /** The base of all shading: tubes and balls (bold/solids.ts). */
+  solids?: ReadonlyArray<Solid>
+  /** Value plan: which parts are dark, mid and light in grey. Held by scripts/gate.ts. */
+  values?: Readonly<Record<"dark" | "mid" | "light", ReadonlyArray<string>>>
   /** Round parts whose own shade always starts with a scattering band, also where a seam cuts it. */
   scatter?: ReadonlyArray<string>
   /** Brows, under the line and shining faintly through the hair. */

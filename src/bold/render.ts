@@ -18,6 +18,7 @@ import { levelsOf } from "../tools/facets.ts"
 import { facetsOf } from "../tools/facets.ts"
 import { chords, planes } from "./planes.ts"
 import type { Planes } from "./planes.ts"
+import { solids } from "./solids.ts"
 import { BLACK, hexRgb, hsv, luma, mix, SKY, SUN, tone, turnHue } from "./tones.ts"
 import type { Kind, RGB } from "./tones.ts"
 
@@ -117,6 +118,10 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   if (hairs && upto >= 4) for (let i = 0; i < N; i++) { if (hairs.shade[i]! > 0.5) m1[i] = 1; if (upto >= 6 && hairs.deep[i]! > 0.5) m2[i] = 1 }
   /* fine rendering: what an agent decided facet by facet */
   const own = set(Object.keys(art.tones ?? {})), mh = new Float32Array(N), ml = new Float32Array(N), sky = new Float32Array(N), skyIn = new Float32Array(N), softOnly = new Float32Array(N)
+  /* the form itself: what is round turns by the light on a solid. Everything after this is an exception on top of it */
+  const F0 = art.solids && upto >= 4 ? solids({ map, names, w, h, z: zs, bg }, art.solids, light, art.head, k) : null, formShade = new Float32Array(N)
+  if (F0) for (let i = 0; i < N; i++) if (F0.has[i]) { if (P) P.turned[i] = 0; if (F0.lam[i]! < 0.1) { formShade[i] = 1; softOnly[i] = 1 } else if (F0.lam[i]! < 0.34) mh[i] = 1 }
+  if (F0) for (let i = 0; i < N; i++) if (formShade[i]) m1[i] = 1
   if (art.tones && upto >= 4) {
     const lv = scaled(await levelsOf(art, art.tones)), id = scaled(fine!.id)
     const round = new Set<number>()
@@ -136,7 +141,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       if ((l === 4 || l === 5 || (l === 7 && t1)) && upto >= 6) m2[i] = 1
       if (l === 5 && upto >= 6) black[i] = 1
       if (l === 2 || (l === 6 && t0 && !t1)) mh[i] = 1
-      if (l === 1) ml[i] = 1
+      if (l === 1) { ml[i] = 1; mh[i] = 0; if (formShade[i]) { m1[i] = 0; softOnly[i] = 0 } }
     }
   }
   if (P) for (let i = 0; i < N; i++) if (P.turned[i]! > 0.5 && kinds[map[i]!] !== "metal" && !own[map[i]!]) { m1[i] = 1; softOnly[i] = 1 }
@@ -194,7 +199,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       if (eh[i]! > 0.01) times(i, t.half, eh[i]! * (1 - e))
       times(i, t.s1, e)
       // inside a shade: darkest just behind its edge, then lighter and cooler again, where the surroundings answer. Never as light as the light
-      if (upto >= 5 && e > 0.5 && kd !== "dark" && kd !== "hair") { const d = depthIn[i]!; times(i, [0.95, 0.91, 0.96], 1 - smooth(0.5, 0.86, d)); if (calm && P?.id[i]) { const C = P.far[i]! + P.near[i]!; if (C > H * 0.12) times(i, kd === "skin" ? [1.06, 1.09, 1.14] : [1.1, 1.14, 1.2], smooth(0.8, 1, d) * smooth(0.6, 0.95, calm[i]!)) } }
+      if (upto >= 5 && e > 0.5 && kd !== "dark" && kd !== "hair") { const d = depthIn[i]!; times(i, [0.95, 0.91, 0.96], 1 - smooth(0.5, 0.86, d)); if (calm && P?.id[i]) { const C = P.far[i]! + P.near[i]!; if (C > H * 0.12) times(i, kd === "skin" || kd === "pale" ? [1.07, 1.1, 1.15] : [1.0, 1.03, 1.1], smooth(0.8, 1, d) * smooth(0.6, 0.95, calm[i]!)) } }
       else if (upto >= 5 && e < 0.5 && calm && P?.id[i] && P.far[i]! + P.near[i]! > H * 0.08) times(i, [1.03, 1.0, 0.95], (1 - calm[i]!) * 0.6)
       if (bk[i]! > 0.01) to(i, t.bounce, bk[i]! * (kd === "skin" ? 0.5 : 0.62))
       if (e2[i]! > 0.01) times(i, [t.s2[0] / t.s1[0], t.s2[1] / t.s1[1], t.s2[2] / t.s1[2]], e2[i]!)
@@ -251,6 +256,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       let m = n, paper = 0
       for (let t = 1; t < most * 1.7; t++) { const X = Math.round(x + sun.x * t), Y = Math.round(y + sun.y * t); if (X < 0 || Y < 0 || X >= w || Y >= h) break; const j = Y * w + X; if (map[j] !== n) { m = map[j]!; break } if (ink[j]! < 0.3) paper++ }
       if (m === n) continue
+      if (F0?.has[i] && air(m, n) && kd !== "peel") { if (ink[i]! <= 0.3) { if (F0.away[i]! > 0.84) sky[i] = 1; else if (F0.away[i]! > 0.72) skyIn[i] = 1 } continue }
       const rough = kd === "peel" || kd === "leaf"
       if (air(m, n)) {
         if (rough || ink[i]! > 0.3) continue
@@ -289,13 +295,14 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       const i = y * w + x
       if (map[i] === bg) continue
       const t = ((x / w - 0.5) * sun.x + (y / h - 0.5) * sun.y) * 1.5, a = Math.min(0.13, Math.abs(t) * 0.16)
-      if (t < 0) { R[i] = R[i]! + (255 - R[i]!) * a * 0.55; G[i] = G[i]! + (244 - G[i]!) * a * 0.38; B[i] = B[i]! * (1 - a * 0.16) } else times(i, [0.86, 0.88, 1.02], a * 2.2)
+      if (t < 0) times(i, [1.06, 1.015, 0.93], a * 5) // air tints, it never lifts a dark
+      else times(i, [0.86, 0.88, 1.02], a * 2.2)
       if (art.focus) { const q = art.focus, f = smooth(0.85, 2.3, Math.hypot((x / k - q.x) / q.rx, (y / k - q.y) / q.ry)) * q.dim; if (f > 0) times(i, [0.8, 0.82, 0.92], f) }
     }
   }
   // air between the viewer and what lies behind: paler, bluer, less contrast
   const back = defs.map((_, n) => art.depth?.[names[n]!] ?? 0), AIR: RGB = [196, 198, 226]
-  if (upto >= 10 && view === "normal") for (let i = 0; i < N; i++) { const d = back[map[i]!]!; if (d) to(i, AIR, d * 0.34) }
+  if (upto >= 10 && view === "normal") for (let i = 0; i < N; i++) { const d = back[map[i]!]!; if (d) { const l = luma([R[i]!, G[i]!, B[i]!]); to(i, mix([l * 0.96, l * 0.98, l * 1.12], AIR, smooth(60, 190, l)), d * 0.34) } }
   const r = rng("grain"), gf = new Float32Array(N)
   for (let i = 0; i < N; i++) gf[i] = r() - 0.5
   const grain = blur(gf, w, h, 1, 1), img = new ImageData(w, h)
