@@ -2,9 +2,9 @@
 
 Written by Gemini 4 Neon, unedited apart from removed machine paths. Not every claim held up when measured: see `../history.md`.
 
-**Final image**: `sketch-probe-neon/output/bell-final.png` (2048 × 3072, rendered with `v=bell&k=3&zoom=2`)  
-**Notes**: `sketch-probe-neon/docs/bell-notes.md`  
-**Edited drawing data**: `sketch-probe-neon/src/splash/bell-seeds.ts`, `sketch-probe-neon/src/splash/bell.ts`
+**Final image**: `archive/neon-bell/bell.png` (kept at 1000 × 1500; judged at 2048 × 3072, rendered with `v=bell&k=3&zoom=2`)  
+**Notes**: `archive/neon-bell/notes.md`  
+**Edited drawing data**: `archive/neon-bell/bell-seeds.ts`, `archive/neon-bell/bell.ts`
 
 ### Short Notes
 - **Palette & extras**: Warm champagne-ash hair (`#d1beaa` → cool mauve tips, `#a494a2` nape), porcelain skin (`#fcf1ec`, face 20% shaded), emerald-teal eyes and brooch gem, twilight slate-navy tailcoat (`#43495c`) with ivory trims (`#ebe6e4`) and mitered antique-gold pinstripes, wine-crimson waistcoat (`#8e4a5b`, subtle clipped pinstripes) and coat lining, slate trousers, crisp white shirt/gloves, and antique-gold brass hardware (desk bell, cravat brooch, buttons, chain, ornate key) with bronze shadows, warm reflected horizons, and cream chips. Floating `back` graphics add golden chime arcs/bars above the bell and a glowing cyan-teal hotel diamond crest with sparkles.

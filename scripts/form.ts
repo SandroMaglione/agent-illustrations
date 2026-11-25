@@ -29,7 +29,7 @@ drawing({ w, h, map, names })
 const raw = (await import(`../src/splash/${name}-form.ts`)) as { parts: ReadonlyArray<Part>; groups: Readonly<Record<string, string>>; bones?: ReadonlyArray<readonly [string, number, number]>; pivot: V3; light?: { fall: readonly [number, number]; up: number }; head?: number }
 const groupOf = new Map<string, string>()
 for (const [g, l] of Object.entries(raw.groups)) for (const n of l.split(/\s+/)) groupOf.set(n, g)
-const M = { ...raw, parts: process.argv.includes("--raw") ? raw.parts : settle(raw.parts, { w, h, map, names }, groupOf) }
+const M = { ...raw, parts: process.argv.includes("--raw") ? raw.parts : settle(raw.parts, { w, h, map, names }, groupOf, { reach: (14 * (raw.head ?? 205)) / 205, soft: (7 * (raw.head ?? 205)) / 205 }) }
 const hue = new Map<string, readonly [number, number, number]>(); [...new Set(M.parts.map((p) => p.group))].forEach((g, i) => { const t = (i * 0.618034) % 1, f = (o: number): number => 0.45 + 0.4 * Math.cos(6.283 * (t + o)); hue.set(g, [f(0), f(0.33), f(0.67)]) })
 
 // ---- fit
@@ -46,6 +46,7 @@ for (let i = 0; i < w * h; i++) {
   if (mg !== "none") { const s = at(mg); s.m++; if (mg !== rg) up(s.spill, rg) }
 }
 const worst = (m: Map<string, number>): string => [...m].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k} ${v}`).join(", ")
+if (raw.head && "face" in raw) console.log(`head pose misses its marks by ${(raw as unknown as { face: { err: number } }).face.err.toFixed(1)} px`)
 console.log(`figure covered ${((hit / figure) * 100).toFixed(1)}%   right form ${((right / figure) * 100).toFixed(1)}%   outside the figure ${((over / figure) * 100).toFixed(1)}%   triangles ${M.parts.reduce((a, p) => a + p.mesh.f.length, 0)}`)
 for (const [g, s] of [...st].sort((a, b) => b[1].r - a[1].r)) console.log(`${g.padEnd(10)} region ${String(s.r).padStart(6)}  iou ${(s.both / (s.r + s.m - s.both)).toFixed(2)}  shows instead: ${worst(s.miss) || "-"}   | spills on: ${worst(s.spill) || "-"}`)
 if (bad.size) console.log("no form yet:", [...bad].join(" "))

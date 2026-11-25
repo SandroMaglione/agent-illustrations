@@ -56,7 +56,7 @@ A starting file comes from `scripts/new.ts`. One line per shape: `parts | tone |
 
 Per piece, in this order: the big turn (`S`), what is cast on it (`X`), half tone beside the turn, deep in folds and under overlaps, lit plane, **`B` on every teal edge with air behind it**. Run polygons past the outline: they are clipped to their part. Put each free edge on a drawn line, or cross a plane cleanly; never 2 to 6 px beside a line.
 
-Taken from the mesh as it is (`formed`, `meshCasts` in the drawing): only simple solids and long casts. Never `face`, never hair, never metal. A patch that open lines gave to the wrong part (a strand of hair read as cheek) is moved with `force` first, or every shadow on it is wrong.
+Taken from the mesh as it is (`formed`, `meshCasts` in the drawing): only simple solids and long casts. Never `face`, never hair, never metal. A patch that open lines gave to the wrong part (a strand of hair read as cheek) is moved with `clicks.move` first, or every shadow on it is wrong.
 
 ## What was tried and dropped
 1. Mesh shading straight into the render: right, soft, blobby, hair ruined.

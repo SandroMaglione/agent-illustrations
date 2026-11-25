@@ -84,7 +84,7 @@ Not confirmed:
 Consequence: line weight belongs in the brief for the artist, in relation to head height, and the engine must read it.
 
 ## Head to head: the bell character (2026-11-24)
-Two makers, blind, same brief (`docs/bell-brief.md`), rules frozen in both copies (checksums equal). Opus in this folder, Gemini 4 Neon in `../sketch-probe-neon`. Each then judged the other; a fresh Neon session did Neon's side. Neither judge is neutral.
+Two makers, blind, same brief (`docs/bell-brief.md`), rules frozen in both copies (checksums equal). Opus in this folder, Gemini 4 Neon in a second copy (its drawing is kept in `archive/neon-bell`). Each then judged the other; a fresh Neon session did Neon's side. Neither judge is neutral.
 
 | | Opus image | Neon image |
 |---|---|---|

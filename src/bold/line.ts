@@ -46,6 +46,8 @@ export type LineIn = {
   /** Round the eyes the artist's own ink is kept, at full weight. */
   eyes: ReadonlyArray<{ x: number; y: number; r: number }>
   /** Parts with printed marks. */
+  /** Inside one form a short thick spot takes the line's colour: only a real filled black stays black. */
+  softWedges?: boolean
   print: Uint8Array
   /** How far back each part lies. */
   back: ReadonlyArray<number>
@@ -120,7 +122,7 @@ export const lineLayer = (q: LineIn): { image: ImageData; half: number } => {
     const x = i % w, y = (i / w) | 0, r = Math.max(2, Math.round(wide[i]! + 2))
     let page = n === bg, lo = z[n] ?? 0, hi = lo, skin = kinds[n] === "skin", other = -1
     for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r], [r, r], [-r, r], [r, -r], [-r, -r]] as const) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= w || Y >= h) continue; const m = map[Y * w + X]!; if (m !== n) other = m; if (m === bg) page = true; else if (m) { lo = Math.min(lo, z[m] ?? 0); hi = Math.max(hi, z[m] ?? 0); if (kinds[m] === "skin") skin = true } }
-    const inside = smooth(0.35, 0.75, bf[i]! / Math.max(0.01, bs[i]!)) * (page ? 0 : 1), heavy = q.print[n] ? 1 : smooth(1.3, 1.9, bw[i]! / Math.max(0.01, bs[i]!)), t = tones[n] ?? tones[other < 0 ? 0 : other] ?? null, sh = smooth(0.25, 0.7, shade[i]!)
+    const inside = smooth(0.35, 0.75, bf[i]! / Math.max(0.01, bs[i]!)) * (page ? 0 : 1), heavy = q.print[n] ? 1 : q.softWedges ? 0 : smooth(1.3, 1.9, bw[i]! / Math.max(0.01, bs[i]!)), t = tones[n] ?? tones[other < 0 ? 0 : other] ?? null, sh = smooth(0.25, 0.7, shade[i]!)
     let c: RGB = BLACK, soft = 1
     if (t && n !== q.face) {
       // a line inside one form only says where it bends: a darker step of the colour it lies on. A line between forms separates, and stays dark
