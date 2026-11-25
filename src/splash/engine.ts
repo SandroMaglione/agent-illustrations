@@ -45,6 +45,8 @@ export type Art = {
   tones?: Readonly<Record<string, string>>
   /** Parts whose inner lines are printed on them: they stay ink. */
   print?: ReadonlyArray<string>
+  /** Round parts whose own shade always starts with a scattering band, also where a seam cuts it. */
+  scatter?: ReadonlyArray<string>
   /** Brows, under the line and shining faintly through the hair. */
   brows?: ReadonlyArray<{ d: string; color: string }>
   /** How far back a part lies, 0 to 1: further back is paler, bluer and has less contrast. */

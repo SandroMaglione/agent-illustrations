@@ -22,6 +22,8 @@ export const turnHue = (c: RGB, by: number, chroma = 1): RGB => {
 /** s1, s2 and half are factors on whatever colour lies below; the rest are colours. */
 export type Tone = { base: RGB; neon: RGB; s1: RGB; s2: RGB; half: RGB; lt: RGB; term: RGB; bounce: RGB; gloss: RGB; ink: RGB; metal: { deep: RGB; dark: RGB; mid: RGB; light: RGB; hi: RGB } }
 export const SUN: RGB = [255, 243, 214], SKY: RGB = [120, 142, 222], BLACK: RGB = [19, 15, 23]
+/** The same colour, no lighter than a value: reflected light stays below the light. */
+const under = (c: RGB, most: number): RGB => { const l = luma(c); return l > most ? mul(c, [most / l, most / l, most / l]) : c }
 export const tone = (color: string, kind: Kind): Tone => {
   const base = hexRgb(color), l = luma(base), h = hueOf(base), s = hsv(base)
   // how warm the colour is: warm colours darken through rose, cool ones through violet blue
@@ -34,9 +36,9 @@ export const tone = (color: string, kind: Kind): Tone => {
     peel: [[0.86, 0.55, 0.85], [0.55, 0.3, 0.85]], leaf: [[0.46, 0.63, 0.72], [0.26, 0.38, 0.5]], metal: [[0.62, 0.6, 0.78], [0.36, 0.34, 0.52]], glass: [[0.6, 0.62, 0.84], [0.38, 0.4, 0.62]], flat: [[0.72, 0.7, 0.84], [0.5, 0.48, 0.64]], sheer: [[0.7, 0.66, 0.8], [0.5, 0.45, 0.64]],
   }
   const [s1, s2] = S[kind], shade = mul(base, s1)
-  const cold = l < 105 ? [104, 146, 236] : kind === "skin" || kind === "peel" ? [250, 176, 218] : warm > 0.45 ? [206, 138, 232] : [156, 196, 255]
+  const cold = l < 105 ? [104, 146, 236] : kind === "skin" || kind === "peel" ? [250, 176, 218] : warm > 0.45 ? [214, 84, 214] : [156, 196, 255]
   return {
-    neon: mix(shade, cold as unknown as RGB, l < 105 ? 0.72 : 0.66),
+    neon: under(mix(shade, cold as unknown as RGB, l < 105 ? 0.72 : 0.66), kind === "dark" || kind === "leather" || l < 60 ? 255 : l * 0.88),
     base, s1, s2, half: kind === "skin" ? [0.965, 0.885, 0.89] : mix([1, 1, 1], s1, 0.44),
     lt: kind === "skin" ? [255, 252, 249] : mix(base, SUN, kind === "dark" || kind === "leather" ? 0.14 : kind === "hair" ? 0.42 : kind === "peel" ? 0.22 : 0.36),
     // where light turns into shade the colour is richest

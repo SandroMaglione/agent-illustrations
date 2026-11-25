@@ -93,3 +93,16 @@ Open: cloth folds are typed coordinates; large cloth stays plain; wide hair area
 Measured: dark fills 7 to 14% (e 9, f 37, g 33), 5th percentile 74 to 42 (47, 22, 41), black share 4.1 to 5.5 (6 to 14). The step between two planes (median 52 to 38) is still larger than the references' (19 to 23), which have many soft steps; the edge width is noisy, do not read much into it.
 Learned: shading by machine alone is either blobs or spots. Machine finds the pieces, the agent decides the tone, the machine cuts and lays it. 430 facets in 32 pieces took one pass. Hair shaded by rule looked like a leopard; by facet it became the sleekest part.
 Open: third soft step in shades; metal still by rule and busy; crate, hands, belt not facet-rendered; big cloth where the artist drew no line stays one tone; eyes typed; hair highlight zigzag is mechanical.
+
+## Fourth round, `visor`: reflected light and scattering (trial)
+| Client's note | Kind | Answer |
+|---|---|---|
+| bolder bounce, a shape and not a thin line | do | a plane as wide as a share of its form, tapered at both ends, with a darker step inside it; and tone `B`, so the agent can hand whole facets to the second light (the navy side of the body) |
+| subsurface scattering where a form turns softly | do | a band of the form's own colour between light and shade: rose on skin, pink to lavender on white, maroon on dark cloth. Only on soft turns and round parts (`scatter`); casts and folds have none |
+| bounce inside a shade, lower than the light | do | a shade is darkest just behind its edge, then lighter and cooler towards the far side. Every reflected colour is capped at 0.88 of the base's value, dark things excepted |
+| no blue where the surroundings are not blue | do | open air behind an edge gives the cold light; another surface gives its own colour (orange under a leaf); only something lower in the stack gives; peel and leaf take no cold light at all |
+
+Read off the references: skin `#fcf0f2` > `#ebced2` > `#bb95a6`; cloth grey > `#3f2338` > black; breast 249 > 203 right behind the edge > 213 to 226 further in.
+Step between planes 38 to 33 (references 19 to 23).
+Learned: a smoothing that suits a big shade erases a thin strip, so each mask needs its own. Before calling a comparison, check that the file was really rewritten: one render failed and the old image was compared with itself.
+Open: the cold light has one fixed colour per material, not a declared light with a place; skin half tones still wander on the shoulder; metal, crate, hands, face not fine-rendered.

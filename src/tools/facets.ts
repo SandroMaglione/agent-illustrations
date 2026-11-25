@@ -6,8 +6,8 @@ import { paper } from "../bucket/fill.ts"
 import { fixedOf, FIXED } from "../splash/engine.ts"
 import type { Art } from "../splash/engine.ts"
 
-/** Lit, half, shade, deep, darkest; T: round, it turns by itself, U: the same inside a shade. A facet with none is the plain colour. */
-export const TONES = ["L", "H", "S", "D", "K", "T", "U"] as const
+/** Lit, half, shade, deep, darkest; T: round, it turns by itself, U: the same inside a shade; B: lit by the second light. A facet with none is the plain colour. */
+export const TONES = ["L", "H", "S", "D", "K", "T", "U", "B"] as const
 export type ToneName = (typeof TONES)[number]
 /** Part name to tones: "S 12 14 | D 3", numbers from ?v=sheet&show=facets&part=…, or points "@x,y". */
 export type Facets = { id: Int32Array; n: number; at: ReadonlyArray<readonly [number, number]>; size: ReadonlyArray<number>; part: ReadonlyArray<number> }
@@ -63,7 +63,7 @@ const build = async (art: Art): Promise<Facets> => {
   for (let i = 0; i < N; i++) id[i] = num[id[i]!]!
   return { id, n: at.length - 1, at, size, part: parts }
 }
-/** Level of every pixel (0 none, 1 to 7 as TONES), at the fixed scale. Points, not numbers: a number is only a way to find the point. */
+/** Level of every pixel (0 none, 1 to 8 as TONES), at the fixed scale. Points, not numbers: a number is only a way to find the point. */
 export const levelsOf = async (art: Art, tones: Readonly<Record<string, string>>): Promise<Uint8Array> => {
   const F = await facetsOf(art), { w, h } = await fixedOf(art), lv = new Uint8Array(F.n + 1)
   for (const text of Object.values(tones)) for (const run of text.split("|")) {

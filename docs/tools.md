@@ -38,6 +38,8 @@ How shapes are placed and checked. Code in `src/tools` and `src/splash`. Why the
 | Tones | `node scripts/tone.ts name` | facet numbers in `<name>-tones.txt` to points in `<name>-tones.ts`; `tones` in the drawing |
 | Review | `node scripts/review.ts name dir piece:x,y,w,h …` | line art, colour, shadow design, grey of each piece |
 | Value | `node scripts/value.ts out.png render.png:box:head` | greyscale and numbers beside the references |
+| Second light | tone `B`; automatic on edges with air behind them | cold plane on the far side; a surface behind gives its own colour instead |
+| Scatter | `scatter: ["bust"]` | round parts whose own shade starts with a band of richer colour |
 | Brows, print | `brows: [{ d, color }]`, `print: ["flap"]` | eyebrows; parts whose inner lines are printed |
 | Lineup | `node scripts/lineup.ts out.png render.png head cx,cy` | the drawing between the references, colour and grey |
 | Light | `light: { fall: [.64, .77], up: .58 }` in the drawing | one light; cast shadows, rims, `turn`, `ball`, `away`, `warp!` all ask it (`light.ts`) |
