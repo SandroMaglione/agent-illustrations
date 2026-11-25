@@ -273,3 +273,17 @@ Learned: control is a layer that targets a feature, and that a hand can find. Mo
 Rejected each time. The causes, sorted, are in [`drawing/log.md`](drawing/log.md). Two that hold for rendering too:
 - A maker who knows what was meant is no judge: use a fresh critic with names removed, beside one known good and one known bad.
 - Check the input before starting. Open shapes, unclear hands or hair, areas larger than a head with nothing in them: ask, do not fill in.
+
+## `meridian`, a third line art: is rendering solid? (trial)
+Image-generated line art, seated, old, mostly cloth, 698 patches in 84 parts. About an hour from line art to the second pass.
+
+| What fell short | Kind | Answer |
+|---|---|---|
+| grey ink line art: `clean.ts` took the grey lines for fills | see | levels first (64 to 243), then clean |
+| a straight-edged region fix cut a tapering hem into a block | rule | fix a region along the lines, or not at all |
+| mesh shading on large cloth: random angular slabs | see | big planes designed by hand: lit top of the thigh, the shin turning away, core shadow in the valley |
+| gold read as paint | do | bevels on every small metal piece |
+| pink second light on warm hems and linings read as a glitch | do | `rim` per part: how strong its second light is (0 to 1) |
+| cloth shades too weak for the robe's mid value | do | `deep` per part: shades stronger than the kind's own |
+
+Blind critic, same four anchors: first pass 4, second 5; the approved drawings 5 to 6.5, a rejected one 3 to 3.5. Rendering was named the main cause both times; the drawing only once, secondly.

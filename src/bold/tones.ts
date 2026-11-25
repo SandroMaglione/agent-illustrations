@@ -24,7 +24,7 @@ export type Tone = { base: RGB; neon: RGB; s1: RGB; s2: RGB; half: RGB; lt: RGB;
 export const SUN: RGB = [255, 243, 214], SKY: RGB = [120, 142, 222], BLACK: RGB = [19, 15, 23]
 /** The same colour, no lighter than a value: reflected light stays below the light. */
 const under = (c: RGB, most: number): RGB => { const l = luma(c); return l > most ? mul(c, [most / l, most / l, most / l]) : c }
-export const tone = (color: string, kind: Kind): Tone => {
+export const tone = (color: string, kind: Kind, deep = 1): Tone => {
   const base = hexRgb(color), l = luma(base), h = hueOf(base), s = hsv(base)
   // how warm the colour is: warm colours darken through rose, cool ones through violet blue
   const dh = Math.abs(((h - 32 + 540) % 360) - 180), warm = (1 - smooth(45, 95, dh)) * smooth(0.06, 0.28, s)
@@ -35,7 +35,7 @@ export const tone = (color: string, kind: Kind): Tone => {
     dark: [[0.5, 0.5, 0.66], [0.2, 0.2, 0.34]], leather: [two([0.54, 0.54, 0.7], [0.62, 0.49, 0.66]), two([0.26, 0.26, 0.4], [0.34, 0.24, 0.42])], plastic: [two([0.72, 0.73, 0.88], [0.84, 0.72, 0.8]), two([0.42, 0.42, 0.62], [0.56, 0.42, 0.62])],
     peel: [[0.88, 0.63, 0.8], [0.62, 0.36, 0.7]], leaf: [[0.46, 0.63, 0.72], [0.26, 0.38, 0.5]], metal: [[0.62, 0.6, 0.78], [0.36, 0.34, 0.52]], glass: [[0.6, 0.62, 0.84], [0.38, 0.4, 0.62]], flat: [[0.72, 0.7, 0.84], [0.5, 0.48, 0.64]], sheer: [[0.7, 0.66, 0.8], [0.5, 0.45, 0.64]],
   }
-  const [s1, s2] = S[kind], shade = mul(base, s1)
+  const [s1, s2] = deep === 1 ? S[kind] : (S[kind].map((v) => v.map((c) => c ** deep)) as unknown as readonly [RGB, RGB]), shade = mul(base, s1)
   const cold = l < 70 ? [104, 146, 236] : kind === "skin" || kind === "peel" ? [255, 188, 158] : warm > 0.45 ? (s < 0.3 ? [150, 140, 224] : [214, 84, 214]) : [112, 176, 255]
   return {
     neon: under(mix(shade, cold as unknown as RGB, l < 70 ? 0.72 : 0.66), kind === "dark" || kind === "leather" || l < 60 ? 84 : l * (warm > 0.45 || kind === "skin" ? 0.84 : 0.92)),
