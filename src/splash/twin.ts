@@ -2,7 +2,7 @@ import { curve, loop } from "../cel/path.ts"
 import { rng } from "../geo.ts"
 import type { P2 } from "../geo.ts"
 import type { Art, Level, Shape, Wash } from "./engine.ts"
-import type { RGB } from "./tones.ts"
+import type { RGB } from "../bold/tones.ts"
 import { SEEDS } from "./twin-seeds.ts"
 
 const sh = (lv: Level, on: string, ...d: Array<string>): Array<Shape> => d.map((x) => ({ lv, on: on.split(" "), d: x, a: 1 }))

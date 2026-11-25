@@ -1,25 +1,27 @@
 /** Bucket fill that closes gaps: regions come from the lines alone, nobody marks anything. */
 export type Segments = { seg: Int32Array; n: number }
 
-/** Exact distance from every pixel to the nearest ink (Felzenszwalb). */
+/** Exact distance from every pixel to the nearest ink: up and down the columns first, then the lowest parabolas along each row. */
 export const paperDistance = (ink: Float32Array, w: number, h: number, cut = 0.4): Float32Array => {
-  const f = Float64Array.from(ink, (v) => (v > cut ? 0 : 1e12)), m = Math.max(w, h)
-  const v = new Int32Array(m), z = new Float64Array(m + 1), a = new Float64Array(m)
-  const pass = (n: number, at: (q: number) => number): void => {
-    for (let q = 0; q < n; q++) a[q] = f[at(q)]!
+  const far = w + h, g = new Int32Array(w * h), out = new Float32Array(w * h)
+  for (let x = 0; x < w; x++) g[x] = ink[x]! > cut ? 0 : far
+  for (let i = w; i < w * h; i++) g[i] = ink[i]! > cut ? 0 : g[i - w]! + 1
+  for (let i = w * (h - 1) - 1; i >= 0; i--) { const v = g[i + w]! + 1; if (v < g[i]!) g[i] = v }
+  const v = new Int32Array(w), z = new Float64Array(w + 1)
+  for (let y = 0; y < h; y++) {
+    const at = y * w
     let k = 0
-    v[0] = 0; z[0] = -Infinity; z[1] = Infinity
-    for (let q = 1; q < n; q++) {
-      let s = (a[q]! + q * q - (a[v[k]!]! + v[k]! * v[k]!)) / (2 * q - 2 * v[k]!)
-      while (s <= z[k]!) { k--; s = (a[q]! + q * q - (a[v[k]!]! + v[k]! * v[k]!)) / (2 * q - 2 * v[k]!) }
-      k++; v[k] = q; z[k] = s; z[k + 1] = Infinity
+    v[0] = 0; z[0] = -1e15; z[1] = 1e15
+    for (let q = 1; q < w; q++) {
+      const fq = g[at + q]! * g[at + q]! + q * q
+      let p = v[k]!, s = (fq - g[at + p]! * g[at + p]! - p * p) / (2 * (q - p))
+      while (s <= z[k]!) { k--; p = v[k]!; s = (fq - g[at + p]! * g[at + p]! - p * p) / (2 * (q - p)) }
+      k++; v[k] = q; z[k] = s; z[k + 1] = 1e15
     }
     k = 0
-    for (let q = 0; q < n; q++) { while (z[k + 1]! < q) k++; f[at(q)] = (q - v[k]!) ** 2 + a[v[k]!]! }
+    for (let q = 0; q < w; q++) { while (z[k + 1]! < q) k++; const p = v[k]!, d = g[at + p]!; out[at + q] = Math.sqrt((q - p) * (q - p) + d * d) }
   }
-  for (let x = 0; x < w; x++) pass(h, (q) => q * w + x)
-  for (let y = 0; y < h; y++) pass(w, (q) => y * w + q)
-  return Float32Array.from(f, (q) => Math.sqrt(q))
+  return out
 }
 /**
  * Think of the paper as a valley whose depth is the distance to the nearest line. Two pools stay apart

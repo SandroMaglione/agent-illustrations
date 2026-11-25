@@ -1,8 +1,10 @@
 # The process
 
-Colour clean line art so it looks like game splash art: clear outline, solid shadows, subsurface scattering, solid shapes. Rules live in `src/splash/engine.ts` and `tones.ts`, tools in `src/tools` ([list](tools.md)). One drawing is a few data files.
+Colour clean line art so that the result could stand beside the target references: crisp, blocky, value first, black where it counts, rich shadows, real materials. The renderer is `src/bold`, the tools `src/tools` ([list](tools.md)), the notes behind it [`lessons.md`](lessons.md). One drawing is a few data files.
 
-Lengths are line-art px on a head of about 430 px; scale them with `head`. Ratios are OKLCH lightness. Lab L is 0 to 255. [M] measured on references, [A] agreed by eye.
+**The only judge that counts:** `node scripts/lineup.ts out.png render.png <head px> <cx,cy>`, in colour and in greyscale. The references stay local (`public/refs`, e f g).
+
+Lengths are line-art px; sizes that matter are shares of head height.
 
 ## Priorities
 1. **Light and value before detail.** One light, one focus, three values. If it does not read in black and white, no shading saves it.
@@ -28,29 +30,20 @@ Lengths are line-art px on a head of about 430 px; scale them with `head`. Ratio
 8. **Fix** DEAD and LEAK warnings, `pnpm check`, crops at 200% of head, hands and accessories. Fix the worst thing, repeat.
 9. **Critic**, optional (below).
 
-## Passes of the engine
-| # | Pass | Rule | Check |
-|---|---|---|---|
-| 0 | Regions | bucket clicks, or colour marks on the older drawings; walls close what the artist left open | `view=regions` has no leaks |
-| 1 | Flats | skin `#fcf1ec` [M]; cloth greyed; stockings and satin never black. Three value groups apart | `view=value`, `pnpm check` |
-| 2 | Gradients | one slow drift per part. Hanging and back hair 20 to 35 Lab L below the crown, cooler to the tips. Blush on cheeks, ears, shoulders, elbows, knees, hands | squint |
-| 3 | Contact | soft dark beside an overlap | paper cut-outs |
-| 4 | Shadow shapes | one long clean side, one pointed side; casts along the one light. Face 8 to 24% in shade | `view=masks` |
-| 5 | Edges and warm band | cast edges 1 to 2.5; form edges 4 to 10 by radius. Skin `#c9aaa4` at the edge, `#b89b97` inside [M]. Warm band `#e2b1a5` just **inside** the edge | never on the lit side |
-| 6 | Deep shade | overlaps, folds and beside a caster. Skin `#a38386`, cloth 0.55, hair toward slate. Shadow centres lean to the sky | remove it: form stays |
-| 7 | Ring and light | hair ring: one solid band, small scallops below, calm edge above, cut only where the hair parts, out of the headwear's shadow, warm lip on the lower edge [M]. Metal: the darkest beside the brightest | hide it: form survives |
-| 8 | Face and eyes | order below | reads at 96 px |
-| 9 | Line | a line takes its darkest neighbour's colour; skin lines red-brown; only ink the artist **filled** goes near black, judged against this drawing's own contour. Face ink is never slimmed | no black line inside skin |
-| 10 | Finish | values close up away from the focus; skin clean, hair and cloth slight grain. White page, halo optional, at most 9% [M] | blink against 9 |
+## What the renderer does
+| # | Pass | Rule |
+|---|---|---|
+| 1 | Flats | three value groups apart. `kind` is the material: skin hair cloth pale dark leather plastic glass peel leaf metal flat |
+| 2 | Hue | slow gradients; hair gets bands along its strands that turn the hue and hardly move the value |
+| 4 | Planes | `forms`: each patch, part or mass turns away from the light somewhere. Casts, kits and hand-made shapes on top. Everything is cut into straight runs |
+| 5 | Edges | hard. Skin takes one pale step before its form shade; the colour is richest where shade begins; reflected light in the last stretch on the far side |
+| 6 | Deep shade | beside a caster, in folds. Under anything that stands well off: black |
+| 7 | Materials | metal: 6 bands, darkest beside brightest. Leather, plastic: one see-through plane. Fruit: broad and soft. Cloth: a lit plane. Skin, matte: none |
+| 8 | Face | clean: short fringe shadow, black lash, crisp iris steps, one spark, a nose patch and a mark only where the line art leaves room |
+| 9 | Line | black, at the references' weight, heavier away from the light; a dark colour only inside a lit plane. Filled blacks and face ink are the artist's |
+| 10 | Air | lit side warmer, far side cooler, grain |
 
-## Eyes, in order
-white (not pure), sclera shadow from the lash edge down, iris dark in the top third with crisp bands, ring, pupil, bright lower crescent, one main light and one small opposite, lash core as the darkest mark, red-brown lash tips, lid tint. Fill brows. Nose: one crisp shadow on the side away from the light, one warm-white mark. Blush plus three to five short strokes.
-
-## Colour
-- Shade 1 and 2 at 0.70 and 0.55 of the base for cloth. White cloth shades to lavender grey.
-- **Shades barely gain saturation** [M]: at most +0.04, +0.09, +0.12 HSV S on cloth, less on hair and white, more on metal. The engine caps it.
-- The figure should be at least 75% under HSV S 0.3 (references 82 to 99%) and at most 5% under luma 30 (references 0.1 to 3.8%). Keep saturation for eyes, metal and one accent.
-- Local contrast at the head at least 1.17 times the rest (references 1.17 to 1.24), and the head lighter than the rest.
+Shade is a colour multiplied on the base: warm colours go through rose to violet, cool ones to blue. Look at `view=grey` before judging a colour.
 
 ## Accessories
 - List small metal and props in `keyline`: they get a thin pale line where they overlap the figure, never inside a shadow. Leave buttons and long straps out, or they look like stickers.

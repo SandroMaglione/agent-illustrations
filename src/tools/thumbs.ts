@@ -5,8 +5,8 @@
 import { blur } from "../lineart/flood.ts"
 import { regionsOf } from "../splash/engine.ts"
 import type { Art } from "../splash/engine.ts"
-import { hexRgb, mix, tone } from "../splash/tones.ts"
-import type { RGB } from "../splash/tones.ts"
+import { hexRgb, mix, mul, tone } from "../bold/tones.ts"
+import type { RGB } from "../bold/tones.ts"
 import { aim } from "./light.ts"
 import type { Light } from "./light.ts"
 
@@ -56,9 +56,9 @@ export const thumbs = async (art: Art, plans: ReadonlyArray<Plan>, masses: Masse
     const im = new ImageData(w, h), out: Array<RGB> = []
     for (let i = 0; i < N; i++) {
       const t = tones[map[i]!], far = Math.max(0, Math.min(1, (Math.hypot(((i % w) / s - p.focus.x) / p.focus.rx, (Math.floor(i / w) / s - p.focus.y) / p.focus.ry) - 0.85) / 1.45))
-      let c: RGB = !t || map[i] === bg ? page : dark[i] ? t.s1 : t.base
+      let c: RGB = !t || map[i] === bg ? page : dark[i] ? mul(t.base, t.s1) : t.base
       if (map[i] !== bg) c = mix(c, [c[0] * 0.77, c[1] * 0.785, c[2] * 0.87], far * p.focus.dim)
-      c = mix(c, t && map[i] !== bg ? t.outer : [40, 34, 44], Math.min(1, ink[i]! * 1.15) * 0.85)
+      c = mix(c, t && map[i] !== bg ? t.ink : [40, 34, 44], Math.min(1, ink[i]! * 1.15) * 0.85)
       out.push(c)
       im.data.set([c[0], c[1], c[2], 255], i * 4)
     }

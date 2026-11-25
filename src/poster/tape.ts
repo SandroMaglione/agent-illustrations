@@ -1,7 +1,7 @@
-import { hexRgb } from "../splash/tones.ts"
+import { hexRgb } from "../bold/tones.ts"
 import type { Art } from "../splash/engine.ts"
 import { TAPE, tapeOver } from "../splash/tape.ts"
-import { render } from "../splash/engine.ts"
+import { render } from "../bold/render.ts"
 import { caps, cipher } from "./type.ts"
 
 type G = CanvasRenderingContext2D

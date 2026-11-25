@@ -14,6 +14,8 @@ Goggles is the current process. The others were rendered along the way and use p
 
 ## How it works
 
+> **25 November 2026:** the renderer was replaced (`src/bold`) to reach a new set of references. Images on this page are from the one before. State and open points: [`docs/lessons.md`](docs/lessons.md).
+
 **Light and value first.** Each drawing states one light and one focus. The big parts get three values, so the face is the lightest mass.
 
 **Name things, do not measure them.** Regions are numbered patches and the drawn lines are numbered. A shape is a sentence about a line: `band s544[0..1] r 0 26 46`. The engine works out the geometry, stops at the ink, and says when a shape leaked, did nothing or could not find its place.

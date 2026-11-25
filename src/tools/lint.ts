@@ -1,5 +1,6 @@
 /** What can be measured about where shadows and lines meet. Nothing here knows how the shapes were made. */
-import { regionsOf, render } from "../splash/engine.ts"
+import {regionsOf} from "../splash/engine.ts"
+import { render } from "../bold/render.ts"
 import type { Art } from "../splash/engine.ts"
 import { islands, linesAnd, slivers } from "./seal.ts"
 

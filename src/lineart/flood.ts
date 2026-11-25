@@ -54,23 +54,30 @@ export const flood = (ink: Float32Array, w: number, h: number, seeds: ReadonlyAr
 }
 
 /** Box blur, n passes. */
+let scratch: [Float32Array, Float32Array] = [new Float32Array(0), new Float32Array(0)]
+/** Box blur, `passes` times each way. Row by row in memory order, with two buffers that are kept. */
 export const blur = (src: Float32Array, w: number, h: number, r: number, passes = 2): Float32Array => {
-  let a = src
-  const k = Math.max(1, Math.round(r))
-  for (let pass = 0; pass < passes * 2; pass++) {
-    const horiz = pass % 2 === 0
-    const [n, m, step, jump] = horiz ? [h, w, 1, w] : [w, h, w, 1]
-    const o = new Float32Array(a.length)
-    for (let j = 0; j < n; j++) {
-      const at = j * jump
+  const k = Math.max(1, Math.round(r)), n = w * h, inv = 1 / (k * 2 + 1)
+  if (scratch[0].length < n) scratch = [new Float32Array(n), new Float32Array(n)]
+  let a: Float32Array = src, b = scratch[0]
+  const sums = new Float64Array(w)
+  for (let pass = 0; pass < passes; pass++) {
+    for (let y = 0; y < h; y++) {
+      const at = y * w
       let sum = 0
-      for (let i = -k; i < m; i++) {
-        if (i + k < m) sum += a[at + (i + k) * step]!
-        if (i - k - 1 >= 0) sum -= a[at + (i - k - 1) * step]!
-        if (i >= 0) o[at + i * step] = sum / (k * 2 + 1)
-      }
+      for (let i = 0; i < Math.min(k, w); i++) sum += a[at + i]!
+      for (let i = 0; i < w; i++) { if (i + k < w) sum += a[at + i + k]!; if (i - k - 1 >= 0) sum -= a[at + i - k - 1]!; b[at + i] = sum * inv }
     }
-    a = o
+    a = b; b = pass === passes - 1 ? new Float32Array(n) : b === scratch[0] ? scratch[1] : scratch[0]
+    sums.fill(0)
+    for (let y = 0; y < Math.min(k, h); y++) { const at = y * w; for (let x = 0; x < w; x++) sums[x] = sums[x]! + a[at + x]! }
+    for (let y = 0; y < h; y++) {
+      const at = y * w, p = at + k * w, q = at - (k + 1) * w
+      if (y + k < h) for (let x = 0; x < w; x++) sums[x] = sums[x]! + a[p + x]!
+      if (q >= 0) for (let x = 0; x < w; x++) sums[x] = sums[x]! - a[q + x]!
+      for (let x = 0; x < w; x++) b[at + x] = sums[x]! * inv
+    }
+    a = b; b = a === scratch[1] ? scratch[0] : scratch[1] === a ? scratch[0] : a === scratch[0] ? scratch[1] : scratch[0]
   }
   return a
 }
