@@ -116,3 +116,13 @@ Open: the cold light has one fixed colour per material, not a declared light wit
 Measured (fills, against e f g): dark 14 to 24% (9, 37, 33), p5 41 to 30 (47, 22, 41). Gate: all pass but two fruits 1 and 3 points over the mid band.
 Learned: the lumps on the shoulder were an old facet tone drawing over the solid; isolate one layer at a time before changing a shape. A measured radius runs through what lies on top: next to the body give the radius. Nothing that comes late may mix towards a light colour; tint by multiplying.
 Open: solids placed by typed axis points; only limbs, fruit, bust, bun have them. Face, hair mass, crate, shoes, metal do not. Steps between planes 34 (19 to 23).
+
+## Sixth round, `visor`: a 3D blockout before any shading (trial)
+| Client's note | Kind | Answer |
+|---|---|---|
+| stop chasing notes one by one; have a clear picture of the 3D forms (triangles), then only apply shades to them and nothing that goes off that structure | see | `src/form/`: the whole figure as a low-poly mesh in the drawing's own view, with depth. `scripts/form.ts` measures it against the line art and turns it around |
+
+How it is made: each form is typed from what is seen (its two outlines) and what is judged (depth). Outlines are then pulled onto the drawn line (`settle`), depth is never touched, cloth lies taut over the body (`drape`), the head is a model posed on the drawn eyes, nose, mouth, chin and ear (`solve`).
+Checks that do not need taste: the right form shows at 97.3% of the figure's pixels (84% as first typed), 2.0% outside it. A wrong depth shows up as the wrong form in front. Left and right limbs must be equally long in space: 170/173, 168/182, 275/287, 278/294 px. Pose landmarks miss by about 8 px.
+Learned: limb lengths fix most of the depth. Forms that come toward the viewer need rings that tip back; computed from depth, not typed. Typed outlines were off by 3 to 10 px, always the same way; do not retype, settle. Ear-clipped cloth has slivers; use even triangles.
+Open: folds are not in the mesh; hair is a mass with few locks, the bun a ball; face planes are a standard head, not this face; what no line shows (backs, far sides) is a guess. Shading is not driven by it yet.

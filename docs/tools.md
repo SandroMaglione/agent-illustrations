@@ -57,6 +57,7 @@ How shapes are placed and checked. Code in `src/tools` and `src/splash`. Why the
 | `ring` | `ring A B C ^ P .3 .5 .3 ~.2` | hair highlight: scallops below, calm edge above |
 | Eye rig | lash, lid, iris, crease lines | iris fitted to the drawn arcs; every layer placed in shares of the eye (`eyes.ts`) |
 | Cast v2 | caster, receiver, distance | moved along the light, edge calmed in proportion to the distance (`cast.ts`) |
+| Blockout | `loft`, `tube`, `ball`, `strip`, `drape`, `box`, `solve` (`src/form/mesh.ts`) | the figure in 3D in the drawing's view, settled onto the drawn outlines (`settle.ts`), with a fit table, turntable and a viewer (`scripts/form.ts`) |
 | Seal | nothing | lit slivers under 4 px between shadow and line are closed and counted (`seal.ts`) |
 | Lint | `pnpm check tape` | slivers, edges beside lines, worst places with coordinates (`lint.ts`) |
 
