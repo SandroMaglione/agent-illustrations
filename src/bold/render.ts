@@ -127,22 +127,22 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   const facetLevel = FF && art.tones ? scaled(await levelsOf(art, art.tones)) : null, refl = new Float32Array(N)
   if (FF) {
     const face = names.indexOf("face")
-    // a face is one calm form: its small bumps are drawn, not shaded
-    if (face > 0) { const r = H * 0.045, on = Float32Array.from(map, (m) => (m === face ? 1 : 0)), bo = blur(on, w, h, r, 2); for (const a of [FF.nx, FF.ny, FF.nz]) { const b = blur(a.map((v, i) => v * on[i]!), w, h, r, 2); for (let i = 0; i < N; i++) if (on[i]) a[i] = b[i]! / bo[i]! } }
+    // a face is never modelled by the form: it stays clean, with the shadows of the hair on it
     if (art.folds) layFolds(FF, art.folds, map, names, w, h, k)
     FF.light()
     // what hair is, its strands say; the mesh keeps out of it
     const formed = art.formed ? set(art.formed) : Uint8Array.from(kinds, (kd) => (kd === "hair" || kd === "metal" ? 0 : 1)), under = set(art.meshCasts ?? names), sc = blur(FF.cast, w, h, Math.max(1, H * 0.012), 2)
+    if (face > 0) { formed[face] = 0; under[face] = 0 }
     for (let i = 0; i < N; i++) { const n = map[i]!; if (!formed[n] && !under[n]) { FF.has[i] = 0; FF.cast[i] = 0; continue } if (!under[n]) { FF.cast[i] = 0; FF.near[i] = 0 } else if (FF.has[i]) FF.cast[i] = sc[i]!; if (!formed[n]) FF.lam[i] = 1 }
     // the mean tilt of every drawn facet: a small one is one plane, its edge is the drawn line
     const id = fine ? scaled(fine.id) : null, sum = new Float32Array((fine?.n ?? 0) + 1), cnt = new Float32Array((fine?.n ?? 0) + 1), little = (H * 0.2) ** 2
     if (id) for (let i = 0; i < N; i++) if (FF.has[i] && id[i]) { sum[id[i]!] = sum[id[i]!]! + FF.lam[i]!; cnt[id[i]!] = cnt[id[i]!]! + 1 }
     for (let i = 0; i < N; i++) if (FF.has[i]) {
-      const n = map[i]!, kd = kinds[n], dim = n === face ? -0.06 : 0.1, f = id?.[i] ?? 0, t = facetLevel && own[n] ? facetLevel[i]! : 0
+      const n = map[i]!, kd = kinds[n], dim = 0.1, f = id?.[i] ?? 0, t = facetLevel && own[n] ? facetLevel[i]! : 0
       const one = f > 0 && own[n] && cnt[f]! < little && t !== 6 && kd !== "skin", lam = one ? sum[f]! / cnt[f]! : FF.lam[i]!
       if (P) P.turned[i] = 0
       // the form first
-      let v = !formed[n] ? 0 : lam < dim ? 2 : lam < dim + (n === face ? 0.1 : 0.22) ? 1 : 0
+      let v = !formed[n] ? 0 : lam < dim ? 2 : lam < dim + 0.22 ? 1 : 0
       const turns = v === 2
       // then what the agent saw in the drawn lines, as far as the form allows it
       if (t === 1) v = lam < -0.1 ? Math.min(v, 1) : 0
@@ -161,9 +161,9 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     for (let i = 0; i < N; i++) if (!formShade[i]) { softOnly[i] = 0; refl[i] = 0; m2[i] = 0 } else mh[i] = 0
   }
   /* the shadow design: shapes drawn over the form */
-  const designed = set((art.shadows ?? []).flatMap((q) => q.on))
+  const designed = set((art.shadows ?? []).filter((q) => !q.add).flatMap((q) => q.on))
   if (art.shadows && upto >= 4) {
-    for (let i = 0; i < N; i++) if (designed[map[i]!]) { formShade[i] = 0; softOnly[i] = 0; refl[i] = 0; m2[i] = 0; mh[i] = 0; ml[i] = 0; if (P) P.turned[i] = 0; if (FF) FF.cast[i] = 0 }
+    for (let i = 0; i < N; i++) if (designed[map[i]!]) { formShade[i] = 0; softOnly[i] = 0; refl[i] = 0; m2[i] = 0; mh[i] = 0; ml[i] = 0; if (P) P.turned[i] = 0; if (FF) FF.cast[i] = 0; if (kinds[map[i]!] === "hair") m1[i] = 0 }
     for (const q of art.shadows) {
       const on = set(q.on)
       tmp.g.clearRect(0, 0, w, h); tmp.g.fillStyle = "#000"; path(tmp.g, q.d, k); tmp.g.fill()
@@ -213,7 +213,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     const boxes = boxesOf(map, w, h, names.length)
     for (const [a, b, d, deep] of art.casts) {
       // where the blockout casts, it alone does
-      const mesh = FF && d > 6 ? set([...(art.meshCasts ?? []), ...(art.shadows ?? []).flatMap((q) => q.on).filter((n) => n !== "face")]) : null
+      const mesh = FF && d > 6 ? set([...(art.meshCasts ?? []), ...(art.shadows ?? []).filter((q) => !q.add).flatMap((q) => q.on)]) : null
       const A = set(a), O = set(b)
       each(cast(map, w, h, boxes, A, O, sun.x * d * k, sun.y * d * k, Math.min(2.4, d * 0.1) * k), w, (i) => { if (!mesh?.[map[i]!]) m1[i] = 1 })
       if (deep && upto >= 6) {
@@ -321,8 +321,8 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       for (let t = 1; t < most * 1.7; t++) { const X = Math.round(x + sun.x * t), Y = Math.round(y + sun.y * t); if (X < 0 || Y < 0 || X >= w || Y >= h) break; const j = Y * w + X; if (map[j] !== n) { m = map[j]!; break } if (ink[j]! < 0.3) paper++ }
       if (m === n) continue
       if (FF?.has[i] && kd === "hair") continue
-      if (n === names.indexOf("face")) continue // a face answers with a soft turn, not with a strip
-      if (F0?.has[i] && air(m, n) && kd !== "peel") { if (ink[i]! <= 0.3) { if (F0.away[i]! > 0.84) sky[i] = 1; else if (F0.away[i]! > 0.72) skyIn[i] = 1 } continue }
+      if (n === names.indexOf("face") || n === names.indexOf("ear") || (kd === "hair" && designed[n])) continue // a face answers with a soft turn, not with a strip
+      if (F0?.has[i] && air(m, n) && kd !== "peel") { if (ink[i]! <= 0.3) { if (F0.away[i]! > 0.84) sky[i] = 1; else if (F0.away[i]! > 0.72 && !designed[n]) skyIn[i] = 1 } continue }
       const rough = kd === "peel" || kd === "leaf"
       if (air(m, n)) {
         if (rough || ink[i]! > 0.3) continue
@@ -369,6 +369,17 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   // air between the viewer and what lies behind: paler, bluer, less contrast
   const back = defs.map((_, n) => art.depth?.[names[n]!] ?? 0), AIR: RGB = [196, 198, 226]
   if (upto >= 10 && view === "normal") for (let i = 0; i < N; i++) { const d = back[map[i]!]!; if (d) { const l = luma([R[i]!, G[i]!, B[i]!]); to(i, mix([l * 0.96, l * 0.98, l * 1.12], AIR, smooth(60, 190, l)), d * 0.34) } }
+  // a painter's last layer on warm shades: overlay with orange. Skin in shade is never grey and never cold
+  if (upto >= 5 && view === "normal") {
+    const OVER: RGB = [255, 146, 72], lay = (a: number, b: number): number => (a < 128 ? (2 * a * b) / 255 : 255 - (2 * (255 - a) * (255 - b)) / 255)
+    const deepen = blur(e1, w, h, Math.max(1, H * 0.012), 2)
+    for (let i = 0; i < N; i++) {
+      const kd = kinds[map[i]!]
+      if (kd !== "skin" && kd !== "hair") continue
+      const a = kd === "skin" ? Math.max(e1[i]! * 0.3, eh[i]! * 0.18) + (1 - e1[i]!) * smooth(0.02, 0.5, deepen[i]!) * 0.16 : e1[i]! * (tones[map[i]!]!.base[0] > tones[map[i]!]!.base[2] * 1.2 ? 0.13 : 0)
+      if (a > 0.005) to(i, [lay(R[i]!, OVER[0]), lay(G[i]!, OVER[1]), lay(B[i]!, OVER[2])], a)
+    }
+  }
   const r = rng("grain"), gf = new Float32Array(N)
   for (let i = 0; i < N; i++) gf[i] = r() - 0.5
   const grain = blur(gf, w, h, 1, 1), img = new ImageData(w, h)

@@ -138,3 +138,15 @@ Tried in this order, each looked at beside the last round:
 3. Mesh as a guide, shapes drawn by the agent: clear win. Form decides where, the drawn line decides the edge.
 Learned: the mesh is for understanding, not for rendering. Use it directly only for simple solids (fruit, crate, leaves, bands) and long casts; draw everything the artist has lines for; leave hair to its locks. A physically right cast can still read as a blot (leaf shadows floating on the fruit): keep it attached. A change of light to please one spot cost dark value everywhere: the gate showed it (24 to 20%), so the light went back.
 Open: hands, shoes, belt, crate fittings, hair not designed yet; shapes are typed points; one fully shaded part (coat) is under its value band.
+
+## Eighth round, `visor`: depth casts back, simple shapes, a clean face, warm skin shade (trial)
+| Client's note | Kind | Answer |
+|---|---|---|
+| leaf on the orange, visor on the head, belt and pack on the legs: those shadows give depth, keep them | see | drawn back as shapes over the mesh casts. I had removed them in round seven as "blots": a cast that stands clear of its caster is exactly what shows distance |
+| uneven shadows must be simpler, even against the 3D form | do | the tail is designed lock by lock (one shape each); reflected strips taken off designed parts; every mesh edge on hair dropped |
+| the face does not follow the 3D form; clean even if flat | see | rule in the engine: the form never shades the part `face`. Only casts of the hair, plus a sliver that frames the chin |
+| skin shade too cold; overlay orange | see, do | overlay pass (255,146,72) on skin in shade, its soft edge, and lightly on warm hair. No cold second light on face and ear |
+
+Measured, skin shade: references e 205/148/148 and 225/187/181, f 205/136/140, g 188/153/169 (cool light in that piece). Hue 357 to 8, saturation 28 to 34.
+Learned: the mesh guide is an argument, the style decides. Three kinds of part: solids follow the form; cloth and hair follow it in simplified shapes; the face does not follow it. Before removing a shadow, ask whether it tells a distance.
+Open: hands, shoes, crate fittings not designed; edges of strand casts on the bangs a little ragged at 400%.
