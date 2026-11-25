@@ -17,7 +17,7 @@ Makers: Claude Opus and Gemini 4 Neon wrote the code; GPT 6.2 Astra High made th
 | 9 | Rough sketch, second | very rough sketch | agent mostly | stopped |
 | 10 | Lines pulled onto the pencil | refined pencil sketch | artist, line by line the agent | rejected |
 | 11 | The sketch's own pixels | pencil sketch | artist, but little was drawn | rejected |
-| control | Rendering on finished line art | line art | whoever drew it | approved, twice |
+| control | Rendering on finished line art | image-generated line art | image model, picked by the owner | approved, twice |
 
 ## 1. Sketch engine
 - **Did:** figures as a few posed solids that output named lines, drawn in thirteen styles. [Step 1](../journey.md). Code: `src/skins/`.
@@ -74,7 +74,7 @@ Generated images, kept as evidence. Nothing in the pipeline uses them.
 - **Did:** five rounds with an image model, led by an agent: design sheets first, pushback on generic parts, three variants against sameness, a merge, an open silhouette.
 - **Verdict:** "Forget image generation, not smart enough and way too much of the 'slop' look all the times, for everything that you shared. Assume this was a total failure." During it: "white space and silhouette are also really important. The major details and pose should be clear just from it."
 - **Broke first:** at the start. Each round fixed faults (grip, string, crossed legs) and none changed the averaged look.
-- **Why:** hand-picking moves around a model's average, not away from it (**guess**). The last image matched a supplied line art in ink, 4.6 to 4.3%, and in stroke widths, 2/3/4/6/8 to 2/2/3/5/7 px, and its outline was closed (**measured**): these numbers say it can be coloured, not that it is good.
+- **Why:** an agent's picks move around a model's average, not away from it (**guess**). Not because generated line art cannot work: see the control. The last image matched a line art by a person (since removed here) in ink, 4.6 to 4.3%, and in stroke widths, 2/3/4/6/8 to 2/2/3/5/7 px, and its outline was closed (**measured**): these numbers say it can be coloured, not that it is good.
 - **Keep:** asking for three variants shows drift. Never thin a 2 px line art before flood filling it: it leaks.
 - **Reported:** far better than it was. Pieces scored 9 and 9.5, and "this workflow genuinely cracked it", one message before the rejection.
 
@@ -109,7 +109,7 @@ Sketches of attempts 8 to 11, and what came of them, are not published.
 - **Reported:** better than it was.
 
 ## Control: finished line art
-`visor` and `maren`, approved, and `rig` before them. Same renderer, about the same number of designed shadow shapes. The line art was supplied by the owner; how it was drawn is not recorded here, so do not read it as "drawn by hand".
+`visor` and `maren`, approved, and `rig` before them. Same renderer, about the same number of designed shadow shapes. **Their line art is image-generated**: made and picked by the owner, outside this repository. Model, prompts and how many were thrown away are not recorded yet. So generated line art can be good enough; attempt 7 shows that an agent leading the generator did not get there. What differed (who asked, who picked, from how many) is the best open lead.
 
 ## The comparison after attempt 11
 
@@ -128,16 +128,16 @@ Sketches of attempts 8 to 11, and what came of them, are not published.
 The critic was a fresh agent: names and verdicts removed, the references beside, causes split into drawing, line, rendering and density. Its words: "Rendering technique looks much the same in all five. The design and drawing beneath it decide the result." It named drawing for `maren` and `linen`, density for `visor` and `tee`, and said colouring alone could not save `linen` or `bob`. One run, five pictures: a direction, not a law. Script: [`archive/drawing/audit.ts`](../../archive/drawing/audit.ts).
 
 ## The critic on line art alone
-Eight line arts in grey, names removed, another fresh agent: four supplied ones, two generated (attempt 7, rounds 3 and 5), two drawn in code (attempts 5 and 6).
+Eight line arts in grey, names removed, another fresh agent: four supplied ones (`maren` is image-generated, `twin` is by another artist and since removed, `bell` and `rig` not recorded), two from attempt 7, rounds 3 and 5, two drawn in code (attempts 5 and 6).
 
 | | Accepts, of 10 | Generic, 10 is worst |
 |---|---|---|
 | supplied: maren, bell, rig, twin | 8.5, 8, 7.5, 6.5 | 3, 2, 5, 9 |
-| generated: round 3, round 5 | 7, 5.5 | 6, 8 |
+| attempt 7: round 3, round 5 | 7, 5.5 | 6, 8 |
 | in code: attempt 5, attempt 6 | 2.5, 1.5 | 4, 6 |
 
 - It puts both code drawings last and together, 95% sure of one maker.
-- It does not sort generated from supplied cleanly: the two overlap in both columns. A single critic catches broken drawing. Whether it catches what the client calls slop is open.
+- It does not sort attempt 7 from the supplied ones: they overlap in both columns, and at least one of those is generated too. A single critic catches broken drawing. Whether it catches what the client calls slop is open.
 - Skill and authorship are two scales. Attempt 5 is less generic than the generated ones and far worse drawn.
 - One run. Scores from a model are weak; reasons and places are what to read.
 

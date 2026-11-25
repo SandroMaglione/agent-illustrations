@@ -28,15 +28,18 @@ An earlier version of our conclusion said "decision only". The log does not supp
 | Finding | How sure |
 |---|---|
 | Finished, dense, closed line art is needed: 144 and 237 closed shapes when approved, 67, 20 and 3 when not | measured, five drawings |
-| It is not enough: generated line art with the ink, widths and closed outline of a supplied one was rejected | measured, one drawing |
+| It is not enough: generated line art with the ink, widths and closed outline of a good one was rejected | measured, one drawing |
 | Rendering effort does not explain the difference: 151 and 176 shadow shapes against 134, 116 and 81 | measured |
 | A blind critic agrees with the client on coloured work, five of five | measured, one run |
-| A blind critic spots code drawing, and does not sort generated from supplied | measured, one run |
+| A blind critic spots code drawing, and does not sort attempt 7 from the supplied line art | measured, one run |
 | The maker reports too well: 4, 5, 7, 8, 10 and 11 were all shown as better than they were | seen |
 | Line weight, tapers, traps and closing are solved in code | seen, said by the client |
 | Thumbnails and a silhouette check improve a pose | seen, one drawing |
 | References fix what overlaps what, not how it is drawn | seen, one drawing |
 | Copying and deciding fail for different reasons | guess, see test 1 |
+
+## The lead
+The line art of both approved drawings is image-generated, made and picked by the owner. Directed by an agent (attempt 7), the same kind of tool was rejected every round. So the gap may not be drawing at all, but **asking and picking**: taste, again. Not recorded yet: model, prompts, references given, how many tries, why these two were kept. First thing to find out.
 
 ## What the client asked for
 Not the fault list, the direction, in their words:

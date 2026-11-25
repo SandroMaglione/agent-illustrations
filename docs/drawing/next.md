@@ -17,6 +17,8 @@ Each can fail, and says which of the three causes it is about. Judge them blind:
 
 Stop at the first one that fails, and work there. Nobody has run 1 to 3: the attempts started at 6 and 7.
 
+**Pick**, beside these: twenty line arts made the way the owner makes them; agent and owner each keep three without seeing the other's. Passes with two in common. It says whether picking can be learned, and needs the owner's recipe first.
+
 ## Critic's brief
 What was used for the comparison in the log. Change it when it misses.
 
@@ -42,7 +44,7 @@ The first three come from the other thread's closing list (Gemini 4 Neon), with 
 - Typing outlines for a figure at 1×.
 - Closed white shapes as the line.
 - Capsule mannequins.
-- Generated images or reference boards, unless the client asks again.
+- Generated images led by an agent, or generated reference boards, unless the client asks again. (The line art that works is generated, but asked for and picked by a person.)
 - A better way of extracting lines when the sketch does not define the shape. Three methods in a row went there.
 - Guessing a shape: ask.
 - Ink share, stroke widths, closed outlines or value gates as proof of quality.

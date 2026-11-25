@@ -79,4 +79,5 @@ How shapes are placed and checked. Code in `src/form`, `src/bold`, `src/tools` a
 - Checks that fail when casts, scattering or a material reflection disappear.
 - A model sheet by part kind (hand, shoe, buckle), and a blockout kit for common figures.
 - Mouth, nose mark, prints, gradients, washes, brows and eyes of `visor` are typed coordinates.
-- `tape`, `bell` and `twin` have no declared light or focus; only `maren` and `visor` (not published) have a blockout, a value plan and a shadow design; `scripts/new.ts` writes starting files for all three.
+- Regions depend on the scale: `visor` is right at `k=3` and leaks in a few places at `k=2`, so its layers (made at 2) do too.
+- `tape` and `bell` have no declared light or focus; only `maren` and `visor` have a blockout, a value plan and a shadow design; `scripts/new.ts` writes starting files for all three.

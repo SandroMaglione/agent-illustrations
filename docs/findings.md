@@ -65,7 +65,7 @@ The client's judgement on the last drawing (goggles, second version): "way bette
 3. **Objects need thickness.** Cast shadows in two depths, lit and shaded rims, undersides. Every overlap must be in the cast list.
 4. **Name things, do not measure them.** Shapes said in terms of numbered lines: typed coordinates in shapes went from 2,954 to 18 on tape and 0 on rig, and slivers from 150 to 0 after the seal. The agent is bad at reading coordinates and good at reading numbers on a drawing.
 5. **Big planes first, then accents, then a separate round for lights.** References use a few large shadow masses, not a wedge beside every fold. The first pass always has too few lights.
-6. **A person draws, code colours.** Rules transfer between drawings. Drawing itself did not work in code: pose, hair, hands and face.
+6. **Someone else draws, code colours.** Rules transfer between drawings. Drawing itself did not work in code: pose, hair, hands and face.
 7. **Face and eyes carry the picture.** Their ink is never slimmed, the lash core is the darkest mark.
 8. **Shades barely gain saturation** (reference blue 0.41, 0.44, 0.50). Ours ran to 0.82.
 9. **Measure claims, the critic's and your own.** Neon's practical review was mostly right, with one bright pixel misread; earlier reviewers and makers were both wrong about several things.

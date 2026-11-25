@@ -1,6 +1,6 @@
 # agent-illustrations
 
-Illustrations coloured entirely by code (TypeScript and Canvas 2D). No image generation: a person supplies line art and directs, an AI agent writes the shapes, rules and numbers. The goal is not one picture but a process that gets better with each one.
+Illustrations coloured entirely by code (TypeScript and Canvas 2D). The line art comes finished (for Visor and Maren from an image model, made and picked by the owner). From there no image generation: a person directs, an AI agent writes the shapes, rules and numbers. The goal is not one picture but a process that gets better with each one.
 
 | | |
 |---|---|
@@ -68,7 +68,7 @@ What it needed and what it changed in the process: [`docs/lessons.md`](docs/less
 3. **Value first, with a check that can fail, and eyes on it.** Numbers found a pass that washed out the darks. Looking found what the numbers had passed: hair that vanished into the page.
 4. **Simple beats correct.** One clean shape per plane or lock.
 5. **What the client approved needs a check that fails when it disappears.** New systems quietly dropped reflected light, and before that cast shadows.
-6. **A person draws, code colours.** The artist's lines stay, above all in the face. Rendering rules transfer between drawings; drawing in code did not.
+6. **Someone else draws, code colours.** The drawn lines stay, above all in the face. Rendering rules transfer between drawings; drawing in code did not.
 7. **Every note is sorted by cause:** could not see, did not ask, had no tool, forgot, or a rule of ours caused it. [`docs/lessons.md`](docs/lessons.md)
 
 Rounds three, five and ten of the same drawing. Between the last two: blockout, guide, shadow design, and a new value plan.
@@ -79,7 +79,7 @@ Numbers, what failed, what is open: [`docs/findings.md`](docs/findings.md).
 
 **Open:** run on two drawings so far; hands, shoes and crate fittings are not designed shape by shape; the shadow shapes are typed points; steps between planes are stronger than in the references; a few parts have no second light.
 
-This drawing's line art and data are not in the repository, so it cannot be re-rendered from here; its renderer, tools and process are.
+Line art: `public/visor.png`, data: `src/splash/visor*`. To render it, make its form field once: `node scripts/form.ts visor output/form/v 4 --field`, then `?v=visor&k=3`. At scale 2 its fine lines let a few regions leak (a lock by the face, a strap).
 
 ## Earlier drawings
 
@@ -123,7 +123,7 @@ node scripts/clipcheck.ts file.clip --tree                          # read a .cl
 
 | Query | Shows |
 |---|---|
-| `v=<drawing>` | any drawing in `src/splash`: `maren`, `rig`, `tape`, `bell`, `twin`. `maren` reads a form field (11 MB, not in Git): make it once with `node scripts/form.ts maren output/form/m 4 --field` |
+| `v=<drawing>` | any drawing in `src/splash`: `visor`, `maren`, `rig`, `tape`, `bell`. `visor` and `maren` read a form field (11 MB, not in Git): make it once with `node scripts/form.ts maren output/form/m 4 --field` |
 | `&upto=0..10` | stop after a pass |
 | `&view=value`, `grey`, `masks`, `regions` | three values, greyscale, shadow design, regions |
 | `&k=2` or `3` | scale, an integer. At 1 a few regions can leak |
@@ -172,10 +172,10 @@ The steps before, oldest first. Code and results are kept; each has its story an
 |---|---|---|---|
 | 1 | A sketch engine, 13 drawn styles | contours, weight and hatching can be code | `src/skins/` |
 | 2 | Splash art as numbers, figure drawn in code | a style is eight decisions; drawing is the weak part | `src/cel/` |
-| 3 | Colouring a rough pencil sketch | split the work: a person draws, code colours | `src/lineart/` |
+| 3 | Colouring a rough pencil sketch | split the work: someone else draws, code colours | `src/lineart/` |
 | 4 | Clean line art, one light | cloth looked like latex | `src/clean/` |
 | 5 | Research, 15 passes | shadow shapes must be designed | `src/passes/` |
-| 6 | The target style, Neon as critic, four rounds | measure every claim | `src/splash/twin.ts` |
+| 6 | The target style, Neon as critic, four rounds | measure every claim | the drawing is removed |
 | 7 | A second character with frozen rules | skin and edges carry over, line weight did not | `src/splash/tape.ts` |
 | 8 | Opus against Neon, blind | the client preferred Opus for face, eyes and large shapes, Neon for small accessories | `src/splash/bell.ts` |
 | 9 | Rules fixed, cast re-rendered | shades must not gain saturation | `docs/process.md` |
@@ -204,4 +204,4 @@ Also here: [a reel of the sketch engine](gallery/reel.mp4) and [its studio in on
 
 Style reference screenshots and every comparison image that contains them are other people's art, so they stay local, as do full-size renders, which the code regenerates. Numbers that mention references cannot be re-run without them.
 
-Line art in progress stays out too (`public/wip`). Line art in `public/` was supplied by the owner.
+Line art in progress stays out too (`public/wip`). Line art in `public/` was supplied by the owner; `visor.png` and `tape.png` (Maren) are image-generated. The twin-tails drawing of step 6, by another artist, and every image made from it were removed on 26 November 2026; numbers and reviews that mention it stay.

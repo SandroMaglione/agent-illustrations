@@ -51,7 +51,7 @@ Changing almost only the numbers gives six styles, and the kitchen scene from st
 
 **Learned:** rendering rules transfer. Drawing does not: pose, hair, hands and face were the weak part. Shadows need a tint, not a hue rotation, or cream turns green.
 
-## 3. Let a person draw, let code colour
+## 3. Let someone else draw, let code colour
 
 **Asked:** the drawing is not there yet; render this sketch in the style instead.
 
@@ -100,15 +100,7 @@ Before and after, same line art:
 
 **Asked:** a new line art that must look like the references (clear outline, solid shadows, subsurface scattering, solid shapes), iterated with Gemini 4 Neon as reviewer.
 
-Line art, regions, first render:
-
-![Start](../gallery/journey/6a-start.jpg)
-
-Rounds 1 to 3 and the signed-off version:
-
-![Rounds](../gallery/journey/6b-rounds.jpg)
-![Heads, rounds 1 to 4](../gallery/journey/6c-heads.jpg)
-![Passes](../gallery/journey/6d-passes.jpg)
+The line art was by another artist. It and the images of this step are removed; what was learned stays.
 
 | Round | Neon's overall | Main change |
 |---|---|---|
@@ -173,7 +165,6 @@ Measuring both also found a second rule bug: shades gained too much saturation.
 
 Before left, after right:
 
-![Twin-tails](../gallery/journey/9a-twin-before-after.jpg)
 ![Headphones](../gallery/journey/9a-tape-before-after.jpg)
 ![Concierge](../gallery/journey/9a-bell-before-after.jpg)
 ![Heads](../gallery/journey/9b-heads.jpg)
