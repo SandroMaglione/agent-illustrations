@@ -11,7 +11,9 @@ export const STEPS: Record<string, Step> = {
   back: s("Background", "", "normal"),
   // flats are one layer per part, in the folder "Flats"
   grads: s("Gradients", "Colour", "normal"),
-  hairHue: s("Hair hue bands", "Colour", "normal"),
+  hairTip: s("Hair tip colour", "Colour", "normal"),
+  hairUp: s("Hair hue bands, light", "Colour", "normal"),
+  hairDown: s("Hair hue bands, dark", "Colour", "normal"),
   washes: s("Washes", "Colour", "normal"),
   scatter: s("Scatter at the turn", "Shading", "auto"),
   half: s("Half tone", "Shading", "multiply"),

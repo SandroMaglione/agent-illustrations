@@ -22,7 +22,7 @@ Illustrations coloured entirely by code (TypeScript and Canvas 2D). No image gen
 8. **The rest by rule.** Scattering, deep shade, materials, line colour, air, grain as measured on the references.
 9. **Review piece by piece.** Line art, colour, shadow design and grey of one piece at a time.
 10. **Last look, always.** Greyscale and three values beside the references. A script fails when big neighbours are too close; someone still has to look.
-11. **Out as layers.** Every paint step becomes a layer, in a `.clip` that opens in CLIP STUDIO PAINT and in a PSD, so a person can go on from there.
+11. **Out as layers.** A clean, organised `.clip` and `.psd`, so a person can go on from there.
 
 ![Detail](gallery/visor-detail.jpg)
 
@@ -30,20 +30,23 @@ Illustrations coloured entirely by code (TypeScript and Canvas 2D). No image gen
 
 Full rules: [`docs/process.md`](docs/process.md). The form stage: [`docs/form-guide.md`](docs/form-guide.md). Every tool: [`docs/tools.md`](docs/tools.md).
 
-## Layers, PSD and CLIP STUDIO PAINT
+## The layered file
 
-**It works in the real program:** Maren's [`.clip`](examples/layers/maren/maren.clip) was opened in CLIP STUDIO PAINT 5.0.1, with layer modes, folders and names as expected.
+Every drawing comes out as a `.clip` for CLIP STUDIO PAINT and a `.psd` that an illustrator can pick up and go on with:
 
-Every step of the paint comes out as a layer, so the result can be refined in a drawing program: flats one layer per part, shading as multiply layers, lights, second light, finish, line art on top, all in pass-through folders. Written as a layered PSD and as a `.clip` for CLIP STUDIO PAINT, either as a new canvas or added on top of a canvas you are working on. The render itself does not change, and the stack composited gives it back (0.5% of pixels differ by more than 8 levels, all on the outer edge of the contour, where the line art now lies on top of the background).
+- **A folder per part** (Hair front, Face, Jacket, Player, …), in each the same layers in the same order, clipped to the base: Base, Gradient, Half tone, Shadow 1, Shadow edge, Shadow 2, Light, Highlight, Reflected light.
+- **A layer is a set of related marks with one job**, not a stroke: both irises, all reflections of the face, all first shadows of a part.
+- **On top:** effects over the whole figure, prints, the face (eyes in eleven layers), and the line art with its colours clipped to it.
+- **Every export checks that it is clean**, and that the layers add up to the render.
 
 ```sh
-node scripts/layers.ts rig output/layers/rig --clip      # any drawing: PSD, .clip, layer PNGs, check
-node scripts/layerview.ts output/layers/rig              # a page to look through them, and a sheet
+node scripts/layers.ts maren output/layers/maren --clip     # .clip, .psd, the checks
+node scripts/layerview.ts output/layers/maren               # look through the layers, and a sheet
 ```
 
-![Maren's layers: the stack growing folder by folder, then every step alone](gallery/layers-maren.jpg)
+![Maren's file: the picture growing, the folder of each part, what some folders hold](gallery/layers-maren.jpg)
 
-The format has no public spec: what was measured on 22 files CSP saved, what others learned, and what was confirmed in CSP are kept apart in [`docs/layers.md`](docs/layers.md). Layers are pixels, so edits made in CSP are not read back into the code.
+Open one: [`maren.clip`](examples/layers/maren/maren.clip). How it is structured: [`docs/layers.md`](docs/layers.md). The `.clip` format, which has no public spec, and what was measured: [`docs/layers-internals.md`](docs/layers-internals.md). Edits made in the drawing program are not read back into the code.
 
 ## A second drawing
 
@@ -137,7 +140,8 @@ Then follow [`docs/process.md`](docs/process.md) and, for the blockout and shado
 - [`docs/form-guide.md`](docs/form-guide.md): from line art to shadow shapes, with the 3D blockout
 - [`docs/lessons.md`](docs/lessons.md): every note on a result, sorted by cause
 - [`docs/tools.md`](docs/tools.md): how shapes are said, placed and checked
-- [`docs/layers.md`](docs/layers.md): the render as layers, PSD and CLIP STUDIO PAINT's .clip
+- [`docs/layers.md`](docs/layers.md): the layered file, how it is structured
+- [`docs/layers-internals.md`](docs/layers-internals.md): how it is made, the `.clip` format, measurements
 - [`docs/findings.md`](docs/findings.md): what works, what does not, numbers
 - [`docs/journey.md`](docs/journey.md): the full story with images, step by step
 - [`docs/history.md`](docs/history.md): measurements, mistakes and disagreements
@@ -170,6 +174,7 @@ The steps before, oldest first. Code and results are kept; each has its story an
 | 16 | Face, grain, a mandatory last look | what is at the top of this page | `scripts/finish.ts` |
 | 17 | The process again on the headphones drawing | it carries over; never edit the plan to pass | `src/splash/maren.ts` |
 | 18 | The render as layers | a `.clip` written by code opens in CLIP STUDIO PAINT | `src/layers/` |
+| 19 | Layers an illustrator can pick up | a layer is a set of related marks, and clean is something a check can fail | `src/layers/arrange.ts` |
 
 ![Earlier characters, sketch engine](gallery/journey/1d-styles.jpg)
 ![Figure drawn in code](gallery/journey/2b-courier.jpg)

@@ -38,7 +38,8 @@ How shapes are placed and checked. Code in `src/form`, `src/bold`, `src/tools` a
 | Gate | `node scripts/gate.ts name` | values per stage and group against the plan, and second light on far edges; exit 1 on a miss |
 | Facets | `?v=sheet&who=name&show=facets&part=legR` | every facet of a piece, numbered (`tools/facets.ts`) |
 | Tones | `node scripts/tone.ts name` | facet numbers in `<name>-tones.txt` to points in `<name>-tones.ts`; `tones` in the drawing |
-| Layers | `node scripts/layers.ts name dir --clip` | the render as a layer stack: PSD, `.clip` (new canvas, or added to one of the same size with `--template`), PNGs, and how closely the stack gives the render back ([how](layers.md)) |
+| Layers | `node scripts/layers.ts name dir --clip` | the render as a file an illustrator can go on with, a folder per part, always the same layers, checked to be clean: PSD, `.clip` (new canvas, or added to one of the same size with `--template`), PNGs, and how closely the stack gives the render back ([how](layers.md)) |
+| Painted eye | `painted([...eyeDetails("Eyes", EYE, LOOK), …, ...eyeLights(…)])` in the drawing | an eye in pieces; pieces with one name, of both eyes, are one layer (`bold/eye.ts`) |
 | Layer view | `node scripts/layerview.ts dir` | `view.html` (switch layers, see one alone, play the stack) and `sheet.png`, from what `layers.ts` wrote |
 | Clip check | `node scripts/clipcheck.ts file.clip --tree` | a `.clip` read back: the rules CSP enforces, the layer tree, its layers composited against its preview |
 | Review | `node scripts/review.ts name dir piece:x,y,w,h …` | line art, colour, shadow design, grey of each piece |

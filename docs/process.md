@@ -19,7 +19,7 @@ Colour clean line art so that the result could stand beside the target reference
 | 10 | Review, piece by piece | every piece was looked at alone |
 | 11 | **Finish: greyscale** | sheet looked at and shown; `finish.ts` and gate pass |
 | 12 | Alarms | `pnpm check`, crops at 200% |
-| 13 | Layers, when a person goes on from here | `layers.ts --clip`, `clipcheck.ts` 0 problems, inside the figure within 4 levels ([how](layers.md)) |
+| 13 | Layers, when a person goes on from here | `folders` in the drawing; `layers.ts --clip` says clean, `clipcheck.ts` 0 problems, the sheet was looked at ([how](layers.md)) |
 
 Lengths are line-art px; sizes that matter are shares of head height.
 

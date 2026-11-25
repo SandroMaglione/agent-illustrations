@@ -1,4 +1,5 @@
 /** What a drawing is made of, and what every tool reads: regions, numbered lines, named shapes. Drawn by src/bold/render.ts. */
+import type { Detail } from "../bold/eye.ts"
 import { loop } from "../cel/path.ts"
 import { fill, paper } from "../bucket/fill.ts"
 import type { Clicks } from "../bucket/fill.ts"
@@ -78,10 +79,18 @@ export type Art = {
   noink: ReadonlyArray<string>
   /** Eyes placed from the lines the artist drew. */
   eyes?: ReadonlyArray<EyeSpec>
+  /** What `face` and `over` draw, piece by piece and in the same order, so that each piece can be a layer (`bold/eye.ts`). */
+  details?: ReadonlyArray<Detail>
+  /** The folders of the layered file, furthest first (`src/layers/arrange.ts`). Every part in exactly one. */
+  folders?: Folders
+  /** The line art in layers of its own: folder and name, and the strokes ("s17", "@x,y,r" for marks). Hair, face and the rest are told apart by rule. */
+  lineGroups?: ReadonlyArray<readonly [string, string]>
   face: (g: CanvasRenderingContext2D) => void; over: (g: CanvasRenderingContext2D) => void
   back: (g: CanvasRenderingContext2D) => void; front: (g: CanvasRenderingContext2D) => void
 }
 export const PASSES = ["Line art", "Flats", "Gradients", "Contact", "Shadow shapes", "Edges and warm band", "Deep shade", "Ring and light shapes", "Face and eyes", "Colour line", "Finish"] as const
+/** Folder, the parts in it, and "fine" where an illustrator works most (face, hair): a few more layers. */
+export type Folders = ReadonlyArray<readonly [string, string, "fine"?]>
 export type View = "normal" | "grey" | "value" | "masks" | "regions"
 
 const vote = (wall: Float32Array, w: number, h: number) => (seed: Uint8Array): void => {

@@ -140,6 +140,7 @@ export const BELL: Art = {
     /* star on the epaulette button */
     g.fillStyle = "rgba(110,76,44,.8)"; g.beginPath(); for (let i = 0; i < 10; i++) { const a = (i / 10) * 6.283 - 1.571, r = i % 2 ? 2 : 4.4; g.lineTo(774 + Math.cos(a) * r * 1.3, 391 + Math.sin(a) * r * 0.8) } g.fill()
   },
+  folders: [["Skin", "neck"], ["Trousers", "pants"], ["Shirt", "shirt shirtS placket"], ["Vest", "vestL vest vband vtrim under utrim"], ["Coat", "lining pleat cuffR sideL sleeveL coatB collar sleeveR panelL panelR lapel cuff epau ptrim ctrim"], ["Buttons", "btn"], ["Key", "chain key"], ["Face", "face ear", "fine"], ["Hair front", "hairF", "fine"], ["Brooch", "bellSI bellS brooch"], ["Bell", "bellB"], ["Glove", "glove"]],
   over: (g) => {
     const st = (d: string, w: number, s: string): void => { g.beginPath(); curve(d).forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.lineWidth = w; g.strokeStyle = s; g.lineCap = "round"; g.stroke() }
     const dot = (x: number, y: number, a: number, b: number, s: string): void => { g.beginPath(); g.ellipse(x, y, a, b, -0.2, 0, 7); g.fillStyle = s; g.fill() }

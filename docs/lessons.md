@@ -230,4 +230,41 @@ The client opened it in CLIP STUDIO PAINT: "It works perfectly! It's exactly as 
 | every step of the renderer already had one job, so it could have a name and a mode | rule | a new paint step gets a name in `src/layers/steps.ts` at once |
 | merging another drawing in met a conflict on a single line | do | after a merge, compare renders byte for byte with the saved ones |
 
-Open: some layers hardly show (`Washes`, `Rims`, `Focus falloff`, `Depth haze`); warmth and air come as a multiply and an add layer each; all first shadows are one `Shade` layer instead of one per part. Nobody has asked for these yet.
+## Layers, second round: a file someone can pick up
+The client: the goal is that an illustrator picks up a clean and organised `.clip` or `.psd`; layers and folders consistent.
+
+| What fell short | Kind | Answer |
+|---|---|---|
+| layers followed the renderer's order, over the whole figure | rule | a folder per part, the same layers in each, clipped to its base |
+| "organised" was an opinion | see | rules that fail: `checkStack`, at every export |
+| 3,503 specks of a few pixels, soft edges crossing into the next part | see | counted, then swept |
+| warmth and air were seven layers that each carried the picture's ghost | do | factors: one Tint, one Glow |
+| how CSP treats a clipped soft edge was guessed, and others had it wrong | see | measured on a file CSP saved: exact |
+| line colour and line shape were one layer | do | one ink, colours clipped on top |
+
+Learned: to reorganise without changing the picture, cut along what never overlaps and merge operations, not pixels.
+
+## Layers, third round: control where it matters
+The client: "That's awesome! We need a little more control on key details": eyes and face, and hair.
+
+| What fell short | Kind | Answer |
+|---|---|---|
+| an eye was white, iris and lights, three layers for both eyes | rule | one kit paints every eye in pieces; a folder per eye, 19 layers |
+| paint, lines and lights of one eye lay in three folders | see | what belongs to one thing is in one folder |
+| the iris was cut by the lid, so it could not be moved | do | whole shapes clipped to the white |
+| form and cast shadow were one shape | do | the renderer says which it is while it paints |
+| hair was one mass, its bands and tips one layer | do | groups cut along drawn lines; tip, light bands, dark bands apart |
+| lines were one layer | do | labels walk through the ink from the stroke numbers |
+
+Learned: not everything needs the same detail. Face, ear and hair are "fine", the rest stays short.
+
+## Layers, fourth round: sets, not strokes
+The client: no layer for each single detail; a layer for a set of related details, "for example all the related reflections with same colour", especially when they do not overlap.
+
+| What was wrong | Kind | Answer |
+|---|---|---|
+| asked for control, I split to the stroke: 202 layers, five for the lights of one eye | rule | one layer per set: same role, same colour, not overlapping. 128 layers |
+| nothing said when two layers were one set | see | `couldBeOne` at every export, with the pairs that stay apart on purpose |
+| hands, ear and arms in three folders with the same skin | see | Skin is one, the ear is with the face |
+
+Learned: control is a layer that targets a feature, and that a hand can find. More layers is not more control.

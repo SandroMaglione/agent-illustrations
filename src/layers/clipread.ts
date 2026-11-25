@@ -143,24 +143,34 @@ const B: Record<number, (b: number, s: number) => number> = {
   9: (b, s) => (s >= 1 ? 1 : Math.min(1, b / (1 - s))), 11: (b, s) => Math.min(1, b + s), 12: (b, s) => Math.min(1, b + s), 14: (b, s) => (b <= 0.5 ? 2 * b * s : 1 - 2 * (1 - b) * (1 - s)), 16: (b, s) => (s <= 0.5 ? 2 * b * s : 1 - 2 * (1 - b) * (1 - s)),
   15: (b, s) => (s <= 0.5 ? b - (1 - 2 * s) * b * (1 - b) : b + (2 * s - 1) * ((b <= 0.25 ? ((16 * b - 12) * b + 4) * b : Math.sqrt(b)) - b)), 18: (b, s) => Math.max(0, Math.min(1, b + 2 * s - 1)), 19: (b, s) => (s <= 0.5 ? Math.min(b, 2 * s) : Math.max(b, 2 * s - 1)), 21: (b, s) => Math.abs(b - s), 22: (b, s) => b + s - 2 * b * s, 36: (b, s) => (s <= 0 ? 1 : Math.min(1, b / s)),
 }
-/** Composites the tree: pass-through folders (30) composite into their parent, others into a buffer of their own. */
+/**
+ * Composites the tree: pass-through folders (30) composite into their parent, others into a buffer of their own. A base and
+ * the layers clipped to it are one group that keeps the base's alpha: exactly what CSP's preview shows (`Illustration-Referece.clip`).
+ */
 export const compositeClip = (c: Clip, unknown: Set<string> = new Set()): Float32Array => {
   const N = c.w * c.h
   const draw = (into: Float32Array, kids: Array<ClipLayer>): void => {
-    let base: Float32Array | null = null
-    for (const L of kids) {
+    for (let n = 0; n < kids.length; n++) {
+      const L = kids[n]!, over: Array<ClipLayer> = []
+      while (n + 1 < kids.length && kids[n + 1]!.clip) over.push(kids[++n]!)
       if (!L.visible) continue
       let src = L.rgba
       if (L.folder) {
         if (L.composite === 30) { draw(into, L.kids); continue }
         src = new Float32Array(N * 4); draw(src, L.kids)
       }
-      if (!L.clip) base = src
       if (!src) continue
+      if (over.length) {
+        src = src.slice()
+        for (const T of over) {
+          if (!T.visible || !T.rgba) continue
+          const ft = B[T.composite] ?? (unknown.add(`blend ${T.composite} (${T.name})`), B[0]!), ot = Math.floor(T.opacity * 256) / 256
+          for (let i = 0; i < N; i++) { const a = (T.rgba[i * 4 + 3]! / 255) * ot; if (a > 0 && src[i * 4 + 3]!) for (let k = 0; k < 3; k++) { const b = src[i * 4 + k]! / 255; src[i * 4 + k] = (b + (ft(b, T.rgba[i * 4 + k]! / 255) - b) * a) * 255 } }
+        }
+      }
       const f = B[L.composite] ?? (unknown.add(`blend ${L.composite} (${L.name})`), B[0]!), op = Math.floor(L.opacity * 256) / 256
       for (let i = 0; i < N; i++) {
         let as = (src[i * 4 + 3]! / 255) * op
-        if (L.clip) as *= base ? base[i * 4 + 3]! / 255 : 0
         if (as <= 0) continue
         const ab = into[i * 4 + 3]! / 255, ao = as + ab * (1 - as)
         for (let k = 0; k < 3; k++) { const s = src[i * 4 + k]! / 255, b = into[i * 4 + k]! / 255; into[i * 4 + k] = (((1 - ab) * as * s + ab * as * f(b, s) + (1 - as) * ab * b) / ao) * 255 }
