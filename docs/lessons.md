@@ -212,7 +212,7 @@ From the docs, with regions and line numbers of `tape`. Light and value plan, bl
 | light streaks by rule on hair cluttered the designed locks | do | `streaks: false` per head of hair |
 | heavy line art: thick spots inside one form stayed black crumbs on a soft line | rule | `softWedges`, off unless asked |
 | warm, pale cloth got a magenta second light | do | greyish warm cloth takes a lavender one |
-| where the picture is cut off, the renderer saw an edge and put a light there | do | no far edge at the border of the picture. A faint line is left at the bottom |
+| where the picture is cut off, the renderer saw an edge and put a light there | do | no far edge at the border of the picture. |
 | a missing form field failed silently | see | said in words, drawing falls back to rules |
 
 Held from the first drawing without change: value plan first, limb lengths (they found that the near elbow lay far too much in front), guide then shapes, face never modelled, artist's face lines untouched, warm skin shade, distance casts, second light in the design, finish sheet.
