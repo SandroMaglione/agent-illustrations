@@ -34,6 +34,11 @@ How shapes are placed and checked. Code in `src/tools` and `src/splash`. Why the
 | Depth | `depth: { tail: 0.45 }` | softer, paler, bluer at the back |
 | Clean | `node scripts/clean.ts in.png out.png` | grey fills to paper, before numbering |
 | Wedge | `wedge s12 away 14 .25` | a fold with straight runs and pointed ends |
+| Facets | `?v=sheet&who=name&show=facets&part=legR` | every facet of a piece, numbered (`tools/facets.ts`) |
+| Tones | `node scripts/tone.ts name` | facet numbers in `<name>-tones.txt` to points in `<name>-tones.ts`; `tones` in the drawing |
+| Review | `node scripts/review.ts name dir piece:x,y,w,h …` | line art, colour, shadow design, grey of each piece |
+| Value | `node scripts/value.ts out.png render.png:box:head` | greyscale and numbers beside the references |
+| Brows, print | `brows: [{ d, color }]`, `print: ["flap"]` | eyebrows; parts whose inner lines are printed |
 | Lineup | `node scripts/lineup.ts out.png render.png head cx,cy` | the drawing between the references, colour and grey |
 | Light | `light: { fall: [.64, .77], up: .58 }` in the drawing | one light; cast shadows, rims, `turn`, `ball`, `away`, `warp!` all ask it (`light.ts`) |
 | `away` / `near` | `band s495 away 0 18 0` | the side away from the light, thinner where the line runs along it |

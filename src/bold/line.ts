@@ -4,7 +4,7 @@ import { blur } from "../lineart/flood.ts"
 import { smooth } from "../geo.ts"
 import type { P2 } from "../geo.ts"
 import type { Stroke } from "../tools/strokes.ts"
-import { BLACK, mix } from "./tones.ts"
+import { BLACK, mix, mul } from "./tones.ts"
 import type { Kind, RGB, Tone } from "./tones.ts"
 
 /** Local thickness: the largest disc of ink that covers each ink pixel. */
@@ -45,6 +45,8 @@ export type LineIn = {
   strokes: ReadonlyArray<Stroke>; fall: P2
   /** Round the eyes the artist's own ink is kept, at full weight. */
   eyes: ReadonlyArray<{ x: number; y: number; r: number }>
+  /** Parts with printed marks. */
+  print: Uint8Array
   /** How far back each part lies. */
   back: ReadonlyArray<number>
   /** 1 where a pixel is in shade. */
@@ -100,6 +102,16 @@ export const lineLayer = (q: LineIn): { image: ImageData; half: number } => {
   }
   const T = thin.getImageData(0, 0, w, h).data, F = full.getImageData(0, 0, w, h).data
   const shade = blur(dark, w, h, 2 * k, 1)
+  // what a line does is a matter of the whole stroke, not of one pixel: inside one form or between two, and how heavy
+  const flag = new Float32Array(N), fat2 = new Float32Array(N), some = new Float32Array(N)
+  for (let i = 0; i < N; i++) {
+    if (ink[i]! < 0.06) continue
+    const n = map[i]!, x = i % w, y = (i / w) | 0, r = Math.max(2, Math.round(wide[i]! + 2 * k))
+    let one = n !== bg
+    if (one) for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r], [r, r], [-r, r], [r, -r], [-r, -r]] as const) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < w && Y < h && map[Y * w + X] !== n) { one = false; break } }
+    some[i] = 1; flag[i] = one ? 1 : 0; fat2[i] = Math.min(2.4, wide[i]! / half)
+  }
+  const rr = Math.max(1, 2.2 * k), bs = blur(some, w, h, rr, 2), bf = blur(flag, w, h, rr, 2), bw = blur(fat2, w, h, rr, 2)
   for (let i = 0; i < N; i++) {
     const n = map[i]!, v = ink[i]!, t0 = T[i * 4 + 3]! / 255
     if (v < 0.06 && t0 < 0.01) continue
@@ -108,11 +120,17 @@ export const lineLayer = (q: LineIn): { image: ImageData; half: number } => {
     const x = i % w, y = (i / w) | 0, r = Math.max(2, Math.round(wide[i]! + 2))
     let page = n === bg, lo = z[n] ?? 0, hi = lo, skin = kinds[n] === "skin", other = -1
     for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r], [r, r], [-r, r], [r, -r], [-r, -r]] as const) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= w || Y >= h) continue; const m = map[Y * w + X]!; if (m !== n) other = m; if (m === bg) page = true; else if (m) { lo = Math.min(lo, z[m] ?? 0); hi = Math.max(hi, z[m] ?? 0); if (kinds[m] === "skin") skin = true } }
-    const lit = (page || hi > lo ? 0 : 1) * (1 - smooth(0.25, 0.7, shade[i]!)) * (1 - solid[i]!), t = tones[n] ?? tones[other < 0 ? 0 : other] ?? null
-    let c: RGB = BLACK
-    if (t && n !== q.face) c = mix(mix(BLACK, t.ink, 0.3), skin ? [112, 54, 56] : t.ink, lit * (skin ? 0.8 : kinds[n] === "hair" ? 0.85 : 0.75))
+    const inside = smooth(0.35, 0.75, bf[i]! / Math.max(0.01, bs[i]!)) * (page ? 0 : 1), heavy = q.print[n] ? 1 : smooth(1.3, 1.9, bw[i]! / Math.max(0.01, bs[i]!)), t = tones[n] ?? tones[other < 0 ? 0 : other] ?? null, sh = smooth(0.25, 0.7, shade[i]!)
+    let c: RGB = BLACK, soft = 1
+    if (t && n !== q.face) {
+      // a line inside one form only says where it bends: a darker step of the colour it lies on. A line between forms separates, and stays dark
+      const own = skin ? mix([196, 128, 124], [126, 62, 74], sh) : mix(mul(t.base, t.s1), mul(t.base, t.s2), 0.35 + 0.65 * sh)
+      const sep = mix(BLACK, skin ? [92, 40, 46] : t.ink, 0.3)
+      c = mix(sep, own, inside * (1 - heavy * 0.85))
+      soft = 1 - 0.12 * inside * (1 - heavy)
+    }
     { const d = page ? Math.max(0, ...[n, other].filter((m) => m >= 0 && m !== bg).map((m) => q.back[m] ?? 0)) : Math.min(q.back[n] ?? 0, other < 0 || other === bg ? 1 : q.back[other] ?? 0); if (d) c = mix(c, [150, 148, 186], d * 0.55) }
-    im.data[i * 4] = c[0]; im.data[i * 4 + 1] = c[1]; im.data[i * 4 + 2] = c[2]; im.data[i * 4 + 3] = a * 255
+    im.data[i * 4] = c[0]; im.data[i * 4 + 1] = c[1]; im.data[i * 4 + 2] = c[2]; im.data[i * 4 + 3] = a * soft * 255
   }
   return { image: im, half }
 }

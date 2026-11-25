@@ -41,6 +41,12 @@ export type Art = {
   forms?: ReadonlyArray<Form>
   /** Hair, shaded lock by lock (bold/locks.ts). */
   hair?: ReadonlyArray<Hair>
+  /** Fine rendering: a tone for every facet of a piece (tools/facets.ts). Such a piece gets no planes by itself. */
+  tones?: Readonly<Record<string, string>>
+  /** Parts whose inner lines are printed on them: they stay ink. */
+  print?: ReadonlyArray<string>
+  /** Brows, under the line and shining faintly through the hair. */
+  brows?: ReadonlyArray<{ d: string; color: string }>
   /** How far back a part lies, 0 to 1: further back is paler, bluer and has less contrast. */
   depth?: Readonly<Record<string, number>>
   /** Where the eye should land: further out, values close up and lines soften. */

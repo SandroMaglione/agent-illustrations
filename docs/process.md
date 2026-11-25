@@ -27,8 +27,10 @@ Lengths are line-art px; sizes that matter are shares of head height.
 5. **Turning planes** of each part, computed from the light (`turn`, `ball`). Then hair by lock, folds and seams from the kits, deep shade inside parents. Judge it in `view=masks`.
 6. **Children.** Trim, buttons and piping inherit the shade they lie on. Bevels on hard parts, never where something lies on top.
 7. **Lights.** A separate round: one lit plane per mass, one lit strand per lock, one glint per hard thing. A light stands on a line or crosses a whole plane.
-8. **Fix** DEAD and LEAK warnings, `pnpm check`, crops at 200% of head, hands and accessories. Fix the worst thing, repeat.
-9. **Critic**, optional (below).
+8. **Fine rendering, one piece at a time.** After the big planes stand: `show=facets&part=…` numbers every facet of a piece, write tones in `<name>-tones.txt` (L lit, H half, S shade, D deep, K darkest, T round), `scripts/tone.ts name` (it lists facets left plain and numbers that belong elsewhere). Then `scripts/review.ts name dir piece:box …` and look at each piece alone: does every plane follow a line, does it turn, does it read in grey? Fix the worst piece, repeat. Not done until every piece was looked at.
+9. **Value, again:** `scripts/value.ts`, `lineup.ts`.
+10. **Fix** DEAD and LEAK warnings, `pnpm check`, crops at 200% of head, hands and accessories. Fix the worst thing, repeat.
+11. **Critic**, optional (below).
 
 ## What the renderer does
 | # | Pass | Rule |

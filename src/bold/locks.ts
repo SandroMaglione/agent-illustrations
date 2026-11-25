@@ -21,7 +21,7 @@ export type Hair = {
 export type Locks = { shade: Float32Array; deep: Float32Array; light: Float32Array; hue: Float32Array; v: Float32Array; ring: Float32Array; any: Uint8Array }
 const sm = (a: number, b: number, x: number): number => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t) }
 
-export const locks = (q: { ink: Float32Array; map: Uint8Array; names: ReadonlyArray<string>; w: number; h: number }, hair: ReadonlyArray<Hair>, fall: P2, head: number, k: number): Locks => {
+export const locks = (q: { ink: Float32Array; map: Uint8Array; names: ReadonlyArray<string>; w: number; h: number; cut?: Int32Array }, hair: ReadonlyArray<Hair>, fall: P2, head: number, k: number): Locks => {
   const { ink, map, names, w, h } = q, N = w * h, o: Locks = { shade: new Float32Array(N), deep: new Float32Array(N), light: new Float32Array(N), hue: new Float32Array(N), v: new Float32Array(N), ring: new Float32Array(N), any: new Uint8Array(N) }
   const done = new Uint8Array(N), H = head * k
   for (const f of hair) {
@@ -29,10 +29,10 @@ export const locks = (q: { ink: Float32Array; map: Uint8Array; names: ReadonlyAr
     for (const n of f.on) { const i = names.indexOf(n); if (i > 0) on[i] = 1 }
     for (let s = 0; s < N; s++) {
       if (done[s] || !on[map[s]!] || ink[s]! > 0.42) continue
-      const px = [s], m0 = map[s]!
+      const px = [s], m0 = map[s]!, c0 = q.cut?.[s]
       done[s] = 1
       let x0 = w, y0 = h, x1 = 0, y1 = 0
-      for (let t = 0; t < px.length; t++) { const i = px[t]!, x = i % w, y = (i / w) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) if (j >= 0 && j < N && !done[j] && map[j] === m0 && ink[j]! <= 0.42) { done[j] = 1; px.push(j) } }
+      for (let t = 0; t < px.length; t++) { const i = px[t]!, x = i % w, y = (i / w) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) if (j >= 0 && j < N && !done[j] && map[j] === m0 && ink[j]! <= 0.42 && q.cut?.[j] === c0) { done[j] = 1; px.push(j) } }
       if (px.length < 10 * k * k) { for (const i of px) { o.any[i] = 1; o.shade[i] = 0.0 } continue }
       const P = 3, X = x0 - P, Y = y0 - P, W = x1 - x0 + 1 + P * 2, HH = y1 - y0 + 1 + P * 2, m = new Uint8Array(W * HH), at = (i: number): number => (((i / w) | 0) - Y) * W + (i % w) - X
       for (const i of px) m[at(i)] = 1

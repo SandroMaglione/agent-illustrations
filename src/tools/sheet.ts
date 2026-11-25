@@ -4,6 +4,7 @@ import { loadInk } from "../lineart/main.ts"
 import { linesOf, regionsOf, stampsOf } from "../splash/engine.ts"
 import type { Art } from "../splash/engine.ts"
 import type { P2 } from "../geo.ts"
+import { facetsOf } from "./facets.ts"
 import { each } from "./stamp.ts"
 
 const PAL = ["#d5263d", "#1667d9", "#12854a", "#9b35c9", "#c4710a", "#0d8f96", "#8a5a3c", "#d02c8d"]
@@ -11,6 +12,7 @@ const PAL = ["#d5263d", "#1667d9", "#12854a", "#9b35c9", "#c4710a", "#0d8f96", "
 export const sheetView = async (art: Art, q: URLSearchParams): Promise<HTMLCanvasElement> => {
   const [X, Y, W, H] = (q.get("box") ?? `0,0,${art.w},${art.h}`).split(",").map(Number) as [number, number, number, number], z = Number(q.get("z") ?? 3)
   if (q.get("show") === "pools") return poolSheet(art, X, Y, W, H, z, q)
+  if (q.get("show") === "facets") return facetSheet(art, X, Y, W, H, z, q)
   const R = await linesOf(art), show = q.get("show") ?? "lines", only = q.get("only")?.split(",").map(Number)
   const c = document.createElement("canvas")
   c.width = W * z; c.height = H * z
@@ -80,5 +82,27 @@ const poolSheet = async (art: Art, X: number, Y: number, W: number, H: number, z
   }
   if (q.has("list")) console.error(JSON.stringify(Object.fromEntries(Array.from({ length: P.n }, (_, i) => [i + 1, [Math.round((B.deep[i + 1]! % w) / k * 2) / 2, Math.round(((B.deep[i + 1]! / w) | 0) / k * 2) / 2, Math.round(B.size[i + 1]! / k / k)]]))))
   if (named) console.error(JSON.stringify({ unnamed: f.unnamed.map((p) => `${p}: ${Math.round((B.deep[p]! % w) / k)},${Math.round(((B.deep[p]! / w) | 0) / k)} ${Math.round(B.size[p]! / k / k)}px`) }))
+  return c
+}
+/** Every facet of a piece, numbered over its line art. `part=a,b` only these parts. */
+const facetSheet = async (art: Art, X: number, Y: number, W: number, H: number, z: number, q: URLSearchParams): Promise<HTMLCanvasElement> => {
+  const F = await facetsOf(art), { w, h, names, ink } = await regionsOf(art, 2), k = 2, only = q.get("part")?.split(",").map((n) => names.indexOf(n))
+  const c = document.createElement("canvas"), t = document.createElement("canvas")
+  c.width = W * z; c.height = H * z; t.width = w; t.height = h
+  const g = c.getContext("2d")!, im = new ImageData(w, h), hue = (n: number, o: number): number => 205 + 48 * Math.cos(((n * 137.5 + o) * Math.PI) / 180)
+  for (let i = 0; i < w * h; i++) { const f = F.id[i]!, on = f && (!only || only.includes(F.part[f]!)), v = 1 - Math.min(1, ink[i]! * 1.1); for (let e = 0; e < 3; e++) im.data[i * 4 + e] = (on ? hue(f, e * 120) : 255) * v; im.data[i * 4 + 3] = 255 }
+  t.getContext("2d")!.putImageData(im, 0, 0)
+  g.imageSmoothingQuality = "high"; g.drawImage(t, X * k, Y * k, W * k, H * k, 0, 0, W * z, H * z)
+  g.font = "bold 12px Helvetica"; g.textAlign = "center"; g.textBaseline = "middle"
+  const list: Record<number, readonly [number, number]> = {}
+  for (let f = 1; f <= F.n; f++) {
+    if (only && !only.includes(F.part[f]!)) continue
+    const [ax, ay] = F.at[f]!, x = (ax - X) * z, y = (ay - Y) * z
+    list[f] = F.at[f]!
+    if (x < 0 || y < 0 || x > W * z || y > H * z) continue
+    const text = String(f), wide = g.measureText(text).width + 3
+    g.fillStyle = "rgba(255,255,255,.75)"; g.fillRect(x - wide / 2, y - 7, wide, 14); g.fillStyle = "#000"; g.fillText(text, x, y)
+  }
+  if (q.has("list")) console.error(JSON.stringify(list))
   return c
 }

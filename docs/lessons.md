@@ -79,3 +79,17 @@ Also fixed: casts, eye light and rims now follow a light from any side; blur and
 Also: `scripts/clean.ts` turns grey fills into paper before anything is numbered (it must not change afterwards: it renumbers patches). `wedge` and hand-cut polygons for cloth the artist left open.
 Learned: the line art decides a lot. The head is about 205 px in both drawings; the fine one carries more form.
 Open: cloth folds are typed coordinates; large cloth stays plain; wide hair areas with open lines (bun) still muddy; small metal is busy; no glow or colour fringing; sleeve and jacket edges a little jagged at 400%.
+
+## Third round, `visor`, fine rendering (trial)
+| Client's note | Kind | Answer |
+|---|---|---|
+| inner lines softer, like the one under the armpit | do | a line inside one form takes a darker step of the colour it lies on; a line between forms stays dark; printed marks stay ink (`print`). Decided per stroke, not per pixel |
+| bounce light, cold, "neon" | do | a hard cold strip along edges that face away from the sun and have something further back behind them: blue on navy and white, violet on red, pink on skin |
+| eyebrows missing | forgot | `brows`: under the line, faint through the hair |
+| greyscale too soft, check at each stage | see | `scripts/value.ts` beside the references; grey in every review sheet. Palette planned again: navy darker, trousers and white lighter, jacket from coral to red |
+| shapes off the lines, unclear volume; a long refining step piece by piece | do | facets (`tools/facets.ts`): the artist's lines, even the faintest, cut a piece into numbered facets; an agent gives each a tone. `scripts/review.ts` shows one piece as line art, colour, shadow design, grey |
+| cold hue in shade, warm in light | do | shade factors colder; inside a shade it cools with distance, inside a light it warms towards the sun |
+
+Measured: dark fills 7 to 14% (e 9, f 37, g 33), 5th percentile 74 to 42 (47, 22, 41), black share 4.1 to 5.5 (6 to 14). The step between two planes (median 52 to 38) is still larger than the references' (19 to 23), which have many soft steps; the edge width is noisy, do not read much into it.
+Learned: shading by machine alone is either blobs or spots. Machine finds the pieces, the agent decides the tone, the machine cuts and lays it. 430 facets in 32 pieces took one pass. Hair shaded by rule looked like a leopard; by facet it became the sleekest part.
+Open: third soft step in shades; metal still by rule and busy; crate, hands, belt not facet-rendered; big cloth where the artist drew no line stays one tone; eyes typed; hair highlight zigzag is mechanical.
