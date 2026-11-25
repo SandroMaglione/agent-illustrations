@@ -1,4 +1,5 @@
 /** What a drawing is made of, and what every tool reads: regions, numbered lines, named shapes. Drawn by src/bold/render.ts. */
+import type { Detail } from "../bold/eye.ts"
 import { loop } from "../cel/path.ts"
 import { fill, paper } from "../bucket/fill.ts"
 import type { Clicks } from "../bucket/fill.ts"
@@ -78,14 +79,22 @@ export type Art = {
   noink: ReadonlyArray<string>
   /** Eyes placed from the lines the artist drew. */
   eyes?: ReadonlyArray<EyeSpec>
-  /** What `face` draws, piece by piece and in the same order, so that each piece can be a layer. `print`: printed on a thing, not part of the face. */
-  details?: ReadonlyArray<{ name: string; print?: boolean; draw: (g: CanvasRenderingContext2D) => void }>
-  /** The folders of the layered file, furthest first: name and the parts in it. Every part in exactly one (`src/layers/arrange.ts`). */
-  folders?: ReadonlyArray<readonly [string, string]>
+  /** What `face` and `over` draw, piece by piece and in the same order, so that each piece can be a layer (`bold/eye.ts`). */
+  details?: ReadonlyArray<Detail>
+  /** The folders of the layered file, furthest first (`src/layers/arrange.ts`). Every part in exactly one. */
+  folders?: Folders
+  /** A part in groups, each with its own folder: name and outline ("x,y" points, "s17" a line, "-s17" backwards). Listed in `folders` as "part:group". */
+  splits?: Readonly<Record<string, ReadonlyArray<readonly [string, string]>>>
+  /** The line art in layers of its own: folder and name, and the strokes ("s17", "@x,y,r" for marks). Hair, face and the rest are told apart by rule. */
+  lineGroups?: ReadonlyArray<readonly [string, string]>
+  /** Left and right of the face in the picture are told by this x. */
+  faceMid?: number
   face: (g: CanvasRenderingContext2D) => void; over: (g: CanvasRenderingContext2D) => void
   back: (g: CanvasRenderingContext2D) => void; front: (g: CanvasRenderingContext2D) => void
 }
 export const PASSES = ["Line art", "Flats", "Gradients", "Contact", "Shadow shapes", "Edges and warm band", "Deep shade", "Ring and light shapes", "Face and eyes", "Colour line", "Finish"] as const
+/** Folder (with subfolders, "Hair front/Fringe"), the parts in it, and "fine" where an illustrator needs every effect on a layer of its own. */
+export type Folders = ReadonlyArray<readonly [string, string, "fine"?]>
 export type View = "normal" | "grey" | "value" | "masks" | "regions"
 
 const vote = (wall: Float32Array, w: number, h: number) => (seed: Uint8Array): void => {

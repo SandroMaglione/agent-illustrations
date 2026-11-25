@@ -10,7 +10,7 @@ import type { Mode } from "./stack.ts"
 
 export type Hint = { mode: "auto" | "normal" | "multiply" | "add" | "dodge" | "linearLight" | "overlay"; color?: readonly [number, number, number] }
 /** One layer as it leaves the browser: pixels cut to their box, deflated. */
-export type Out = { key: string; name: string; group: string; mode: Mode; x: number; y: number; w: number; h: number; pixels: number; data: Uint8Array }
+export type Out = { key: string; name: string; group: string; clip?: boolean; mode: Mode; x: number; y: number; w: number; h: number; pixels: number; data: Uint8Array }
 
 const deflate = async (b: Uint8Array): Promise<Uint8Array> => new Uint8Array(await new Response(new Blob([b as BlobPart]).stream().pipeThrough(new CompressionStream("deflate"))).arrayBuffer())
 
@@ -22,19 +22,21 @@ export class Recorder {
   /** The step the next layers come from, as `STEPS` names it, or `flat:<part>`, `detail:<name>`, `print:<name>`. */
   key = ""
   /** The drawing's plan of folders, and the layer plan's helpers. */
-  folders: ReadonlyArray<readonly [string, string]> | null = null
+  folders: ReadonlyArray<readonly [string, string, "fine"?]> | null = null
+  /** Left and right of the face, in px. */
+  mid = 0
   /** Set by the renderer, which knows the size at its scale. */
   size(w: number, h: number): void { this.w = w; this.h = h }
 
   /** Keeps a finished RGBA layer (straight alpha). Empty layers are dropped. */
-  async keep(name: string, group: string, mode: Mode, rgba: Uint8ClampedArray | Uint8Array, at?: number): Promise<void> {
+  async keep(name: string, group: string, mode: Mode, rgba: Uint8ClampedArray | Uint8Array, at?: number, clip = false): Promise<void> {
     const { w, h } = this
     let x0 = w, y0 = h, x1 = -1, y1 = -1, n = 0
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (rgba[(y * w + x) * 4 + 3]) { n++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y }
     if (!n) { this.notes.push(`${name}: empty, dropped`); return }
     const bw = x1 - x0 + 1, bh = y1 - y0 + 1, cut = new Uint8Array(bw * bh * 4)
     for (let y = 0; y < bh; y++) cut.set(rgba.subarray(((y + y0) * w + x0) * 4, ((y + y0) * w + x1 + 1) * 4), y * bw * 4)
-    const o: Out = { key: this.key, name, group, mode, x: x0, y: y0, w: bw, h: bh, pixels: n, data: await deflate(cut) }
+    const o: Out = { key: this.key, name, group, mode, clip, x: x0, y: y0, w: bw, h: bh, pixels: n, data: await deflate(cut) }
     if (at === undefined) this.out.push(o); else this.out.splice(at, 0, o)
   }
 

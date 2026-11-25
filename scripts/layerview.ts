@@ -99,7 +99,11 @@ writeFileSync(join(dir, "view.html"), page)
 console.log(`  wrote ${join(dir, "view.html")} (${(page.length / 1e6).toFixed(1)} MB)`)
 
 // the sheet: the picture growing, every part's folder put together, and what one folder holds
-const url = await p.evaluate(async ({ data, W, H, M }) => {
+const groups = [...new Set(stack.layers.map((q) => q.group))], size = (g: string): number => stack.layers.filter((q) => q.group === g).length, most = (l: ReadonlyArray<string>): string | undefined => [...l].sort((x, y) => size(y) - size(x))[0], parts0 = groups.filter((q) => q.startsWith("Colour/"))
+/** The folders shown layer by layer, from the full-size layers: an eye, a group of hair, the face, and an ordinary part. */
+const inside = [most(groups.filter((q) => q.startsWith("Face features/Eye"))), groups.find((q) => q === "Face features/Mouth"), most(parts0.filter((q) => /hair front/i.test(q))), parts0.find((q) => /\/Face$/.test(q)), most(parts0.filter((q) => !/hair|face|ear/i.test(q)))].filter((q) => q !== undefined)
+const full = inside.map((g) => ({ g, layers: stack.layers.filter((q) => q.group === g).map((q) => ({ i: q.index, x: q.x, y: q.y, w: q.w, h: q.h, src: dataUrl(".png", readFileSync(join(dir, "png", files[q.index]!))) })) }))
+const url = await p.evaluate(async ({ data, W, H, M, full }) => {
   const I = await Promise.all(data.map(async (d) => { const i = new Image(); i.src = d.s; await i.decode(); return i }))
   const mk = (w: number, h: number): CanvasRenderingContext2D => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c.getContext("2d", { willReadFrequently: true })! }
   const ops: Record<string, GlobalCompositeOperation> = { normal: "source-over", multiply: "multiply", add: "lighter", dodge: "color-dodge", overlay: "overlay", screen: "screen" }
@@ -114,10 +118,10 @@ const url = await p.evaluate(async ({ data, W, H, M }) => {
       g.globalCompositeOperation = ops[d.m]!; g.drawImage(q.canvas, 0, 0); g.globalCompositeOperation = "source-over"
     }
   }
-  const all = data.map((_, i) => i), top = (i: number): string => data[i]!.g.split("/")[0]!, names = (list: ReadonlyArray<string>) => (i: number): boolean => top(i) !== "Colour" || list.includes(data[i]!.n)
-  const A = ["Base"], B = [...A, "Gradient", "Hue bands"], C = [...B, "Half tone", "Shadow 1", "Shadow edge", "Shadow lift", "Shadow 2"], noEffects = (i: number): boolean => !["Effects", "Details", "Line art", "Over lines"].includes(top(i))
-  const stages: Array<[string, Array<number>]> = [["Base", all.filter((i) => noEffects(i) && names(A)(i))], ["+ Gradient, hue bands", all.filter((i) => noEffects(i) && names(B)(i))], ["+ Shadows", all.filter((i) => noEffects(i) && names(C)(i))], ["+ Metal, lights, reflected light", all.filter(noEffects)], ["+ Effects", all.filter((i) => !["Details", "Line art", "Over lines"].includes(top(i)))], ["+ Details", all.filter((i) => !["Line art", "Over lines"].includes(top(i)))], ["+ Line art, eye lights", all]]
-  const parts = [...new Set(data.map((d) => d.g).filter((g) => g.startsWith("Colour/")))], biggest = [...parts].sort((x, y) => data.filter((d) => d.g === y).length - data.filter((d) => d.g === x).length)[0]!
+  const all = data.map((_, i) => i), top = (i: number): string => data[i]!.g.split("/")[0]!, names = (ok: (n: string) => boolean) => (i: number): boolean => top(i) !== "Colour" || ok(data[i]!.n)
+  const A = (n: string): boolean => n === "Base", B = (n: string): boolean => A(n) || /^(Gradient|Wash|Tip colour|Hue bands)/.test(n), C = (n: string): boolean => B(n) || /^(Half tone|Shadow)/.test(n), above = ["Effects", "Prints", "Face features", "Line art", "Over lines"], noEffects = (i: number): boolean => !above.includes(top(i))
+  const stages: Array<[string, Array<number>]> = [["Base", all.filter((i) => noEffects(i) && names(A)(i))], ["+ Gradient, hue bands", all.filter((i) => noEffects(i) && names(B)(i))], ["+ Shadows", all.filter((i) => noEffects(i) && names(C)(i))], ["+ Metal, lights, reflected light", all.filter(noEffects)], ["+ Effects", all.filter((i) => !above.slice(1).includes(top(i)))], ["+ Prints, face features", all.filter((i) => !["Line art", "Over lines"].includes(top(i)))], ["+ Line art", all]]
+  const parts = [...new Set(data.map((d) => d.g).filter((g) => g.startsWith("Colour/")))]
   const boxOf = (ids: Array<number>): [number, number, number, number] => { const g = mk(W, H); for (const i of ids) g.drawImage(I[i]!, 0, 0); const d = g.getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = 0, y1 = 0; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3]! > 8) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y) } return [Math.max(0, x0 - 4), Math.max(0, y0 - 4), Math.min(W, x1 + 5), Math.min(H, y1 + 5)] }
   const total = 2500, pad = 14, T = 28
   const g = mk(total, 6000)
@@ -137,15 +141,20 @@ const url = await p.evaluate(async ({ data, W, H, M }) => {
   row(stages.length, Math.round(((total - pad * 8) / 7 / W) * H), stages.map(([l, ids]) => (x, w, h) => { const q = mk(W, H); q.fillStyle = "#fff"; q.fillRect(0, 0, W, H); put(q, ids); g.drawImage(q.canvas, x, y, w, h); g.fillStyle = "#222"; g.fillText(l, x, y + h + 20, w) }))
   head("Colour: one folder per part")
   row(7, 270, parts.map((f) => (x, w, h) => { const ids = all.filter((i) => data[i]!.g === f); cell(x, w, h, ids, boxOf(ids), `${f.slice(7)} · ${ids.length} layers`) }))
-  for (const f of [biggest, parts.find((q) => /hair front/i.test(q)) ?? parts.at(-1)!]) {
-    head(`Inside ${f.slice(7)}, bottom to top, each layer clipped to Base`)
-    const ids = all.filter((i) => data[i]!.g === f), b = boxOf(ids)
-    row(6, 250, ids.map((i) => (x, w, h) => cell(x, w, h, [i], b, `${data[i]!.n} · ${M[data[i]!.m]}`)))
+  for (const f of full) {
+    head(`Inside ${f.g.split("/").slice(1).join(" / ")}, bottom to top`)
+    const im = await Promise.all(f.layers.map(async (d) => { const q = new Image(); q.src = d.src; await q.decode(); return q })), x0 = Math.min(...f.layers.map((d) => d.x)) - 6, y0 = Math.min(...f.layers.map((d) => d.y)) - 6, x1 = Math.max(...f.layers.map((d) => d.x + d.w)) + 6, y1 = Math.max(...f.layers.map((d) => d.y + d.h)) + 6
+    row(7, 215, f.layers.map((d, n) => (x, w, h) => {
+      for (let b = 0; b < h; b += 14) for (let a = 0; a < w; a += 14) { g.fillStyle = ((a + b) / 14) % 2 ? "#c9c9c9" : "#b5b5b5"; g.fillRect(x + a, y + b, Math.min(14, w - a), Math.min(14, h - b)) }
+      const s = Math.min(w / (x1 - x0), h / (y1 - y0)), ox = x + (w - (x1 - x0) * s) / 2, oy = y + (h - (y1 - y0) * s) / 2
+      g.drawImage(im[n]!, ox + (d.x - x0) * s, oy + (d.y - y0) * s, d.w * s, d.h * s)
+      g.fillStyle = "#222"; g.fillText(`${data[d.i]!.n} · ${M[data[d.i]!.m]}`, x, y + h + 20, w)
+    }))
   }
   const out = mk(total, Math.ceil(y))
   out.drawImage(g.canvas, 0, 0)
   return out.canvas.toDataURL("image/png")
-}, { data, W, H, M: modes })
+}, { data, W, H, M: modes, full })
 writeFileSync(join(dir, "sheet.png"), bytes(url))
 console.log(`  wrote ${join(dir, "sheet.png")}`)
 await b.close()

@@ -4,11 +4,13 @@
  *
  *   Paper, Background       what `back` draws, cut out of the white
  *   Colour/<part>           one folder per part, furthest first (`folders` in the drawing). In it, always in this order and
- *                           only where there is something: PART below, every layer clipped to Base
+ *                           only where there is something: PART below, or FINE where the drawing says "fine" (face, hair), every
+ *                           layer clipped to Base. A part can be in groups with folders of their own (Hair front/Fringe)
  *   Effects                 what lies over the whole figure: tint, glow, haze, grain
- *   Details                 prints, nose, mouth, eyes, brows: drawn flat, above the effects, so they stay clean
- *   Line art                Line in one ink, Line colour clipped to it
- *   Over lines              eye lights, and what `front` draws
+ *   Prints                  what is printed on things
+ *   Face features           nose, mouth, brows and each eye, every one with all that is its own: paint, lines, lights
+ *   Line art                body, face outline, hair outline, hair strands: each in one ink, its colour clipped to it
+ *   Over lines              what `front` draws
  *
  * Parts never share a pixel, so a step can be cut along them without changing the picture. Steps are merged as operations
  * (x -> a x + b per channel), not as pictures: a multiply stays a colour of its own and does not carry what lies under it.
@@ -20,11 +22,13 @@ import { blend } from "./stack.ts"
 import type { Layer, Mode, Stack } from "./stack.ts"
 
 export type Raw = Omit<Out, "data" | "pixels"> & { rgba: Uint8Array }
-type Slot = { name: string; mode: Mode; keys: ReadonlyArray<string> }
+type Only = "cast" | "form" | "left" | "right"
+type Slot = { name: string; mode: Mode; keys: ReadonlyArray<string>; only?: Only }
+export type Plan = ReadonlyArray<readonly [string, string, "fine"?]>
 /** What a part's folder can hold above its Base. One list for every part of every drawing. */
 export const PART: ReadonlyArray<Slot> = [
   { name: "Gradient", mode: "normal", keys: ["grads", "washes"] },
-  { name: "Hue bands", mode: "normal", keys: ["hairHue"] },
+  { name: "Hue bands", mode: "normal", keys: ["hairTip", "hairUp", "hairDown"] },
   { name: "Half tone", mode: "multiply", keys: ["half"] },
   { name: "Shadow 1", mode: "multiply", keys: ["shade"] },
   { name: "Shadow edge", mode: "multiply", keys: ["scatter", "inner"] },
@@ -37,8 +41,35 @@ export const PART: ReadonlyArray<Slot> = [
   { name: "Warm shade", mode: "overlay", keys: ["warmSkin"] },
   { name: "Blush", mode: "normal", keys: ["blush"] },
 ]
-const TINT = ["warm", "airWarm", "airCool", "focus"], DETAILS = ["Nose", "Mouth", "Face marks", "Eye whites", "Irises", "Eyes"]
-export const TOP = ["Colour", "Effects", "Details", "Line art", "Over lines"]
+/** The same, one layer per effect: for the places an illustrator works on most. */
+export const FINE: ReadonlyArray<Slot> = [
+  { name: "Gradient", mode: "normal", keys: ["grads"] },
+  { name: "Wash", mode: "normal", keys: ["washes"] },
+  { name: "Tip colour", mode: "normal", keys: ["hairTip"] },
+  { name: "Hue bands, light", mode: "normal", keys: ["hairUp"] },
+  { name: "Hue bands, dark", mode: "normal", keys: ["hairDown"] },
+  { name: "Half tone", mode: "multiply", keys: ["half"] },
+  { name: "Shadow 1, form", mode: "multiply", keys: ["shade"], only: "form" },
+  { name: "Shadow 1, cast", mode: "multiply", keys: ["shade"], only: "cast" },
+  { name: "Shadow edge, scatter", mode: "multiply", keys: ["scatter"] },
+  { name: "Shadow edge, core", mode: "multiply", keys: ["inner"] },
+  { name: "Shadow lift", mode: "dodge", keys: ["lift", "reflected"] },
+  { name: "Shadow 2, form", mode: "multiply", keys: ["deep", "black"], only: "form" },
+  { name: "Shadow 2, cast", mode: "multiply", keys: ["deep", "black"], only: "cast" },
+  { name: "Metal", mode: "normal", keys: ["metal", "metalShade"] },
+  { name: "Light", mode: "normal", keys: ["sheen", "lights", "hairLight"] },
+  { name: "Rim light", mode: "normal", keys: ["rims"] },
+  { name: "Highlight", mode: "normal", keys: ["gloss", "highlights"] },
+  { name: "Reflected, bounce", mode: "normal", keys: ["bounce"] },
+  { name: "Reflected, neighbours", mode: "normal", keys: ["bleed"] },
+  { name: "Reflected, second light edge", mode: "normal", keys: ["skyIn"] },
+  { name: "Reflected, second light", mode: "normal", keys: ["sky"] },
+  { name: "Warm shade", mode: "overlay", keys: ["warmSkin"] },
+  { name: "Blush, left", mode: "normal", keys: ["blush"], only: "left" },
+  { name: "Blush, right", mode: "normal", keys: ["blush"], only: "right" },
+]
+const TINT = ["warm", "airWarm", "airCool", "focus"]
+export const TOP = ["Colour", "Effects", "Prints", "Face features", "Line art", "Over lines"]
 
 const byte = (v: number): number => Math.max(0, Math.min(255, Math.round(v)))
 type Box = { x: number; y: number; w: number; h: number }
@@ -130,7 +161,7 @@ const trim = (rgba: Uint8Array, b: Box): (Box & { rgba: Uint8Array }) | null => 
   return { x: b.x + x0, y: b.y + y0, w, h, rgba: o }
 }
 
-export const arrange = (raw: ReadonlyArray<Raw>, plan: ReadonlyArray<readonly [string, string]>, w: number, h: number): { stack: Stack; notes: Array<string>; problems: Array<string> } => {
+export const arrange = (raw: ReadonlyArray<Raw>, plan: Plan, w: number, h: number, mid = 0): { stack: Stack; notes: Array<string>; problems: Array<string> } => {
   const notes: Array<string> = [], problems: Array<string> = [], layers: Array<Layer> = [], N = w * h, all: Box = { x: 0, y: 0, w, h }
   const of = (k: string): Array<Raw> => raw.filter((L) => L.key === k)
   const leaf = (group: string, name: string, mode: Mode, b: Box & { rgba: Uint8Array }, clip = false): void => { layers.push({ name, group, mode, opacity: 1, visible: true, x: b.x, y: b.y, w: b.w, h: b.h, rgba: b.rgba, clip }) }
@@ -144,8 +175,11 @@ export const arrange = (raw: ReadonlyArray<Raw>, plan: ReadonlyArray<readonly [s
   }
 
   const flats = new Map(raw.filter((L) => L.key.startsWith("flat:")).map((L) => [L.key.slice(5), L] as const)), figure = new Uint8Array(N), used = new Map<string, string>(), known = new Set<string>()
-  for (const s of PART) for (const k of s.keys) known.add(k)
-  for (const [folder, parts] of plan) {
+  for (const s of [...PART, ...FINE]) for (const k of s.keys) known.add(k)
+  const castBy = new Uint8Array(N), sides: Partial<Record<Only, Uint8Array>> = {}
+  for (const L of of("mask:cast")) for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) if (L.rgba[(y * L.w + x) * 4 + 3]) castBy[(y + L.y) * w + x + L.x] = 1
+  sides.cast = castBy; sides.form = castBy.map((v) => 1 - v); sides.left = new Uint8Array(N).map((_, i) => (i % w < mid ? 1 : 0)); sides.right = sides.left.map((v) => 1 - v)
+  for (const [folder, parts, fine] of plan) {
     const names = parts.split(" "), mine: Array<Raw> = []
     for (const n of names) { const L = flats.get(n); if (used.has(n)) problems.push(`part ${n} is in ${used.get(n)} and in ${folder}`); used.set(n, folder); if (L) mine.push(L); else problems.push(`${folder}: no part ${n}`) }
     if (!mine.length) continue
@@ -162,12 +196,12 @@ export const arrange = (raw: ReadonlyArray<Raw>, plan: ReadonlyArray<readonly [s
       const t = trim(rgba, box)
       if (t) leaf(`Colour/${folder}`, name, mode, t, true)
     }
-    for (const s of PART) {
-      const src = s.keys.flatMap(of)
+    for (const s of fine ? FINE : PART) {
+      const src = s.keys.flatMap(of), only = s.only ? mask.map((v, i) => v & sides[s.only!]![i]!) : mask
       if (!src.length) continue
       if (s.mode === "overlay") { const o = new Uint8Array(box.w * box.h * 4); for (const L of src) for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) { const X = x + L.x - x0, Y = y + L.y - y0; if (X < 0 || Y < 0 || X >= box.w || Y >= box.h || !mask[(y + L.y) * w + x + L.x]) continue; const p = (y * L.w + x) * 4; if (L.mode === "overlay") o.set(L.rgba.subarray(p, p + 4), (Y * box.w + X) * 4) } sweep(o, box.w, box.h, N / 350000); put(s.name, s.mode, o); continue }
       const op = new Op(box)
-      for (const L of src) op.add(L, mask, w)
+      for (const L of src) op.add(L, only, w)
       const { rgba, odd } = asLayer(op, s.mode, state)
       if (odd) notes.push(`${folder}/${s.name}: ${odd} px both lift and darken, the lift is lost`)
       settle(rgba, box.w, box.h, 3)
@@ -182,28 +216,50 @@ export const arrange = (raw: ReadonlyArray<Raw>, plan: ReadonlyArray<readonly [s
   for (const k of TINT) for (const L of of(k)) (L.mode === "dodge" ? glow : dark).add(L, figure, w)
   for (const [name, mode, op] of [["Tint", "multiply", dark], ["Glow", "dodge", glow]] as const) { for (let i = 0; i < N; i++) op.cover[i] = figure[i]!; const { rgba } = asLayer(op, mode, none, true), t = trim(rgba, all); if (t && rgba.some((v, i) => i % 4 !== 3 && figure[i >> 2] && (mode === "multiply" ? v < 252 : v > 3))) leaf("Effects", name, mode, t) }
   for (const [k, name] of [["haze", "Depth haze"], ["grain", "Grain"]] as const) for (const L of of(k)) leaf("Effects", name, L.mode, L)
-  for (const L of raw.filter((q) => q.key.startsWith("print:"))) leaf("Details", L.name, L.mode, L)
-  const details = raw.filter((L) => L.key.startsWith("detail:")), rank = (n: string): number => { const i = DETAILS.indexOf(n); return i < 0 ? 99 : i }
-  for (const L of [...details].sort((a, b) => rank(a.name) - rank(b.name))) leaf("Details", L.name, L.mode, L)
-  for (const L of of("face")) leaf("Details", "Face marks", L.mode, L)
-  for (const L of of("brows")) leaf("Details", "Brows", L.mode, L)
-  // lines: the shapes in one ink, their colours clipped on top, so either can be changed alone
-  for (const L of of("line")) {
+  // printed on things: drawn flat, above the effects
+  for (const L of raw.filter((q) => q.key.startsWith("print:"))) leaf("Prints", L.name, L.mode, L)
+  // the face: every eye, the mouth, the nose and the brows with all that is theirs in one folder, paint, then lines, then lights
+  const F = "Face features", inked = (group: string, name: string, L: Raw): void => {
+    // the shape in one ink, its colours clipped on top, so either can be changed alone
     const one = L.rgba.slice(), col = L.rgba.slice()
-    for (let i = 0; i < one.length; i += 4) { for (let c = 0; c < 3; c++) one[i + c] = BLACK[c]!; col[i + 3] = L.rgba[i + 3] ? 255 : 0 }
-    leaf("Line art", "Line", "normal", { ...L, rgba: one })
-    const t = trim(col, L)
-    if (t) leaf("Line art", "Line colour", "normal", t, true)
+    let tinted = 0, ink = 0
+    for (let i = 0; i < one.length; i += 4) { if (L.rgba[i + 3]! > 40 && Math.max(...[0, 1, 2].map((c) => Math.abs(L.rgba[i + c]! - BLACK[c]!))) > 3) tinted++; if (L.rgba[i + 3]! > 40) ink++; for (let c = 0; c < 3; c++) one[i + c] = BLACK[c]!; col[i + 3] = L.rgba[i + 3] ? 255 : 0 }
+    const a = trim(one, L), t = trim(col, L)
+    if (a) leaf(group, name, "normal", a)
+    if (a && t && tinted > Math.max(20, ink * 0.06)) leaf(group, name === "Line" ? "Line colour" : `${name}, colour`, "normal", t, true)
   }
+  const RULED = ["Body", "Face", "Hair outline", "Hair strands"], lines = raw.filter((L) => L.key.startsWith("line:")), ruled = lines.filter((L) => RULED.includes(L.key.slice(5))), named = lines.filter((L) => !ruled.includes(L))
+  const folderOf = (L: Raw): string => { const n = L.key.slice(L.key.indexOf(":") + 1); return L.key.startsWith("line:") ? (n.includes("/") ? n.split("/")[0]! : "") : n }
+  const mine = [...raw.filter((L) => L.key.startsWith("detail:")), ...named, ...raw.filter((L) => L.key.startsWith("over:"))], order = ["", "Nose", "Mouth", "Brows"], rank = (n: string): number => { const i = order.indexOf(n); return i < 0 ? 9 : i }
+  for (const L of of("face")) leaf(F, "Face marks", L.mode, L)
+  const brows = of("brows"), names = [...new Set([...mine.map(folderOf), ...(brows.length ? ["Brows"] : [])])].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))
+  for (const f of names) {
+    const at = f ? `${F}/${f}` : F
+    if (f === "Brows") for (const L of brows) {
+      // a brow, the other, and what of them shows through the hair
+      const hair = new Uint8Array(N), face = new Uint8Array(N)
+      for (const [k, Q] of flats) for (let y = 0; y < Q.h; y++) for (let x = 0; x < Q.w; x++) if (Q.rgba[(y * Q.w + x) * 4 + 3]) (k === "face" ? face : hair)[(y + Q.y) * w + x + Q.x] = 1
+      for (const [name, ok] of [["Through the hair", (i: number) => hair[i] === 1], ["Brow left", (i: number) => face[i] === 1 && i % w < mid], [mid ? "Brow right" : "Brows", (i: number) => face[i] === 1 && i % w >= mid]] as const) {
+        const o = L.rgba.slice()
+        let n = 0
+        for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) { const p = (y * L.w + x) * 4; if (!o[p + 3]) continue; if (ok((y + L.y) * w + x + L.x)) n++; else o[p + 3] = 0 }
+        const t = n > 8 ? trim(o, L) : null
+        if (t) leaf(at, name, L.mode, t)
+      }
+    }
+    for (const L of mine) if (folderOf(L) === f) { if (L.key.startsWith("line:")) inked(at, L.key.slice(5).split("/").at(-1)!, L); else leaf(at, L.name, L.mode, L, L.clip ?? false) }
+  }
+  if (lines.length) for (const L of ruled) inked("Line art", L.key.slice(5), L)
+  else for (const L of of("line")) inked("Line art", "Line", L)
   for (const [k, name] of [["over", "Eye lights"], ["front", "Front"]] as const) for (const L of of(k)) leaf("Over lines", name, L.mode, L)
   const placed = new Set([...known, ...TINT, "haze", "grain", "brows", "line", "over", "front", "back", "face"])
-  for (const L of raw) if (!placed.has(L.key) && !/^(flat|detail|print):/.test(L.key)) problems.push(`step ${L.key} (${L.name}) has no place in the layers`)
-  return { stack: { w, h, layers, sealed: [...plan.map(([f]) => `Colour/${f}`), "Details", "Line art", "Over lines"] }, notes, problems }
+  for (const L of raw) if (!placed.has(L.key) && !/^(flat|detail|print|mask|line|over):/.test(L.key)) problems.push(`step ${L.key} (${L.name}) has no place in the layers`)
+  return { stack: { w, h, layers, sealed: [...new Set(layers.map((L) => L.group).filter((g) => g && g !== "Colour" && g !== "Effects").flatMap((g) => { const p = g.split("/"); return p.map((_, i) => p.slice(0, i + 1).join("/")) }))].filter((g) => g !== "Colour") }, notes, problems }
 }
 
 /** What "clean" means, as rules that can fail. */
-export const checkStack = (s: Stack, plan: ReadonlyArray<readonly [string, string]>): Array<string> => {
-  const bad: Array<string> = [], order = ["Base", ...PART.map((p) => p.name)], tops = s.layers.map((L) => L.group.split("/")[0]!).filter(Boolean).map((g) => TOP.indexOf(g))
+export const checkStack = (s: Stack, plan: Plan): Array<string> => {
+  const bad: Array<string> = [], tops = s.layers.map((L) => L.group.split("/")[0]!).filter(Boolean).map((g) => TOP.indexOf(g))
   if (tops.some((v, i) => v < 0 || (i && v < tops[i - 1]!))) bad.push("top folders are not the fixed ones, in the fixed order")
   const groups = [...new Set(s.layers.map((L) => L.group))]
   for (const g of groups) {
@@ -213,7 +269,8 @@ export const checkStack = (s: Stack, plan: ReadonlyArray<readonly [string, strin
     if (g && at.at(-1)! - at[0]! + 1 !== at.length) bad.push(`${g}: the folder is in two places`)
     if (!g.startsWith("Colour/")) continue
     if (!plan.some(([f]) => `Colour/${f}` === g)) bad.push(`${g}: not in the plan`)
-    const ranks = names.map((n) => order.indexOf(n)), fixed = ranks.filter((v) => v >= 0)
+    const order = ["Base", ...(plan.find(([f]) => `Colour/${f}` === g)?.[2] ? FINE : PART).map((q) => q.name)], ranks = names.map((n) => order.indexOf(n)), fixed = ranks.filter((v) => v >= 0)
+    for (const [i, v] of ranks.entries()) if (v < 0) bad.push(`${g}/${names[i]!}: not a name from the list`)
     if (names[0] !== "Base") bad.push(`${g}: does not start with Base`)
     if (fixed.some((v, i) => i > 0 && v < fixed[i - 1]!)) bad.push(`${g}: layers out of order`)
     const base = kids[0]!

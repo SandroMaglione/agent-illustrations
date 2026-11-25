@@ -2,7 +2,7 @@
 
 **The goal: an illustrator opens the file and goes on painting.** So it is organised the way an illustrator keeps a file, the same in every drawing, and a check fails when it is not.
 
-**Status.** A `.clip` from this repository opens in CLIP STUDIO PAINT 5.0.1 with the right modes, folders and names ([details](#the-clip)); that was the first layout, one layer per paint step. The layout below is newer: clipping, nested folders and color dodge in it have not been opened in CSP yet.
+**Status.** A `.clip` from this repository opens in CLIP STUDIO PAINT 5.0.1 with the right modes, folders and names ([details](#the-clip)); that was the first layout, one layer per paint step. The layout below is newer: with clipping, nested folders and color dodge. The client opened it too ("awesome") and asked for more control on eyes, face and hair, which is what is described here.
 
 ```sh
 node scripts/layers.ts maren output/layers/maren --clip                       # PSD, .clip, layer PNGs, stack.json, the checks
@@ -20,13 +20,20 @@ As in the layer panel, top first:
 
 | Folder | Holds |
 |---|---|
-| **Over lines** | Eye lights (and what `front` draws) |
-| **Line art** | `Line` in one ink; `Line colour` clipped to it |
-| **Details** | Brows, Irises, Eye whites, Mouth, Nose, Prints: drawn flat, above the effects, so they stay clean |
+| **Over lines** | what `front` draws; often not there |
+| **Line art** | Body, Face, Hair outline, Hair strands: each in one ink, its colour clipped to it |
+| **Face features** | Eye left, Eye right, Brows, Mouth, Nose: each with all that is its own, paint, then lines, then lights. Above the effects, so they stay clean |
+| **Prints** | what is printed on things |
 | **Effects** (pass-through) | Grain (linear light), Depth haze, Glow (color dodge), Tint (multiply): over the whole figure |
-| **Colour** (pass-through) | one folder per part, nearest on top: Hands, Headphones, Hair front, Face, …, Hair back |
+| **Colour** (pass-through) | one folder per part, nearest on top: Hands, Headphones, Hair front (in groups: Ahoge, Fringe, Side left, Side right), Face, Ear, …, Hair back |
 | Background | only when `back` draws something; cut out of the white |
 | Paper | CSP's own |
+
+**An eye**, bottom to top (left and right are the picture's): White; clipped to it White shade, Iris, Iris gradient, Iris rays, Iris glow, Iris glow bright, Lid shadow, Pupil, Pupil light; then the artist's lines, Iris line, Lid crease, Lower lash, Upper lash; then Main light, two small lights, Warm glint, Star. The iris and what is on it are whole shapes that go on under the lid: select them together and the eye looks elsewhere. Made by one kit for every drawing (`src/bold/eye.ts`).
+
+**The mouth**: Teeth, Teeth shade, Inner mouth, Lip colour, Mouth line, Lip light. **The nose**: Nose shade, Nose line. **Brows**: left, right, and what shows through the hair.
+
+**Where an illustrator works most** (`"fine"` in `folders`: face, ear, hair) every effect has a layer of its own instead of the list below: Gradient, Wash, Tip colour, Hue bands light and dark, Half tone, Shadow 1 form, Shadow 1 cast, Shadow edge scatter and core, Shadow lift, Shadow 2 form and cast, Light, Rim light, Highlight, Reflected bounce, neighbours and second light, Warm shade, Blush left and right. Form is the part turning away; cast falls from something else, so the hair's shadow on the face is on its own.
 
 Every part's folder holds the same layers, in the same order, only where there is something to hold. Everything above `Base` is clipped to it, so painting never spills:
 
@@ -47,12 +54,12 @@ Every part's folder holds the same layers, in the same order, only where there i
 | Gradient | normal | slow colour over the base |
 | **Base** | normal | the part's flat colours, opaque, hard edged |
 
-Which parts go in which folder is data: `folders` in the drawing (`src/splash/tape-folders.ts`), furthest first. What the face draws is named piece by piece (`details`).
+Which parts go in which folder is data in the drawing, furthest first: `folders`, and `splits` for a part in groups (outlines that can follow drawn lines, `src/splash/tape-folders.ts`). What is painted in the face is named piece by piece (`details`), whose line is whose by stroke number (`lineGroups`, `src/splash/maren-face.ts`).
 
 ## What "clean" means
 `checkStack` (`src/layers/arrange.ts`) runs at every export and says NOT CLEAN when one fails:
 - every part is in exactly one folder, every paint step has a place;
-- only the five top folders, in order; only names from the list, in order, none twice;
+- only the six top folders, in order; only names from the list, in order, none twice;
 - every folder starts with `Base`, every other layer is clipped and has no pixel outside it;
 - no empty layer.
 
@@ -84,10 +91,10 @@ On renders at k=2, 26 November 2026, the new layout:
 | Check | Maren | Goggles (`rig`) | Headphones (`tape`) | Bell (`bell`) |
 |---|---|---|---|---|
 | Render without layers vs before | identical (also `visor`) | identical | | |
-| Folders, layers with paper | 18, 117 | 13, 77 | 18, 94 | 16, 77 |
+| Folders with layers, layers with paper | 27, 202 | 14, 103 | 22, 123 | 17, 86 |
 | Clean | yes | yes | yes | yes |
-| Stack vs render, whole image: pixels off by more than 2, 8 | 1.91%, 0.47% | 1.12%, 0.52% | 0.61%, 0.47% | 0.73%, 0.58% |
-| More than 3 px inside the figure: off by more than 2 | 2.09% | 0.80% | 0.08% | 0.08% |
+| Stack vs render, whole image: pixels off by more than 2, 8 | 1.91%, 0.47% | 1.11%, 0.53% | 0.61%, 0.47% | 0.73%, 0.58% |
+| More than 3 px inside the figure: off by more than 2 | 2.10% | 0.79% | 0.08% | 0.08% |
 | .clip read back: rule problems | 0 | 0 | 0 | 0 |
 
 Maren's PSD composited by **psd-tools** (an independent reader) vs our own composite: max 3.
@@ -133,6 +140,8 @@ With `--template` pointing at a .clip of the same size as the render, nothing in
 - Layers are pixels at the render's scale, not vector strokes, and not the renderer's shapes. Edit them like painted layers.
 - Shadows follow when a Base is recoloured; normal layers (Gradient, lights, reflected light) keep their colours.
 - Bases are hard edged and end in the middle of a line; a part does not go on under what covers it.
+- Eyes are in pieces where the eye kit paints them (`maren`, `visor`). The older drawings paint them with the eye rig or by hand: one layer.
+- Lines are told apart by walking through the ink from each stroke's middle: where two meet, the cut is a guess and can look blunt on its own.
 - A part's Base holds all its colours in one layer (Jacket: cloth, lining, trim, cuffs).
 - Re-render after changing the drawing's data; the layers are not read back into the code.
 - The background lies under the line art (see above). `cut` renders and the `masks`, `value`, `grey` and `regions` views have no layers.
@@ -144,6 +153,8 @@ With `--template` pointing at a .clip of the same size as the render, nothing in
 | `src/layers/steps.ts` | every step: name, folder, mode |
 | `src/layers/record.ts` | the recorder in the browser, and the fit |
 | `src/layers/arrange.ts` | from paint steps to the illustrator's file, and what clean means |
+| `src/layers/linegroups.ts` | whose line a pixel of ink is |
+| `src/bold/eye.ts` | the painted eye, in pieces |
 | `src/layers/stack.ts` | the stack, its tree and its composite, with CSP's formulas |
 | `src/layers/psd.ts` | the PSD writer |
 | `src/layers/clip.ts` | the .clip writer: new canvas or injected |

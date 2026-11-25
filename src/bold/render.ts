@@ -24,6 +24,8 @@ import { path } from "./shadows.ts"
 import { BLACK, hexRgb, hsv, luma, mix, SKY, SUN, tone, turnHue } from "./tones.ts"
 import type { Kind, RGB } from "./tones.ts"
 import type { Recorder } from "../layers/record.ts"
+import { inkOf, lineGroups, outline } from "../layers/linegroups.ts"
+import type { Detail } from "./eye.ts"
 import { STEPS } from "../layers/steps.ts"
 
 /** Straightens masks part by part. Outside the part the mask is continued first, so nothing is rounded off where it meets a line. */
@@ -89,7 +91,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     R[i] = c[0]; G[i] = c[1]; B[i] = c[2]
   }
   rec?.size(w, h)
-  if (rec) rec.folders = art.folders ?? null
+  if (rec) { rec.folders = art.folders ?? null; rec.mid = (art.faceMid ?? 0) * k }
   /* layers: every paint step has a name (`on`). Recording, a loop runs once per step, each time doing only that step */
   let gate: string | null = null, tag = "", stray = 0
   const cover = rec ? new Float32Array(N) : null, on = (t: string): void => { tag = t }
@@ -122,16 +124,27 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     if (!t || q === bg || upto === 0) continue
     const f = new Uint8ClampedArray(N * 4)
     for (let i = 0; i < N; i++) if (map[i] === q) { f[i * 4] = t.base[0]; f[i * 4 + 1] = t.base[1]; f[i * 4 + 2] = t.base[2]; f[i * 4 + 3] = 255 }
-    rec.key = `flat:${names[q]!}`
-    await rec.keep(names[q]!, "Flats", "normal", f)
+    // a part in groups: the first outline a pixel lies in, or the part itself
+    const groups = art.splits?.[names[q]!]
+    if (!groups) { rec.key = `flat:${names[q]!}`; await rec.keep(names[q]!, "Flats", "normal", f); continue }
+    const left = f.slice()
+    for (const [g, d] of groups) {
+      tmp.g.clearRect(0, 0, w, h); tmp.g.beginPath(); outline(d, refs.run).forEach(([x, y], i) => (i ? tmp.g.lineTo(x * k, y * k) : tmp.g.moveTo(x * k, y * k))); tmp.g.fillStyle = "#000"; tmp.g.fill()
+      const a = alphaOf(), one = new Uint8ClampedArray(N * 4)
+      for (let i = 0; i < N; i++) if (left[i * 4 + 3] && a[i * 4 + 3]! > 127) { for (let c = 0; c < 4; c++) one[i * 4 + c] = left[i * 4 + c]!; left[i * 4 + 3] = 0 }
+      rec.key = `flat:${names[q]!}:${g}`; await rec.keep(`${names[q]!}:${g}`, "Flats", "normal", one)
+    }
+    rec.key = `flat:${names[q]!}`; await rec.keep(names[q]!, "Flats", "normal", left)
   }
   if (upto >= 2 && view !== "regions") {
     await stage(["grads"], () => { for (const q of art.grads) { const ok = set(q.on), l2 = (q.b[0] - q.a[0]) ** 2 + (q.b[1] - q.a[1]) ** 2; for (let i = 0; i < N; i++) if (ok[map[i]!]) to(i, q.to, smooth(0, 1, (((i % w) / k - q.a[0]) * (q.b[0] - q.a[0]) + (((i / w) | 0) / k - q.a[1]) * (q.b[1] - q.a[1])) / l2) * q.k) } })
-    await stage(["hairHue"], () => { if (hairs) for (let i = 0; i < N; i++) {
+    await stage(["hairTip", "hairUp", "hairDown"], () => { if (hairs) for (let i = 0; i < N; i++) {
       if (!hairs.any[i]) continue
       const turn = hairTip[map[i]!]!, v = hairs.v[i]!
+      on("hairTip")
       if (turn) { const t = cached([R[i]!, G[i]!, B[i]!], turn, 1.06); to(i, t, smooth(0.15, 0.95, v)) }
       const g = hairs.hue[i]!
+      on(g > 0 ? "hairUp" : "hairDown")
       if (g) { const c: RGB = [R[i]!, G[i]!, B[i]!]; const t = cached(c, g > 0 ? 9 : -12, 1.06); to(i, g > 0 ? [t[0] * 1.02, t[1] * 1.02, t[2] * 1.02] : [t[0] * 0.97, t[1] * 0.965, t[2] * 0.98], Math.abs(g) * 0.7) }
     } })
     await stage(["washes"], () => wash(false))
@@ -187,6 +200,10 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     for (let i = 0; i < N; i++) if (!formShade[i]) { softOnly[i] = 0; refl[i] = 0; m2[i] = 0 } else mh[i] = 0
   }
   /* the shadow design: shapes drawn over the form */
+  /** Recording: shade that falls from something else, not the form turning. */
+  const fallen = rec ? new Uint8Array(N) : null
+  const marked = rec ? new Uint8Array(N) : null
+  if (fallen && FF) for (let i = 0; i < N; i++) if (FF.cast[i]! > 0.5) fallen[i] = 1
   const drawnB = new Uint8Array(N), gloss = new Float32Array(N), designed = set((art.shadows ?? []).filter((q) => !q.add).flatMap((q) => q.on))
   if (art.shadows && upto >= 4) {
     for (let i = 0; i < N; i++) if (designed[map[i]!]) { formShade[i] = 0; softOnly[i] = 0; refl[i] = 0; m2[i] = 0; mh[i] = 0; ml[i] = 0; if (P) P.turned[i] = 0; if (FF) FF.cast[i] = 0; if (kinds[map[i]!] === "hair") m1[i] = 0 }
@@ -196,6 +213,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       const d = alphaOf()
       for (let i = 0; i < N; i++) {
         if (d[i * 4 + 3]! < 128 || !on[map[i]!]) continue
+        if (fallen && (q.tone === "S" || q.tone === "X")) fallen[i] = q.tone === "X" && !q.add ? 1 : 0
         if (q.tone === "S") { formShade[i] = 1; softOnly[i] = 1; mh[i] = 0; ml[i] = 0; refl[i] = 0 }
         else if (q.tone === "X") { formShade[i] = 1; softOnly[i] = 0; mh[i] = 0; ml[i] = 0; refl[i] = 0 }
         else if (q.tone === "H") { if (!formShade[i]) mh[i] = 1; ml[i] = 0 }
@@ -243,7 +261,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       // where the blockout casts, it alone does
       const mesh = FF && d > 6 ? set([...(art.meshCasts ?? []), ...(art.shadows ?? []).filter((q) => !q.add).flatMap((q) => q.on)]) : null
       const A = set(a), O = set(b)
-      each(cast(map, w, h, boxes, A, O, sun.x * d * k, sun.y * d * k, Math.min(2.4, d * 0.1) * k), w, (i) => { if (!mesh?.[map[i]!]) m1[i] = 1 })
+      each(cast(map, w, h, boxes, A, O, sun.x * d * k, sun.y * d * k, Math.min(2.4, d * 0.1) * k), w, (i) => { if (!mesh?.[map[i]!]) { if (fallen && m1[i]! < 0.5) fallen[i] = 1; m1[i] = 1 } })
       if (deep && upto >= 6) {
         each(cast(map, w, h, boxes, A, O, sun.x * d * deep * k, sun.y * d * deep * k, Math.min(2, d * deep * 0.14) * k), w, (i) => { if (!mesh?.[map[i]!]) m2[i] = 1 })
         // right under the thing it is too dark to see colour
@@ -253,6 +271,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     for (const [kids, on] of art.inherits ?? []) { const a = set(kids), b = set(on), one = inherit(map, w, h, m1, a, b, 6 * k), two = upto >= 6 ? inherit(map, w, h, m2, a, b, 6 * k) : null; for (let i = 0; i < N; i++) { if (one[i]) m1[i] = 1; if (two?.[i]) m2[i] = 1 } }
     for (const q of art.bevels ?? []) { const on = set(q.on), low = Math.min(...q.on.map((n) => art.defs[n]?.z ?? 0)), over = new Uint8Array(names.length); defs.forEach((d, n) => { if (d && d.z > low && !on[n]) over[n] = 1 }); const b = bevel(map, ink, w, h, on, over, q.w * k, sun.x, sun.y); for (let i = 0; i < N; i++) { if (b[i]! < 0) { m1[i] = 1; if (q.deep && upto >= 6) m2[i] = 1 } else if (b[i]! > 0) rims[i] = q.lit } }
     const lift = mask(["lift"])
+    if (marked) for (let i = 0; i < N; i++) if (m1[i]! > 0.5) marked[i] = fallen![i] ? 2 : 1
     for (let i = 0; i < N; i++) if (lift[i]! > 0.5) m1[i] = 0
     // every shade is cut like a hand would: straight runs, inside its own part
     cutAll([m1, m2, mh, ml, refl], map, kinds, names.length, boxes, w, h, Math.max(1, art.head * (FF ? 0.0075 : 0.0055) * k), undefined, designed.map((v, q) => (v && kinds[q] !== "skin" ? 1 : 0)))
@@ -264,6 +283,17 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   }
   for (let i = 0; i < N; i++) if (map[i] === bg) { m1[i] = 0; softOnly[i] = 0; m2[i] = 0; black[i] = 0 }
   const er = FF && upto >= 5 ? crisp(refl) : zero, eh = upto >= 4 ? crisp(mh) : zero, el = upto >= 7 ? crisp(ml) : zero, e1 = upto >= 4 ? crisp(m1) : zero, e2 = upto >= 6 ? crisp(m2) : zero, e3 = upto >= 6 ? crisp(black, 0.4) : zero
+  if (rec && fallen && upto >= 4) {
+    // the cut and its soft edges went a little past what was marked: the nearest marked shade says what they are
+    const said = new Uint8Array(N), st: Array<number> = []
+    for (let i = 0; i < N; i++) if (marked![i] && m1[i]! > 0.5) { said[i] = marked![i]!; st.push(i) }
+    for (let t = 0; t < st.length; t++) { const i = st[t]!, x = i % w; for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) if (j >= 0 && j < N && !said[j] && map[j] === map[i] && e1[j]! > 0) { said[j] = said[i]!; st.push(j) } }
+    // a crumb of one inside the other is the other
+    { const seen = new Uint8Array(N), least = (H * 0.06) ** 2; for (let s = 0; s < N; s++) { if (!said[s] || seen[s]) continue; const c = [s], l = said[s]!; let touch = 0; seen[s] = 1; for (let t = 0; t < c.length; t++) { const i = c[t]!, x = i % w; for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) if (j >= 0 && j < N && said[j] && map[j] === map[i]) { if (said[j] === l) { if (!seen[j]) { seen[j] = 1; c.push(j) } } else touch++ } } if (touch && c.length < least) for (const i of c) said[i] = 3 - l } }
+    const c = new Uint8ClampedArray(N * 4)
+    for (let i = 0; i < N; i++) if (said[i] === 2) c[i * 4 + 3] = 255
+    rec.key = "mask:cast"; await rec.keep("cast", "", "normal", c)
+  }
   /* 4 to 6: the planes */
   if (upto >= 4 && view !== "regions") {
     // light scatters under a soft turn: between light and shade lies a band of its own colour. Casts and folds have none
@@ -479,12 +509,22 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     const f = (d: Uint8ClampedArray): Array<Float32Array> => [0, 1, 2].map((c) => Float32Array.from({ length: N }, (_, i) => d[i * 4 + c]!))
     await rec.step(st.name, st.group, { mode: "normal" }, f(before), f(after), new Float32Array(N))
   }
+  /** A detail: on the picture as it is drawn, in the file as its whole shape, clipped if it says so. */
+  const piece = async (d: Detail): Promise<void> => {
+    const on = (g: CanvasRenderingContext2D, f: (g: CanvasRenderingContext2D) => void): void => { g.save(); g.scale(k, k); f(g); g.restore() }, kind = d.print ? "print" : d.over ? "over" : "detail"
+    if (!d.clip) { await paint("face", (g) => on(g, d.draw), undefined, `${kind}:${d.folder ?? ""}`, d.name); return }
+    on(col.g, d.draw)
+    const c = mk()
+    on(c.g, d.free ?? d.draw)
+    rec!.key = `${kind}:${d.folder ?? ""}`
+    await rec!.keep(d.name, "", "normal", c.g.getImageData(0, 0, w, h).data, undefined, true)
+  }
   if (upto >= 8 && drawn) {
     const scaled = (f: (g: CanvasRenderingContext2D) => void) => (g: CanvasRenderingContext2D): void => { g.save(); g.scale(k, k); f(g); g.restore() }
     if (!rec || (!art.details && !eyes.length)) await paint("face", scaled((g) => { art.face(g); for (const e of eyes) e.under(g) }))
     else {
-      for (const d of art.details ?? [{ name: "Face marks", draw: art.face, print: false }]) await paint("face", scaled(d.draw), undefined, `${d.print ? "print" : "detail"}:${d.name}`, d.name)
-      if (eyes.length) await paint("face", scaled((g) => { for (const e of eyes) e.under(g) }), undefined, "detail:Eyes", "Eyes")
+      for (const d of (art.details ?? [{ name: "Face marks", draw: art.face }]) as ReadonlyArray<Detail>) if (!d.over) await piece(d)
+      if (eyes.length) await paint("face", scaled((g) => { for (const e of eyes) e.under(g) }), undefined, "detail:", "Eyes")
     }
   }
 
@@ -503,7 +543,12 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   if (view === "masks") col.g.globalAlpha = 0.5
   await paint("line", (g) => g.drawImage(ic.c, 0, 0), li.data); col.g.globalAlpha = 1
   if (cut) { const d = col.g.getImageData(0, 0, w, h); for (let i = 0; i < N; i++) if (map[i] === bg) for (let c = 0; c < 4; c++) d.data[i * 4 + c] = li.data[i * 4 + c]!; col.g.putImageData(d, 0, 0) }
-  if (upto >= 9 && drawn) await paint("over", (g) => { g.save(); g.scale(k, k); art.over(g); for (const e of eyes) e.over(g); g.restore() })
+  if (rec && art.lineGroups && upto >= 9 && view === "normal") {
+    const g = lineGroups({ strokes: refs.strokes, alpha: (i) => li.data[i * 4 + 3]!, map, w, h, k, hair: (n) => kinds[n] === "hair", face: (n) => n === names.indexOf("face") }, art.lineGroups)
+    for (let t = 0; t < g.names.length; t++) { const o = li.data.slice(), on = inkOf(g, t, (i) => li.data[i * 4 + 3]!, w, Math.max(1, Math.round((g.half[t]! > 3 ? 5 : 0.6) * k))); for (let i = 0; i < N; i++) if (!on[i]) o[i * 4 + 3] = 0; rec.key = `line:${g.names[t]!}`; await rec.keep(g.names[t]!, "", "normal", o) }
+  }
+  if (rec && upto >= 9 && drawn && art.details?.some((d) => d.over)) { for (const d of art.details) if (d.over) await piece(d); for (const e of eyes) await paint("over", (g) => { g.save(); g.scale(k, k); e.over(g); g.restore() }) }
+  else if (upto >= 9 && drawn) await paint("over", (g) => { g.save(); g.scale(k, k); art.over(g); for (const e of eyes) e.over(g); g.restore() })
   if (upto >= 10 && view !== "masks" && !cut) {
     const bk = mk()
     bk.g.fillStyle = "#fff"; bk.g.fillRect(0, 0, w, h); bk.g.save(); bk.g.scale(k, k); art.back(bk.g); bk.g.restore()

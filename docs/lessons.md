@@ -243,3 +243,17 @@ The client: the goal is that an illustrator picks up a clean and organised `.cli
 | line colour and line shape were one layer | do | one ink, colours clipped on top |
 
 Learned: to reorganise without changing the picture, cut along what never overlaps and merge operations, not pixels.
+
+## Layers, third round: control where it matters
+The client: "That's awesome! We need a little more control on key details": eyes and face, and hair.
+
+| What fell short | Kind | Answer |
+|---|---|---|
+| an eye was white, iris and lights, three layers for both eyes | rule | one kit paints every eye in pieces; a folder per eye, 19 layers |
+| paint, lines and lights of one eye lay in three folders | see | what belongs to one thing is in one folder |
+| the iris was cut by the lid, so it could not be moved | do | whole shapes clipped to the white |
+| form and cast shadow were one shape | do | the renderer says which it is while it paints |
+| hair was one mass, its bands and tips one layer | do | groups cut along drawn lines; tip, light bands, dark bands apart |
+| lines were one layer | do | labels walk through the ink from the stroke numbers |
+
+Learned: not everything needs the same detail. Face, ear and hair are "fine", the rest stays short.
