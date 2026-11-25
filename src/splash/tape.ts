@@ -1,4 +1,4 @@
-import { FOLDERS, SPLITS } from "./tape-folders.ts"
+import { FOLDERS } from "./tape-folders.ts"
 import { curve, loop } from "../cel/path.ts"
 import type { P2 } from "../geo.ts"
 import type { Art, Level, Shape, Wash } from "./engine.ts"
@@ -99,7 +99,7 @@ export const TAPE: Art = {
     // a printed line down the sleeve and a back-print corner
     g.save(); g.translate(252, 664); g.rotate(0.42); g.font = "800 15px 'Avenir Next Condensed', 'Arial Narrow', sans-serif"; g.fillStyle = "rgba(238,234,226,.9)"; g.fillText("LOW TIDE", 0, 6); g.font = "600 6.5px 'Avenir Next', sans-serif"; g.fillText("RECORD EVERYTHING", 1, 16); g.restore()
   },
-  folders: FOLDERS, splits: SPLITS,
+  folders: FOLDERS,
   over: tapeOver("rgba(96,70,84,.8)"),
   back: (g) => {
     // sound: arcs with a glow, and three bars, in the references' floating-graphic manner

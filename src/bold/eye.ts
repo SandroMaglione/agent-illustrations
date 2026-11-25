@@ -1,15 +1,15 @@
 /**
- * A painted eye, between the artist's lines, as pieces: each is drawn on its own and is a layer of its own in the file an
- * illustrator gets (`src/layers`). `draw` is what the picture shows, cut by the opening; `free` is the whole shape, for a
+ * A painted eye, between the artist's lines, in pieces that become layers of the file an illustrator gets (`src/layers`): one
+ * layer per set of related marks, for both eyes together. `draw` is what the picture shows, cut by the opening; `free` is the whole shape, for a
  * layer clipped to the white: the iris goes on under the lid, so it can be moved.
  */
 import { path } from "./shadows.ts"
 
 type G = CanvasRenderingContext2D
-/** One thing drawn on the canvas with a name. `clip`: clipped to the first layer of its folder. `over`: above the lines. `print`: printed on a thing. */
+/** One thing drawn on the canvas with a name. Pieces with the same folder and name are one layer: a set of related marks, not a stroke. `clip`: clipped to the first layer of its folder. `over`: above the lines. `print`: printed on a thing. */
 export type Detail = { name: string; folder?: string; clip?: boolean; over?: boolean; print?: boolean; draw: (g: G) => void; free?: (g: G) => void }
 export type Eye = { open: string; x: number; y: number; rx: number; ry: number; turn: number; shade: string }
-type Spot = { name: string; x: number; y: number; rx: number; ry: number; color: string }
+type Spot = { x: number; y: number; rx: number; ry: number; color: string }
 export type EyeLook = {
   /** Half the size of the square the white fills, in line-art px. */
   reach: readonly [number, number]
@@ -41,18 +41,18 @@ export const eyeDetails = (folder: string, e: Eye, q: EyeLook): Array<Detail> =>
     { name: "White shade", folder, clip: true, draw: opened((g) => fill(g, e.shade, q.shade)), free: (g) => fill(g, e.shade, q.shade) },
     piece("Iris", (g) => el(g, 0, 0, rx, ry, q.rim), false),
     piece("Iris gradient", (g) => { const l = g.createLinearGradient(0, -ry, 0, ry); for (const [a, c] of q.stops) l.addColorStop(a, c); g.fillStyle = l; g.fillRect(-rx, -ry, rx * 2, ry * 2) }),
-    piece("Iris rays", (g) => { const s = q.spokes; g.fillStyle = s.color; for (let i = 0; i < s.n; i++) { const a = s.from + (i / (s.n - 1)) * s.span; g.beginPath(); g.moveTo(Math.cos(a) * rx * 0.3, Math.sin(a) * ry * 0.3); g.lineTo(Math.cos(a - s.half) * rx * s.out, Math.sin(a - s.half) * ry * s.out); g.lineTo(Math.cos(a + s.half) * rx * s.out, Math.sin(a + s.half) * ry * s.out); g.fill() } }),
+    piece("Iris lines", (g) => { const s = q.spokes; g.fillStyle = s.color; for (let i = 0; i < s.n; i++) { const a = s.from + (i / (s.n - 1)) * s.span; g.beginPath(); g.moveTo(Math.cos(a) * rx * 0.3, Math.sin(a) * ry * 0.3); g.lineTo(Math.cos(a - s.half) * rx * s.out, Math.sin(a - s.half) * ry * s.out); g.lineTo(Math.cos(a + s.half) * rx * s.out, Math.sin(a + s.half) * ry * s.out); g.fill() } }),
     ...q.glow.map((c) => piece(c.name, (g) => crescent(g, c.inner, c.outer, c.n, c.color))),
     piece("Lid shadow", (g) => { const l = q.lid; g.beginPath(); g.moveTo(-rx, -ry); g.lineTo(rx, -ry); g.lineTo(rx, l.right * ry); g.quadraticCurveTo(0, l.mid * ry, -rx, l.left * ry); g.fillStyle = l.color; g.fill() }),
     piece("Pupil", spot(q.pupil)), piece("Pupil light", spot(q.spark)),
   ]
 }
-/** The lights over the lines: the main one, the small ones, the star. */
-export const eyeLights = (folder: string, e: Eye, q: EyeLook): Array<Detail> => {
+/** The lights over the lines, all one layer: the main one, the small ones, the star. */
+export const eyeLights = (name: string, e: Eye, q: EyeLook): Array<Detail> => {
   const at = (f: (g: G) => void) => (g: G): void => { g.save(); g.translate(e.x, e.y); g.rotate(e.turn); f(g); g.restore() }
   return [
-    ...q.lights.map((s) => ({ name: s.name, folder, over: true, draw: at((g) => { g.beginPath(); g.ellipse(s.x * e.rx, s.y * e.ry, s.rx * e.rx, s.ry * e.ry, 0, 0, 7); g.fillStyle = s.color; g.fill() }) })),
-    { name: "Star", folder, over: true, draw: at((g) => { const s = q.star; g.fillStyle = s.color; g.beginPath(); for (let i = 0; i < 8; i++) { const a = (i / 8) * 6.283, r = i % 2 ? 0.045 : s.r; g.lineTo(s.x * e.rx + Math.cos(a) * r * e.rx, s.y * e.ry + Math.sin(a) * r * e.ry * 1.15) } g.fill() }) },
+    ...q.lights.map((s) => ({ name, over: true, draw: at((g) => { g.beginPath(); g.ellipse(s.x * e.rx, s.y * e.ry, s.rx * e.rx, s.ry * e.ry, 0, 0, 7); g.fillStyle = s.color; g.fill() }) })),
+    { name, over: true, draw: at((g) => { const s = q.star; g.fillStyle = s.color; g.beginPath(); for (let i = 0; i < 8; i++) { const a = (i / 8) * 6.283, r = i % 2 ? 0.045 : s.r; g.lineTo(s.x * e.rx + Math.cos(a) * r * e.rx, s.y * e.ry + Math.sin(a) * r * e.ry * 1.15) } g.fill() }) },
   ]
 }
 /** The two functions a drawing needs, from its details. */

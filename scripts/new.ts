@@ -55,8 +55,8 @@ export const ART: Art = {
   // field: "/wip/${name}-field.bin", formed: [], meshCasts: [],                        after form.ts --field: what the mesh shades and casts by itself
   shadows: SHADOWS,
   grads: [], casts: [], shapes: SHAPES, soft: [], washes: [], noink: [],
-  // ...painted([...eyeDetails("Eye right", EYE, LOOK), ...eyeLights("Eye right", EYE, LOOK)]), faceMid: 0,   instead of face and over: the eye kit, each piece a layer (bold/eye.ts)
-  // folders: [["Hair back", "hairB", "fine"], ["Face", "face", "fine"]], splits: {}, lineGroups: [],            the layered file (docs/layers.md)
+  // ...painted([...eyeDetails("Eyes", EYE, LOOK), ...eyeLights("Highlights", EYE, LOOK)]),   instead of face and over: the eye kit, each piece a layer (bold/eye.ts)
+  // folders: [["Hair back", "hairB", "fine"], ["Face", "face", "fine"]], lineGroups: [],            the layered file (docs/layers.md)
   face: () => undefined, over: () => undefined, back: () => undefined, front: () => undefined,
 }
 `)

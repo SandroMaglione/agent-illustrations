@@ -35,7 +35,7 @@ export const lineGroups = (q: {
     of[i + 1] = n < 3 ? place(Math.min(N - 1, Math.round(mid[1] * k) * w + Math.round(mid[0] * k))) : both > n * 0.5 ? 3 : both + hair > n * 0.5 ? 2 : face > n * 0.5 ? 1 : 0
   })
   for (const [name, list] of said) {
-    const id = names.push(name) - 1
+    const id = names.includes(name) ? names.indexOf(name) : names.push(name) - 1
     for (const t of list.split(" ")) { if (t.startsWith("@")) { const [x, y, r] = t.slice(1).split(",").map(Number); marks.push({ x: x! * k, y: y! * k, r: r! * k, id }) } else of[Number(t.slice(1))] = id }
   }
   // shortest way through the ink, in half pixels; a heavy line starts ahead by its own half width
@@ -62,5 +62,3 @@ export const lineGroups = (q: {
   const half = names.map((_, t) => { let sum = 0, n = 0; q.strokes.forEach((s, i) => { if (of[i + 1] === t) for (const v of s.half) { sum += v * v; n += v } }); return n ? sum / n : 0 })
   return { names, label, half }
 }
-/** A polygon from "x,y" points and whole lines: "s17", "-s17" backwards. */
-export const outline = (d: string, run: (r: string) => { p: Array<P2> }): Array<P2> => d.trim().split(/\s+/).flatMap((t): Array<P2> => { const m = t.match(/^(-?)(s\d+)$/); if (m) { const p = run(m[2]!).p; return m[1] ? [...p].reverse() : p } const [x, y] = t.split(",").map(Number); return [[x!, y!]] })

@@ -257,3 +257,14 @@ The client: "That's awesome! We need a little more control on key details": eyes
 | lines were one layer | do | labels walk through the ink from the stroke numbers |
 
 Learned: not everything needs the same detail. Face, ear and hair are "fine", the rest stays short.
+
+## Layers, fourth round: sets, not strokes
+The client: no layer for each single detail; a layer for a set of related details, "for example all the related reflections with same colour", especially when they do not overlap.
+
+| What was wrong | Kind | Answer |
+|---|---|---|
+| asked for control, I split to the stroke: 202 layers, five for the lights of one eye | rule | one layer per set: same role, same colour, not overlapping. 128 layers |
+| nothing said when two layers were one set | see | `couldBeOne` at every export, with the pairs that stay apart on purpose |
+| hands, ear and arms in three folders with the same skin | see | Skin is one, the ear is with the face |
+
+Learned: control is a layer that targets a feature, and that a hand can find. More layers is not more control.

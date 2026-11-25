@@ -4,7 +4,7 @@ import { painted } from "../bold/eye.ts"
 import { BROWS, DETAILS, LINE_GROUPS, NOINK } from "./maren-face.ts"
 import { SHADOWS } from "./maren-shadows.ts"
 import { CLICKS, WALLS } from "./tape-clicks.ts"
-import { FOLDERS, SPLITS } from "./tape-folders.ts"
+import { FOLDERS } from "./tape-folders.ts"
 import { LINES } from "./tape-lines.ts"
 
 const P = (color: string, kind: Art["defs"][string]["kind"], z: number): Art["defs"][string] => ({ color, kind, z })
@@ -44,7 +44,7 @@ export const ART: Art = {
   bevels: [{ on: ["dev", "devF", "devP"], w: 3.4, lit: 0.8 }, { on: ["cup", "band", "pad"], w: 3.4, lit: 0.6 }, { on: ["strap", "belt", "trimL", "cuffL", "cuffR", "flap", "pocket"], w: 3, lit: 0.5 }, { on: ["btn"], w: 2.4, lit: 0.7 }],
   shapes: [], soft: [], brows: BROWS,
   washes: [{ on: ["face"], x: 556, y: 282, rx: 34, ry: 17, color: [250, 176, 166], a: 0.42, late: true }, { on: ["face"], x: 424, y: 326, rx: 26, ry: 14, color: [250, 176, 166], a: 0.36, late: true }, { on: ["ear"], x: 410, y: 355, rx: 26, ry: 30, color: [246, 160, 148], a: 0.4 }, { on: ["handL"], x: 170, y: 1196, rx: 40, ry: 24, color: [250, 176, 160], a: 0.4 }, { on: ["handR"], x: 704, y: 258, rx: 36, ry: 30, color: [250, 176, 160], a: 0.4 }],
-  noink: NOINK, ...painted(DETAILS), lineGroups: LINE_GROUPS, faceMid: 465,
-  folders: FOLDERS, splits: SPLITS,
+  noink: NOINK, ...painted(DETAILS), lineGroups: LINE_GROUPS,
+  folders: FOLDERS,
   back: () => undefined, front: () => undefined,
 }

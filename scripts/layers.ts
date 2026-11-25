@@ -11,7 +11,7 @@ import { join } from "node:path"
 import { inflateSync } from "node:zlib"
 import { base, bytes, open } from "./page.ts"
 import { decodePng, encodePng } from "../src/layers/png.ts"
-import { arrange, checkStack } from "../src/layers/arrange.ts"
+import { arrange, checkStack, couldBeOne } from "../src/layers/arrange.ts"
 import { compare, composite } from "../src/layers/stack.ts"
 import type { Layer, Mode, Stack } from "../src/layers/stack.ts"
 import { psd } from "../src/layers/psd.ts"
@@ -29,7 +29,7 @@ await p.goto(`${base}?v=${name}&k=${k}&raw=1&layers=1`)
 await p.waitForFunction(() => (window as unknown as { __ready?: boolean }).__ready === true)
 const render = decodePng(bytes(await p.evaluate(() => document.querySelector("canvas")!.toDataURL("image/png"))))
 type Meta = { key: string; clip?: boolean; name: string; group: string; mode: Mode; x: number; y: number; w: number; h: number; pixels: number }
-const { metas, notes, plan, mid } = await p.evaluate(() => { const r = (window as unknown as { __layers: { out: Array<Meta & { data: Uint8Array }>; notes: Array<string>; mid: number; folders: Array<[string, string, "fine"?]> | null } }).__layers; return { mid: r.mid, plan: r.folders, metas: r.out.map(({ data: _, ...m }) => m), notes: r.notes } })
+const { metas, notes, plan } = await p.evaluate(() => { const r = (window as unknown as { __layers: { out: Array<Meta & { data: Uint8Array }>; notes: Array<string>; folders: Array<[string, string, "fine"?]> | null } }).__layers; return { plan: r.folders, metas: r.out.map(({ data: _, ...m }) => m), notes: r.notes } })
 const layers: Array<Layer & { key: string }> = []
 for (let i = 0; i < metas.length; i++) {
   const b64 = await p.evaluate((i) => { const d = (window as unknown as { __layers: { out: Array<{ data: Uint8Array }> } }).__layers.out[i]!.data; let s = ""; for (let j = 0; j < d.length; j += 0x8000) s += String.fromCharCode(...d.subarray(j, j + 0x8000)); return btoa(s) }, i)
@@ -39,12 +39,12 @@ for (let i = 0; i < metas.length; i++) {
 await b.close()
 const { w, h } = render
 if (!plan && !args.includes("--steps")) console.log("  this drawing has no `folders`: one layer per paint step")
-const made = plan && !args.includes("--steps") ? arrange(layers, plan, w, h, mid) : null
+const made = plan && !args.includes("--steps") ? arrange(layers, plan, w, h) : null
 // paper at the bottom, as in a new canvas
 const stack: Stack = made ? made.stack : { w, h, layers: [{ name: "Paper", group: "", mode: "normal", opacity: 1, visible: true, x: 0, y: 0, w, h, rgba: new Uint8Array(w * h * 4).fill(255) }, ...layers.filter((L) => !/^(mask|line):/.test(L.key))] }
 console.log(`${name}: ${w}x${h}, ${stack.layers.length} layers, in ${Math.round((Date.now() - t0) / 1000)} s`)
 for (const n of [...notes.filter((q) => !q.endsWith("empty, dropped")), ...(made?.notes ?? [])]) console.log(`  note: ${n}`)
-if (made) { const bad = [...made.problems, ...checkStack(stack, plan!)]; console.log(bad.length ? `  NOT CLEAN, ${bad.length}:` : `  clean: ${new Set(stack.layers.filter((L) => L.group).map((L) => L.group)).size} folders, every part in one, same names and order, all clipped inside their base`); for (const b of bad) console.log(`    ${b}`) }
+if (made) { const bad = [...made.problems, ...checkStack(stack, plan!)]; console.log(bad.length ? `  NOT CLEAN, ${bad.length}:` : `  clean: ${new Set(stack.layers.filter((L) => L.group).map((L) => L.group)).size} folders, every part in one, same names and order, all clipped inside their base`); for (const b of bad) console.log(`    ${b}`); for (const c of couldBeOne(stack)) console.log(`  look: ${c}`) }
 
 // the check: does the stack give the render back?
 const rgb = new Uint8Array(w * h * 3)

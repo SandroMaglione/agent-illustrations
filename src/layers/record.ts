@@ -23,8 +23,6 @@ export class Recorder {
   key = ""
   /** The drawing's plan of folders, and the layer plan's helpers. */
   folders: ReadonlyArray<readonly [string, string, "fine"?]> | null = null
-  /** Left and right of the face, in px. */
-  mid = 0
   /** Set by the renderer, which knows the size at its scale. */
   size(w: number, h: number): void { this.w = w; this.h = h }
 

@@ -1,4 +1,4 @@
-/** Colour inside the artist's face. Their lines stay: only what lies between them is painted. "x,y~" is a soft point. Left and right are the picture's. */
+/** Colour inside the artist's face. Their lines stay: only what lies between them is painted. "x,y~" is a soft point. */
 import { eyeDetails, eyeLights, fill } from "../bold/eye.ts"
 import type { Detail, Eye, EyeLook } from "../bold/eye.ts"
 
@@ -7,10 +7,10 @@ const LOOK: EyeLook = {
   reach: [70, 60], white: "#fffaf8", shade: "#cdc5dc", rim: "#0f2f38", inner: [0.92, 0.92],
   stops: [[0, "#113a44"], [0.3, "#16545c"], [0.31, "#1a6c72"], [0.5, "#229089"], [0.51, "#34b3a0"], [1, "#4ccfae"]],
   spokes: { n: 13, from: 0.3, span: 2.55, half: 0.045, out: 0.88, color: "#1c7a78" },
-  glow: [{ name: "Iris glow", inner: 0.36, outer: 0.95, n: 6, color: "#86e6bd" }, { name: "Iris glow, bright", inner: 0.62, outer: 0.95, n: 4, color: "#e6fbc9" }],
+  glow: [{ name: "Iris glow 1", inner: 0.36, outer: 0.95, n: 6, color: "#86e6bd" }, { name: "Iris glow 2", inner: 0.62, outer: 0.95, n: 4, color: "#e6fbc9" }],
   lid: { right: -0.3, mid: 0.02, left: -0.26, color: "rgba(8,20,40,.5)" },
-  pupil: { name: "", x: 0, y: 0, rx: 0.3, ry: 0.4, color: "#081a20" }, spark: { name: "", x: 0, y: 0.12, rx: 0.11, ry: 0.18, color: "#4fd0b0" },
-  lights: [{ name: "Main light", x: -0.36, y: -0.12, rx: 0.16, ry: 0.2, color: "#ffffff" }, { name: "Small light, far side", x: 0.44, y: 0.36, rx: 0.08, ry: 0.1, color: "#fffdf0" }, { name: "Small light, near side", x: -0.5, y: 0.34, rx: 0.05, ry: 0.05, color: "#c8fff0" }, { name: "Warm glint", x: 0.32, y: -0.02, rx: 0.045, ry: 0.045, color: "#ffd98a" }],
+  pupil: { x: 0, y: 0, rx: 0.3, ry: 0.4, color: "#081a20" }, spark: { x: 0, y: 0.12, rx: 0.11, ry: 0.18, color: "#4fd0b0" },
+  lights: [{ x: -0.36, y: -0.12, rx: 0.16, ry: 0.2, color: "#ffffff" }, { x: 0.44, y: 0.36, rx: 0.08, ry: 0.1, color: "#fffdf0" }, { x: -0.5, y: 0.34, rx: 0.05, ry: 0.05, color: "#c8fff0" }, { x: 0.32, y: -0.02, rx: 0.045, ry: 0.045, color: "#ffd98a" }],
   star: { x: 0.08, y: 0.56, r: 0.17, color: "#fffbd8" },
 }
 const NEAR: Eye = { open: "500,241 512,231~ 526,223~ 544,218~ 562,216 571,219 566,230 552,236~ 536,240~ 514,246", x: 542.5, y: 227, rx: 20, ry: 15.5, turn: -0.16, shade: "498,242 512,235 528,228~ 546,224~ 572,224 572,210 520,212" }
@@ -27,19 +27,18 @@ const prints = (g: G): void => {
 }
 
 export const DETAILS: ReadonlyArray<Detail> = [
-  ...eyeDetails("Eye right", NEAR, LOOK), ...eyeDetails("Eye left", FAR, LOOK),
-  { name: "Teeth", folder: "Mouth", draw: (g) => fill(g, "484,338 494,328.6~ 508,322.6~ 524,319.4 534,316 527,324~ 512,334~ 500,338.6", "#fff8f4") },
-  { name: "Teeth shade", folder: "Mouth", draw: (g) => fill(g, "488,336 498,328.6~ 512,323.4~ 530,319 526,322 510,327~ 498,332", "#dccfd6") },
-  { name: "Inner mouth", folder: "Mouth", draw: (g) => fill(g, "518,330 528,321~ 537,314 531,322.6~ 522,329.4", "#b9575a") },
-  { name: "Lip colour", folder: "Mouth", draw: (g) => { g.save(); g.globalAlpha = 0.45; g.filter = "blur(3px)"; fill(g, "498,346 508,345~ 519,339.4~ 524,334 522,341~ 511,348~", "#e0685f"); g.restore() } },
-  { name: "Nose shade", folder: "Nose", draw: (g) => fill(g, "466,296 471,299~ 475,304~ 475,309 468,304~", "#f6cfc3") },
+  ...eyeDetails("Eyes", NEAR, LOOK), ...eyeDetails("Eyes", FAR, LOOK),
+  { name: "Mouth", draw: (g) => fill(g, "484,338 494,328.6~ 508,322.6~ 524,319.4 534,316 527,324~ 512,334~ 500,338.6", "#fff8f4") },
+  { name: "Mouth shade", draw: (g) => fill(g, "488,336 498,328.6~ 512,323.4~ 530,319 526,322 510,327~ 498,332", "#dccfd6") },
+  { name: "Mouth shade", draw: (g) => fill(g, "518,330 528,321~ 537,314 531,322.6~ 522,329.4", "#b9575a") },
+  { name: "Lips and nose", draw: (g) => { g.save(); g.globalAlpha = 0.45; g.filter = "blur(3px)"; fill(g, "498,346 508,345~ 519,339.4~ 524,334 522,341~ 511,348~", "#e0685f"); g.restore() } },
+  { name: "Lips and nose", draw: (g) => fill(g, "466,296 471,299~ 475,304~ 475,309 468,304~", "#f6cfc3") },
   { name: "Prints", print: true, draw: prints },
-  ...eyeLights("Eye right", NEAR, LOOK), ...eyeLights("Eye left", FAR, LOOK),
-  { name: "Lip light", folder: "Mouth", over: true, draw: (g) => { g.fillStyle = "#fffdfb"; g.beginPath(); g.ellipse(510, 343, 2.4, 1, -0.5, 0, 7); g.fill() } },
+  ...eyeLights("Highlights", NEAR, LOOK), ...eyeLights("Highlights", FAR, LOOK),
+  { name: "Highlights", over: true, draw: (g) => { g.fillStyle = "#fffdfb"; g.beginPath(); g.ellipse(510, 343, 2.4, 1, -0.5, 0, 7); g.fill() } },
 ]
 /** Whose line is whose: stroke numbers (tape-lines.ts), and "@x,y,r" for a mark that is no stroke. */
 export const LINE_GROUPS: ReadonlyArray<readonly [string, string]> = [
-  ["Eye right/Iris line", "s75 s78 s82"], ["Eye right/Lid crease", "s65 s67 s71 s77"], ["Eye right/Lower lash", "s83 s86"], ["Eye right/Upper lash", "s63 s64 s68 s72 s73 s87"],
-  ["Eye left/Iris line", "s115 s119"], ["Eye left/Lid crease", "s102 s105"], ["Eye left/Lower lash", "s118 s132"], ["Eye left/Upper lash", "s114 s123 s126"],
-  ["Nose/Nose line", "s113 @485,298,6"], ["Mouth/Mouth line", "s145 s150 s166"], ["Beauty mark", "@576.7,238.5,5"],
+  ["Eyes/Eye lines", "s63 s64 s65 s67 s68 s71 s72 s73 s75 s77 s78 s82 s83 s86 s87 s102 s105 s114 s115 s118 s119 s123 s126 s132"],
+  ["Face", "s113 s145 s150 s166 @485,298,6 @576.7,238.5,5"],
 ]

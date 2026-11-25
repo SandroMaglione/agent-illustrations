@@ -83,17 +83,13 @@ export type Art = {
   details?: ReadonlyArray<Detail>
   /** The folders of the layered file, furthest first (`src/layers/arrange.ts`). Every part in exactly one. */
   folders?: Folders
-  /** A part in groups, each with its own folder: name and outline ("x,y" points, "s17" a line, "-s17" backwards). Listed in `folders` as "part:group". */
-  splits?: Readonly<Record<string, ReadonlyArray<readonly [string, string]>>>
   /** The line art in layers of its own: folder and name, and the strokes ("s17", "@x,y,r" for marks). Hair, face and the rest are told apart by rule. */
   lineGroups?: ReadonlyArray<readonly [string, string]>
-  /** Left and right of the face in the picture are told by this x. */
-  faceMid?: number
   face: (g: CanvasRenderingContext2D) => void; over: (g: CanvasRenderingContext2D) => void
   back: (g: CanvasRenderingContext2D) => void; front: (g: CanvasRenderingContext2D) => void
 }
 export const PASSES = ["Line art", "Flats", "Gradients", "Contact", "Shadow shapes", "Edges and warm band", "Deep shade", "Ring and light shapes", "Face and eyes", "Colour line", "Finish"] as const
-/** Folder (with subfolders, "Hair front/Fringe"), the parts in it, and "fine" where an illustrator needs every effect on a layer of its own. */
+/** Folder, the parts in it, and "fine" where an illustrator works most (face, hair): a few more layers. */
 export type Folders = ReadonlyArray<readonly [string, string, "fine"?]>
 export type View = "normal" | "grey" | "value" | "masks" | "regions"
 

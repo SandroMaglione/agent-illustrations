@@ -24,7 +24,7 @@ import { path } from "./shadows.ts"
 import { BLACK, hexRgb, hsv, luma, mix, SKY, SUN, tone, turnHue } from "./tones.ts"
 import type { Kind, RGB } from "./tones.ts"
 import type { Recorder } from "../layers/record.ts"
-import { inkOf, lineGroups, outline } from "../layers/linegroups.ts"
+import { inkOf, lineGroups } from "../layers/linegroups.ts"
 import type { Detail } from "./eye.ts"
 import { STEPS } from "../layers/steps.ts"
 
@@ -91,7 +91,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     R[i] = c[0]; G[i] = c[1]; B[i] = c[2]
   }
   rec?.size(w, h)
-  if (rec) { rec.folders = art.folders ?? null; rec.mid = (art.faceMid ?? 0) * k }
+  if (rec) rec.folders = art.folders ?? null
   /* layers: every paint step has a name (`on`). Recording, a loop runs once per step, each time doing only that step */
   let gate: string | null = null, tag = "", stray = 0
   const cover = rec ? new Float32Array(N) : null, on = (t: string): void => { tag = t }
@@ -124,17 +124,8 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     if (!t || q === bg || upto === 0) continue
     const f = new Uint8ClampedArray(N * 4)
     for (let i = 0; i < N; i++) if (map[i] === q) { f[i * 4] = t.base[0]; f[i * 4 + 1] = t.base[1]; f[i * 4 + 2] = t.base[2]; f[i * 4 + 3] = 255 }
-    // a part in groups: the first outline a pixel lies in, or the part itself
-    const groups = art.splits?.[names[q]!]
-    if (!groups) { rec.key = `flat:${names[q]!}`; await rec.keep(names[q]!, "Flats", "normal", f); continue }
-    const left = f.slice()
-    for (const [g, d] of groups) {
-      tmp.g.clearRect(0, 0, w, h); tmp.g.beginPath(); outline(d, refs.run).forEach(([x, y], i) => (i ? tmp.g.lineTo(x * k, y * k) : tmp.g.moveTo(x * k, y * k))); tmp.g.fillStyle = "#000"; tmp.g.fill()
-      const a = alphaOf(), one = new Uint8ClampedArray(N * 4)
-      for (let i = 0; i < N; i++) if (left[i * 4 + 3] && a[i * 4 + 3]! > 127) { for (let c = 0; c < 4; c++) one[i * 4 + c] = left[i * 4 + c]!; left[i * 4 + 3] = 0 }
-      rec.key = `flat:${names[q]!}:${g}`; await rec.keep(`${names[q]!}:${g}`, "Flats", "normal", one)
-    }
-    rec.key = `flat:${names[q]!}`; await rec.keep(names[q]!, "Flats", "normal", left)
+    rec.key = `flat:${names[q]!}`
+    await rec.keep(names[q]!, "Flats", "normal", f)
   }
   if (upto >= 2 && view !== "regions") {
     await stage(["grads"], () => { for (const q of art.grads) { const ok = set(q.on), l2 = (q.b[0] - q.a[0]) ** 2 + (q.b[1] - q.a[1]) ** 2; for (let i = 0; i < N; i++) if (ok[map[i]!]) to(i, q.to, smooth(0, 1, (((i % w) / k - q.a[0]) * (q.b[0] - q.a[0]) + (((i / w) | 0) / k - q.a[1]) * (q.b[1] - q.a[1])) / l2) * q.k) } })
