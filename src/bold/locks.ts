@@ -16,6 +16,8 @@ export type Hair = {
   ring?: { at: P2; r: number; thick: number; from: number; to: number; squash?: number }
   /** More shade: 0 none, 1 as usual, 1.5 a lock that lies behind. */
   shade?: number
+  /** false: no light streaks by rule, the highlights are drawn (tone W). */
+  streaks?: boolean
 }
 /** shade, deep, light: planes. hue: −1..1, a streak that only turns the hue. v: root to tip. ring: highlight. */
 export type Locks = { shade: Float32Array; deep: Float32Array; light: Float32Array; hue: Float32Array; v: Float32Array; ring: Float32Array; any: Uint8Array }

@@ -63,8 +63,10 @@ How shapes are placed and checked. Code in `src/form`, `src/bold`, `src/tools` a
 | Finish | `node scripts/finish.ts name render.png scale head cx,cy` | the mandatory last check: colour, greyscale, three values beside the references; fails when `apart` pairs are too close |
 | Apart | `apart: [["hairF", "face", 65]]` | big neighbours and how far their medians must differ in grey |
 | Noise | `node scripts/noise.ts file:x,y,w,h:scale …` | grain per brightness: strength, coarseness, colour, specks |
-| Force | `force: [{ label, d, over }]` | a patch the open lines gave to the wrong part, also in bucket mode |
+| Move | `clicks: { at, walls, move: [{ label, d, over }] }` | a patch the open lines gave to the wrong part |
 | Highlight | tone `W` in the shadow design | hair highlight, one block per lock |
+| Soft wedges | `softWedges: true` | heavy line art: thick spots inside one form take the colour of their line |
+| Calm hair | `hair: [{ …, streaks: false }]` | no light streaks by rule; highlights are drawn (`W`) |
 | Seal | nothing | lit slivers under 4 px between shadow and line are closed and counted (`seal.ts`) |
 | Lint | `pnpm check tape` | slivers, edges beside lines, worst places with coordinates (`lint.ts`) |
 
@@ -73,4 +75,4 @@ How shapes are placed and checked. Code in `src/form`, `src/bold`, `src/tools` a
 - Checks that fail when casts, scattering or a material reflection disappear.
 - A model sheet by part kind (hand, shoe, buckle), and a blockout kit for common figures.
 - Mouth, nose mark, prints, gradients, washes, brows and eyes of `visor` are typed coordinates.
-- `tape`, `bell` and `twin` have no declared light or focus; only `visor` (not published) has a blockout, a value plan and a shadow design; `scripts/new.ts` writes starting files for all three.
+- `tape`, `bell` and `twin` have no declared light or focus; only `maren` and `visor` (not published) have a blockout, a value plan and a shadow design; `scripts/new.ts` writes starting files for all three.

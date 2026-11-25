@@ -2,7 +2,7 @@
 
 Colour clean line art so that the result could stand beside the target references: crisp, blocky, value first, rich shadows, real materials. The renderer is `src/bold`, the form tools `src/form`, everything else `src/tools` ([list](tools.md)). One drawing is a few data files in `src/splash`. Why each rule exists: [`findings.md`](findings.md). Every note ever given: [`lessons.md`](lessons.md).
 
-**Two judges.** `node scripts/gate.ts name` measures value and second light after every stage; `node scripts/finish.ts …` puts the result beside the references in colour, greyscale and three values, and fails when big neighbours are too close. A FAIL means stop and fix. A pass means **look**: both have passed on a wrong picture, because the plan they check was wrong. References stay local (`public/refs`); without them `finish.ts` shows the drawing alone.
+**Two judges.** `node scripts/gate.ts name` measures value and second light after every stage; `node scripts/finish.ts …` puts the result beside the references in colour, greyscale and three values, and fails when big neighbours are too close. A FAIL means stop and fix. A pass means **look**: both have passed on a wrong picture, because the plan they check was wrong. **Never edit the plan to pass**: change the picture, or have someone with taste change the plan. References stay local (`public/refs`); without them `finish.ts` shows the drawing alone.
 
 ## The steps at a glance
 | | Step | Done when |
@@ -87,6 +87,6 @@ Shade is a colour multiplied on the base: warm colours go through rose, cool one
 A second model gets the references, the line art, the render, the value and mask views, the declared light, and the operations the maker can execute. Each finding must say where, what, evidence, the exact change, and how to see it is fixed. Measure every claim before acting.
 
 ## Known limits
-- Proven end to end on one drawing. The rules above are trial until they help a second one.
+- Two drawings end to end (`visor`, `maren`); the second is not judged yet. Rules stay trial until it is.
 - The blockout and the shadow shapes are typed by the agent; that is the main cost, and judgement.
 - One pose, one angle. Cannot invent tapered lines the artist did not draw.

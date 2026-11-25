@@ -6,9 +6,10 @@ import type { Light } from "../tools/light.ts"
 /** lam: how squarely the surface meets the light. away: how much it faces the far side. cast: something is in between, hit: how far off it is (px of the line art). shut: how enclosed. */
 export type FormField = { has: Uint8Array; lam: Float32Array; away: Float32Array; cast: Float32Array; near: Float32Array; shut: Float32Array; nx: Float32Array; ny: Float32Array; nz: Float32Array; light: () => void }
 const loaded = new Map<string, Promise<Uint8Array>>()
-export const formField = async (url: string, w0: number, h0: number, map: Uint8Array, bg: number, w: number, h: number, light: Light, head: number): Promise<FormField> => {
+export const formField = async (url: string, w0: number, h0: number, map: Uint8Array, bg: number, w: number, h: number, light: Light, head: number): Promise<FormField | null> => {
   if (!loaded.has(url)) loaded.set(url, fetch(`${url}?${Date.now()}`).then(async (r) => new Uint8Array(await r.arrayBuffer())))
   const d = await loaded.get(url)!, n0 = w0 * h0, L = aim(light), k = w / w0
+  if (d.length !== n0 * 7) { console.error(`no form field at ${url}: node scripts/form.ts <name> outdir --field`); return null }
   // casts: one clean edge at the drawing's scale, then up
   const pick = (f: (o: number) => number): Float32Array => Float32Array.from({ length: n0 }, (_, i) => (d[i * 7] ? f(i * 7) : 0))
   const hasF = pick(() => 1), spread = (a: Float32Array, r: number): Float32Array => { const x = r > 0 ? blur(a, w0, h0, r, 2) : a, y = r > 0 ? blur(hasF, w0, h0, r, 2) : hasF; return x.map((v, i) => (y[i]! > 0.02 ? v / y[i]! : 0)) }

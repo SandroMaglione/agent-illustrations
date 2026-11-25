@@ -77,7 +77,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   const of = (kind: ReadonlyArray<Kind>): Uint8Array => Uint8Array.from(kinds, (d) => (d && kind.includes(d) ? 1 : 0))
 
   const fine = art.tones && (art.hair || upto >= 4) ? await facetsOf(art) : null, scaled = (a: ArrayLike<number>): Int32Array => { const o = new Int32Array(N), st = base.w / w; for (let y = 0; y < h; y++) { const Y = Math.min(base.h - 1, Math.floor((y + 0.5) * st)) * base.w; for (let x = 0; x < w; x++) { const j = Y + Math.min(base.w - 1, Math.floor((x + 0.5) * st)); if (base.map[j] === map[y * w + x]) o[y * w + x] = a[j]! } } return o }
-  const hairs = art.hair && upto >= 2 ? locks({ ink, map, names, w, h, ...(fine ? { cut: scaled(fine.id) } : {}) }, art.hair, [sun.x, sun.y], art.head, k) : null, hairTip = new Float32Array(names.length)
+  const hairs = art.hair && upto >= 2 ? locks({ ink, map, names, w, h, ...(fine ? { cut: scaled(fine.id) } : {}) }, art.hair, [sun.x, sun.y], art.head, k) : null, hairTip = new Float32Array(names.length), calmHair = set((art.hair ?? []).filter((f) => f.streaks === false).flatMap((f) => f.on))
   for (const f of art.hair ?? []) for (const n of f.on) { const i = names.indexOf(n); if (i > 0) hairTip[i] = f.tip ?? 0 }
   const R = new Float32Array(N), G = new Float32Array(N), B = new Float32Array(N)
   for (let i = 0; i < N; i++) {
@@ -88,7 +88,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   const to = (i: number, c: RGB, a: number): void => { R[i] = R[i]! + (c[0] - R[i]!) * a; G[i] = G[i]! + (c[1] - G[i]!) * a; B[i] = B[i]! + (c[2] - B[i]!) * a }
   const times = (i: number, m: RGB, a: number): void => { R[i] = R[i]! * (1 + (m[0] - 1) * a); G[i] = G[i]! * (1 + (m[1] - 1) * a); B[i] = B[i]! * (1 + (m[2] - 1) * a) }
   /** A mask with one clean, sharp edge: pixel steps go, the shape stays. */
-  const crisp = (m: Float32Array, r = 0.4): Float32Array => { const b = blur(m, w, h, Math.max(1, r * k), 2); for (let i = 0; i < N; i++) b[i] = smooth(0.4, 0.6, b[i]!); return b }
+  const crisp = (m: Float32Array, r = 0.4): Float32Array => { const b = blur(m, w, h, Math.max(1, r * k), 2); const e = Math.ceil(Math.max(1, r * k)) * 4; for (let i = 0; i < N; i++) { const x = i % w, y = (i / w) | 0; b[i] = x < e || y < e || x >= w - e || y >= h - e ? m[i]! : smooth(0.4, 0.6, b[i]!) } return b }
   const wash = (late: boolean): void => {
     const blushes = eyes.flatMap((e) => (e.blush ? [{ ...e.blush, on: ["face"], color: [250, 186, 178] as RGB, late: true, mode: undefined }] : []))
     for (const q of [...art.washes, ...blushes]) if (Boolean(q.late) === late) {
@@ -244,7 +244,9 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     // reflected light: the last stretch before the edge on the far side, inside the shade
     const back = upto >= 5 ? new Float32Array(N) : zero
     if (upto >= 5 && P) for (let i = 0; i < N; i++) {
-      const n = map[i]!
+      const n = map[i]!, edge = H * 0.04
+      // where the picture ends, the form does not
+      if (i % w > w - edge || i / w > h - edge || i % w < edge || i / w < edge) continue
       if (m1[i]! < 0.5 || m2[i]! > 0.5 || black[i]! > 0.5 || metal[n] || !P.id[i] || (designed[n] && kinds[n] === "skin")) continue
       const C = P.far[i]! + P.near[i]!, strip = Math.min(0.09 * C, H * 0.016)
       if (C > H * 0.06 && P.far[i]! < strip + 2 * k && P.far[i]! > 1.2 * k && P.side[i]! > 0.1 && P.side[i]! < 0.86) back[i] = 1
@@ -303,7 +305,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
         if (el[i]! > 0.01) to(i, t.lt, el[i]! * lit * 0.85)
         if (L[i]! > 0.01) to(i, t.lt, L[i]! * Math.max(0.5, lt[i]!) * lit)
         if (rm[i]! > 0.01) to(i, kd === "skin" ? t.lt : mix(t.base, SUN, 0.7), rm[i]! * lit * 0.85)
-        if (hairs && hairs.any[i]) { if (hairs.light[i]! > 0.01) to(i, t.lt, hairs.light[i]! * lit * 0.5); if (hairs.ring[i]! > 0.01) to(i, mix(t.base, [255, 254, 252], 0.72), hairs.ring[i]! * 0.8 * (1 - e1[i]! * 0.85)) }
+        if (hairs && hairs.any[i]) { if (hairs.light[i]! > 0.01 && !calmHair[n]) to(i, t.lt, hairs.light[i]! * lit * 0.5); if (hairs.ring[i]! > 0.01) to(i, mix(t.base, [255, 254, 252], 0.72), hairs.ring[i]! * 0.8 * (1 - e1[i]! * 0.85)) }
         if (gw[i]! > 0.01) to(i, mix(t.base, [255, 253, 246], 0.66), gw[i]! * 0.72 * (1 - e1[i]! * 0.8))
         if (ring[i]! > 0.01) to(i, mix(t.base, [255, 253, 248], 0.62), ring[i]! * (1 - e1[i]! * 0.85))
       }
@@ -417,7 +419,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   const drawn = view !== "masks" && view !== "regions"
   if (upto >= 8 && drawn) { col.g.save(); col.g.scale(k, k); art.face(col.g); for (const e of eyes) e.under(col.g); col.g.restore() }
 
-  const line = lineLayer({ ink, map, w, h, k, head: art.head, bg, kinds, z: zs, tones, face: names.indexOf("face"), dark: e1, strokes: refs.strokes, fall: [sun.x, sun.y], print: set(art.print ?? []), eyes: eyes.map((e) => e.at), back: upto >= 10 ? back : back.map(() => 0) }), li = line.image
+  const line = lineLayer({ ink, map, w, h, k, head: art.head, bg, kinds, z: zs, tones, face: names.indexOf("face"), dark: e1, strokes: refs.strokes, fall: [sun.x, sun.y], print: set(art.print ?? []), softWedges: art.softWedges ?? false, eyes: eyes.map((e) => e.at), back: upto >= 10 ? back : back.map(() => 0) }), li = line.image
   if (upto < 9) for (let i = 0; i < N; i++) { li.data[i * 4] = BLACK[0]; li.data[i * 4 + 1] = BLACK[1]; li.data[i * 4 + 2] = BLACK[2]; li.data[i * 4 + 3] = smooth(0.2, 0.64, ink[i]!) * 255 }
   if (upto >= 8) {
     tmp.g.clearRect(0, 0, w, h); tmp.g.fillStyle = "#000"
