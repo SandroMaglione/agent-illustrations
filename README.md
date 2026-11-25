@@ -2,6 +2,11 @@
 
 Illustrations coloured entirely by code (TypeScript and Canvas 2D). No image generation: a person supplies line art and directs, an AI agent writes the shapes, rules and numbers. The goal is not one picture but a process that gets better with each one.
 
+| | |
+|---|---|
+| **Rendering: works** | Finished line art in, splash illustration and layered `.clip` out. Everything on this page is about this |
+| **Open drawing: does not** | Deciding pose, shapes, hands, hair and costume, or finishing a sketch. Eleven attempts by two agents, none approved: [`docs/drawing/`](docs/drawing/README.md) |
+
 ![Visor](gallery/visor.jpg)
 
 ## How it works
@@ -89,6 +94,14 @@ The headphones character also has two announcement cards (own fictional brand, t
 
 ![Cards](gallery/cards.jpg)
 
+## What does not work: open drawing
+
+The renderer carries out decisions that are in the line art. Where line art leaves them open, an agent has to make them, and so far that fails. Tried: figures in code, a 3D mannequin under ink, sketching in stages, drawing from references, directed image generation, and three ways of turning a sketch into line art.
+
+Three causes: a known shape is lost when it is typed, invented shapes are symbols, and every check passed on what was rejected. A blind critic agreed with the client on the coloured drawings; the maker did not.
+
+The [log](docs/drawing/log.md) has what broke first in each, and [`next.md`](docs/drawing/next.md) small tests for a new agent.
+
 ## Run
 
 ```sh
@@ -138,6 +151,7 @@ Then follow [`docs/process.md`](docs/process.md) and, for the blockout and shado
 
 - [`docs/process.md`](docs/process.md): the current rules, in order
 - [`docs/form-guide.md`](docs/form-guide.md): from line art to shadow shapes, with the 3D blockout
+- [`docs/drawing/`](docs/drawing/README.md): open drawing, what was tried and why it fails, tests for the next agent
 - [`docs/lessons.md`](docs/lessons.md): every note on a result, sorted by cause
 - [`docs/tools.md`](docs/tools.md): how shapes are said, placed and checked
 - [`docs/layers.md`](docs/layers.md): the layered file, how it is structured
@@ -148,7 +162,7 @@ Then follow [`docs/process.md`](docs/process.md) and, for the blockout and shado
 - [`docs/reviews/`](docs/reviews/): the other models' reports in full
 - [`docs/research-anime-rendering.md`](docs/research-anime-rendering.md), [`docs/research-precision-tools.md`](docs/research-precision-tools.md): research with sources
 - [`docs/earlier/`](docs/earlier/): superseded notes
-- [`archive/`](archive/): pixel measurements, Neon's bell drawing
+- [`archive/`](archive/): pixel measurements, Neon's bell drawing, the drawing attempts' code
 
 ## Previous attempts
 
@@ -175,6 +189,7 @@ The steps before, oldest first. Code and results are kept; each has its story an
 | 17 | The process again on the headphones drawing | it carries over; never edit the plan to pass | `src/splash/maren.ts` |
 | 18 | The render as layers | a `.clip` written by code opens in CLIP STUDIO PAINT | `src/layers/` |
 | 19 | Layers an illustrator can pick up | a layer is a set of related marks, and clean is something a check can fail | `src/layers/arrange.ts` |
+| 20 | Drawing, and sketches into line art | eleven attempts, none approved: [the log](docs/drawing/log.md) | `archive/drawing/` |
 
 ![Earlier characters, sketch engine](gallery/journey/1d-styles.jpg)
 ![Figure drawn in code](gallery/journey/2b-courier.jpg)
