@@ -1,7 +1,8 @@
 /**
  * The layers as a page to look through: switch layers and folders, see one alone, play the stack from the bottom.
  *   node scripts/layers.ts maren output/layers/maren --clip && node scripts/layerview.ts output/layers/maren
- * Writes <dir>/view.html (one file, layers scaled down) and <dir>/sheet.png (the stack growing folder by folder, then every step alone).
+ * Writes <dir>/view.html (one file, layers scaled down) and <dir>/sheet.png (the picture growing,
+ * every part's folder put together, and what one folder holds).
  * The page composites with the same formulas as the check, on smaller pixels: for looking, not for measuring.
  */
 import { readFileSync, readdirSync, writeFileSync } from "node:fs"
@@ -11,7 +12,7 @@ import type { Mode } from "../src/layers/stack.ts"
 
 const [dir] = process.argv.slice(2)
 if (!dir) { console.log("node scripts/layerview.ts <dir written by layers.ts>"); process.exit(1) }
-type Row = { index: number; name: string; group: string; mode: Mode; x: number; y: number; w: number; h: number }
+type Row = { index: number; name: string; group: string; mode: Mode; clip?: boolean; x: number; y: number; w: number; h: number }
 const stack = JSON.parse(readFileSync(join(dir, "stack.json"), "utf8")) as { drawing: string; w: number; h: number; layers: Array<Row> }
 const files = readdirSync(join(dir, "png")).sort(), W = 600, H = Math.round((stack.h / stack.w) * W), z = W / stack.w
 const { b, p } = await open()
@@ -27,8 +28,8 @@ for (const r of stack.layers) {
   }, { src, r, W, H, z }))
 }
 
-const modes: Record<Mode, string> = { normal: "normal", multiply: "multiply", add: "add", linearLight: "linear light", overlay: "overlay", screen: "screen" }
-const data = stack.layers.map((r, i) => ({ n: r.name, g: r.group, m: r.mode, s: small[i]! }))
+const modes: Record<Mode, string> = { normal: "normal", multiply: "multiply", add: "add", dodge: "color dodge", linearLight: "linear light", overlay: "overlay", screen: "screen" }
+const data = stack.layers.map((r, i) => ({ n: r.name, g: r.group, m: r.mode, k: r.clip ? 1 : 0, s: small[i]! }))
 const page = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${stack.drawing} layers</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0}body{font:13px/1.35 var(--font-sans,system-ui);color:var(--foreground,#222)}
@@ -41,7 +42,7 @@ input[type=range]{flex:1;min-width:120px;accent-color:var(--primary,#36c)}
 #now{min-height:1.35em;margin-top:8px;color:var(--muted-foreground,#666)}
 .p{border:1px solid var(--border,#ccc);border-radius:var(--radius,8px);overflow:hidden}
 .r{display:flex;align-items:center;gap:8px;padding:0 8px;min-height:26px;border-bottom:1px solid var(--border,#ddd)}
-.r:last-child{border-bottom:0}.r.in{padding-left:26px}.r.f{background:var(--secondary,#f2f2f2);font-weight:600}
+.r:last-child{border-bottom:0}.r.f{background:var(--secondary,#f2f2f2);font-weight:600}
 .r button{flex:1;min-width:0;background:none;border:0;border-radius:0;padding:4px 0;text-align:left;font-weight:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .r i{font-style:normal;font-size:11px;color:var(--muted-foreground,#777);white-space:nowrap}
 .r.on button{color:var(--primary,#25c);font-weight:600}.r.un{opacity:.45}.hide{display:none}
@@ -54,24 +55,40 @@ input[type=range]{flex:1;min-width:120px;accent-color:var(--primary,#36c)}
 const D=${JSON.stringify(data)},M=${JSON.stringify(modes)},W=${W},H=${H},el=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e}
 const c=document.getElementById("c"),g=c.getContext("2d",{willReadFrequently:true}),now=document.getElementById("now"),up=document.getElementById("upto")
 const I=await Promise.all(D.map(d=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=d.s})))
-// the stack's steps for the slider: the flats count as one
-const steps=[];D.forEach((d,i)=>{if(d.g==="Flats"&&i&&D[i-1].g==="Flats")steps[steps.length-1]=i;else steps.push(i)})
+// the stack's steps for the slider: every top folder, and every part in Colour
+const unit=d=>{const a=d.g.split("/");return a[0]==="Colour"?a.slice(0,2).join("/"):d.g?a[0]+"/"+d.n:d.n}
+const steps=[];D.forEach((d,i)=>{if(i&&unit(D[i-1])===unit(d))steps[steps.length-1]=i;else steps.push(i)})
 const vis=D.map(()=>true);let solo=-1,limit=D.length-1,timer=0
 up.max=steps.length-1;up.value=up.max
+const OP={normal:"source-over",multiply:"multiply",add:"lighter",dodge:"color-dodge",overlay:"overlay",screen:"screen"}
+// a soft base and what is clipped to it are one group that keeps the base's alpha
+const tmp=document.createElement("canvas");tmp.width=W;tmp.height=H;const tg=tmp.getContext("2d")
 const lin=i=>{const t=document.createElement("canvas");t.width=W;t.height=H;const q=t.getContext("2d");q.drawImage(I[i],0,0);const s=q.getImageData(0,0,W,H).data,o=g.getImageData(0,0,W,H),d=o.data;for(let k=0;k<d.length;k+=4){const a=s[k+3]/255;if(a)for(let e=0;e<3;e++)d[k+e]+=(Math.max(0,Math.min(255,d[k+e]+2*s[k+e]-255))-d[k+e])*a}g.putImageData(o,0,0)}
 const draw=()=>{g.globalCompositeOperation="source-over";g.fillStyle="#fff";g.fillRect(0,0,W,H)
- if(solo>=0||Array.isArray(solo)){for(let y=0;y<H;y+=15)for(let x=0;x<W;x+=15){g.fillStyle=((x+y)/15)%2?"#c9c9c9":"#b5b5b5";g.fillRect(x,y,15,15)}for(const i of [].concat(solo)){g.drawImage(I[i],0,0)}}
- else D.forEach((d,i)=>{if(i>limit||!vis[i])return;if(d.m==="linearLight"){lin(i);return}g.globalCompositeOperation={normal:"source-over",multiply:"multiply",add:"lighter",overlay:"overlay",screen:"screen"}[d.m];g.drawImage(I[i],0,0);g.globalCompositeOperation="source-over"})
+ const one=solo>=0||Array.isArray(solo),list=one?[].concat(solo):D.map((d,i)=>i).filter(i=>i<=limit&&vis[i])
+ if(one)for(let y=0;y<H;y+=15)for(let x=0;x<W;x+=15){g.fillStyle=((x+y)/15)%2?"#c9c9c9":"#b5b5b5";g.fillRect(x,y,15,15)}
+ for(let n=0;n<list.length;n++){const i=list[n],d=D[i]
+  if(one&&list.length===1){g.drawImage(I[i],0,0);continue}
+  if(d.m==="linearLight"){if(!one)lin(i);continue}
+  const over=[];while(n+1<list.length&&D[list[n+1]].k&&D[list[n+1]].g===d.g)over.push(list[++n])
+  if(!over.length){g.globalCompositeOperation=OP[d.m];g.drawImage(I[i],0,0);g.globalCompositeOperation="source-over";continue}
+  tg.globalCompositeOperation="copy";tg.drawImage(I[i],0,0)
+  for(const j of over){tg.globalCompositeOperation=D[j].m==="normal"?"source-atop":OP[D[j].m];tg.drawImage(I[j],0,0)}
+  tg.globalCompositeOperation="destination-in";tg.drawImage(I[i],0,0)
+  g.globalCompositeOperation=OP[d.m];g.drawImage(tmp,0,0);g.globalCompositeOperation="source-over"}
  rows.forEach(r=>{r.e.classList.toggle("on",r.ids.length===[].concat(solo).length&&r.ids.every((x,k)=>x===[].concat(solo)[k]));r.e.classList.toggle("un",r.ids.every(i=>i>limit||!vis[i]));r.b.checked=r.ids.every(i=>vis[i])})
- now.textContent=solo>=0||Array.isArray(solo)?"Alone: "+(Array.isArray(solo)?D[solo[0]].g+" (folder)":D[solo].n+", "+M[D[solo].m]):limit<D.length-1?"Up to: "+(D[limit].g==="Flats"?"Flats":D[limit].n):"All layers"}
+ now.textContent=Array.isArray(solo)?"Alone: "+D[solo[0]].g.split("/").pop()+" (folder)":solo>=0?"Alone: "+(D[solo].g?D[solo].g.split("/").pop()+" / ":"")+D[solo].n+", "+M[D[solo].m]:limit<D.length-1?"Up to: "+unit(D[limit]).split("/").pop():"All layers"}
 const rows=[],P=document.getElementById("p")
-const row=(label,ids,mode,cls,kids)=>{const e=el("div","r "+cls),b=el("input"),t=el("button"),m=el("i");b.type="checkbox";b.checked=true;b.setAttribute("aria-label","Show "+label);t.textContent=label;t.title="See alone";m.textContent=mode
+const row=(label,ids,mode,depth,box,folder)=>{const e=el("div","r"+(folder?" f":"")),b=el("input"),t=el("button"),m=el("i");e.style.paddingLeft=8+depth*16+"px";b.type="checkbox";b.checked=true;b.setAttribute("aria-label","Show "+label);t.textContent=label;t.title="See alone";m.textContent=mode
  b.onchange=()=>{ids.forEach(i=>vis[i]=b.checked);solo=-1;draw()};t.onclick=()=>{const s=ids.length===1?ids[0]:ids;solo=JSON.stringify(solo)===JSON.stringify(s)?-1:s;stop();draw()}
- e.append(b,t,m);if(kids){const x=el("button");x.style.flex="0 0 auto";x.textContent="+";x.setAttribute("aria-label","Open "+label);x.onclick=()=>{const h=kids[0].classList.toggle("hide");kids.forEach(k=>k.classList.toggle("hide",h));x.textContent=h?"+":"\\u2212"};e.append(x)}
- rows.push({e,b,ids});return e}
-for(let i=D.length-1;i>=0;){const G=D[i].g;if(!G){P.append(row(D[i].n,[i],M[D[i].m],""));i--;continue}
- const ids=[];while(i>=0&&D[i].g===G)ids.push(i--);const shut=G==="Flats",kids=ids.map(j=>{const e=row(D[j].n,[j],M[D[j].m],"in"+(shut?" hide":""));return e})
- P.append(row(G,[...ids].reverse(),ids.length+" layers","f",shut?kids:null),...kids)}
+ e.append(b,t,m);let kids=null;if(folder){kids=el("div",folder==="shut"?"hide":"");const x=el("button");x.style.flex="0 0 auto";x.textContent=folder==="shut"?"+":"\u2212";x.setAttribute("aria-label","Open or close "+label);x.onclick=()=>{x.textContent=kids.classList.toggle("hide")?"+":"\u2212"};e.append(x)}
+ rows.push({e,b,ids});box.append(e);if(kids)box.append(kids);return kids}
+const build=(from,to,path,depth,box)=>{for(let i=to;i>=from;){const g=D[i].g,rest=path?(g===path?"":g.slice(path.length+1)):g
+ if(!rest){row((D[i].k?"\u21b3 ":"")+D[i].n,[i],M[D[i].m],depth,box);i--;continue}
+ const name=rest.split("/")[0],p=path?path+"/"+name:name;let j=i;while(j>=from&&(D[j].g===p||D[j].g.startsWith(p+"/")))j--
+ const ids=[];for(let k=j+1;k<=i;k++)ids.push(k)
+ build(j+1,i,p,depth+1,row(name,ids,ids.length+(ids.length===1?" layer":" layers"),depth,box,p==="Colour"||p===window.OPEN?"open":"shut"));i=j}}
+build(0,D.length-1,"",0,P)
 const stop=()=>{clearInterval(timer);timer=0;document.getElementById("play").textContent="Play"}
 up.oninput=()=>{stop();solo=-1;limit=steps[+up.value];draw()}
 document.getElementById("reset").onclick=()=>{stop();solo=-1;vis.fill(true);limit=D.length-1;up.value=up.max;draw()}
@@ -81,33 +98,54 @@ draw();window.__ready=true
 writeFileSync(join(dir, "view.html"), page)
 console.log(`  wrote ${join(dir, "view.html")} (${(page.length / 1e6).toFixed(1)} MB)`)
 
-// the sheet: the stack after each folder, then every step alone on grey
-const order = [...new Set(stack.layers.map((r) => r.group || r.name))].filter((g) => g !== "Paper" && g !== "Background")
-const grown = order.map((g) => ({ label: g, upto: stack.layers.map((r, i) => ((r.group || r.name) === g ? i : -1)).reduce((a, x) => Math.max(a, x), 0) }))
-const url = await p.evaluate(async ({ data, grown, W, H, M }) => {
+// the sheet: the picture growing, every part's folder put together, and what one folder holds
+const url = await p.evaluate(async ({ data, W, H, M }) => {
   const I = await Promise.all(data.map(async (d) => { const i = new Image(); i.src = d.s; await i.decode(); return i }))
   const mk = (w: number, h: number): CanvasRenderingContext2D => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c.getContext("2d", { willReadFrequently: true })! }
-  const ops: Record<string, GlobalCompositeOperation> = { normal: "source-over", multiply: "multiply", add: "lighter", overlay: "overlay", screen: "screen" }
-  const upto = (n: number): HTMLCanvasElement => {
-    const g = mk(W, H); g.fillStyle = "#fff"; g.fillRect(0, 0, W, H)
-    for (let i = 0; i <= n; i++) {
-      if (data[i]!.m === "linearLight") { const q = mk(W, H); q.drawImage(I[i]!, 0, 0); const s = q.getImageData(0, 0, W, H).data, o = g.getImageData(0, 0, W, H), d = o.data; for (let k = 0; k < d.length; k += 4) { const a = s[k + 3]! / 255; if (a) for (let e = 0; e < 3; e++) d[k + e] = d[k + e]! + (Math.max(0, Math.min(255, d[k + e]! + 2 * s[k + e]! - 255)) - d[k + e]!) * a } g.putImageData(o, 0, 0); continue }
-      g.globalCompositeOperation = ops[data[i]!.m]!; g.drawImage(I[i]!, 0, 0); g.globalCompositeOperation = "source-over"
+  const ops: Record<string, GlobalCompositeOperation> = { normal: "source-over", multiply: "multiply", add: "lighter", dodge: "color-dodge", overlay: "overlay", screen: "screen" }
+  const put = (g: CanvasRenderingContext2D, ids: Array<number>): void => {
+    for (let n = 0; n < ids.length; n++) {
+      const i = ids[n]!, d = data[i]!
+      if (d.m === "linearLight") { const q = mk(W, H); q.drawImage(I[i]!, 0, 0); const s = q.getImageData(0, 0, W, H).data, o = g.getImageData(0, 0, W, H), t = o.data; for (let k = 0; k < t.length; k += 4) { const a = s[k + 3]! / 255; if (a) for (let e = 0; e < 3; e++) t[k + e] = t[k + e]! + (Math.max(0, Math.min(255, t[k + e]! + 2 * s[k + e]! - 255)) - t[k + e]!) * a } g.putImageData(o, 0, 0); continue }
+      const q = mk(W, H)
+      q.drawImage(I[i]!, 0, 0)
+      while (n + 1 < ids.length && data[ids[n + 1]!]!.k && data[ids[n + 1]!]!.g === d.g) { const j = ids[++n]!; q.globalCompositeOperation = data[j]!.m === "normal" ? "source-atop" : ops[data[j]!.m]!; q.drawImage(I[j]!, 0, 0) }
+      q.globalCompositeOperation = "destination-in"; q.drawImage(I[i]!, 0, 0)
+      g.globalCompositeOperation = ops[d.m]!; g.drawImage(q.canvas, 0, 0); g.globalCompositeOperation = "source-over"
     }
-    return g.canvas
   }
-  const alone = (ids: Array<number>): HTMLCanvasElement => { const g = mk(W, H); for (let y = 0; y < H; y += 20) for (let x = 0; x < W; x += 20) { g.fillStyle = ((x + y) / 20) % 2 ? "#c9c9c9" : "#b5b5b5"; g.fillRect(x, y, 20, 20) } for (const i of ids) g.drawImage(I[i]!, 0, 0); return g.canvas }
-  const flats = data.map((d, i) => (d.g === "Flats" ? i : -1)).filter((i) => i >= 0)
-  const cells: Array<[string, HTMLCanvasElement]> = [["Flats", alone(flats)]]
-  data.forEach((d, i) => { if (d.g !== "Flats" && d.n !== "Paper" && d.n !== "Background") cells.push([`${d.n} · ${M[d.m]}`, alone([i])]) })
-  const cols = 9, pad = 14, T = 26, A = 264, ah = Math.round((A / W) * H), total = cols * (A + pad) + pad, big = Math.floor((total - pad * (grown.length + 1)) / grown.length), bh = Math.round((big / W) * H)
-  const rows = Math.ceil(cells.length / cols), g = mk(total, pad + bh + T + pad * 2 + rows * (ah + T + pad))
-  g.fillStyle = "#f4f4f2"; g.fillRect(0, 0, total, g.canvas.height); g.font = "600 17px system-ui"; g.fillStyle = "#222"; g.imageSmoothingQuality = "high"
-  grown.forEach((s, i) => { const x = pad + i * (big + pad); g.drawImage(upto(s.upto), x, pad, big, bh); g.fillText(`${i ? "+ " : ""}${s.label}`, x, pad + bh + 20) })
-  g.font = "15px system-ui"
-  cells.forEach(([l, c], i) => { const x = pad + (i % cols) * (A + pad), y = pad + bh + T + pad * 2 + Math.floor(i / cols) * (ah + T + pad); g.drawImage(c, x, y, A, ah); g.fillText(l, x, y + ah + 18, A) })
-  return g.canvas.toDataURL("image/png")
-}, { data, grown, W, H, M: modes })
+  const all = data.map((_, i) => i), top = (i: number): string => data[i]!.g.split("/")[0]!, names = (list: ReadonlyArray<string>) => (i: number): boolean => top(i) !== "Colour" || list.includes(data[i]!.n)
+  const A = ["Base"], B = [...A, "Gradient", "Hue bands"], C = [...B, "Half tone", "Shadow 1", "Shadow edge", "Shadow lift", "Shadow 2"], noEffects = (i: number): boolean => !["Effects", "Details", "Line art", "Over lines"].includes(top(i))
+  const stages: Array<[string, Array<number>]> = [["Base", all.filter((i) => noEffects(i) && names(A)(i))], ["+ Gradient, hue bands", all.filter((i) => noEffects(i) && names(B)(i))], ["+ Shadows", all.filter((i) => noEffects(i) && names(C)(i))], ["+ Metal, lights, reflected light", all.filter(noEffects)], ["+ Effects", all.filter((i) => !["Details", "Line art", "Over lines"].includes(top(i)))], ["+ Details", all.filter((i) => !["Line art", "Over lines"].includes(top(i)))], ["+ Line art, eye lights", all]]
+  const parts = [...new Set(data.map((d) => d.g).filter((g) => g.startsWith("Colour/")))], biggest = [...parts].sort((x, y) => data.filter((d) => d.g === y).length - data.filter((d) => d.g === x).length)[0]!
+  const boxOf = (ids: Array<number>): [number, number, number, number] => { const g = mk(W, H); for (const i of ids) g.drawImage(I[i]!, 0, 0); const d = g.getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = 0, y1 = 0; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3]! > 8) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y) } return [Math.max(0, x0 - 4), Math.max(0, y0 - 4), Math.min(W, x1 + 5), Math.min(H, y1 + 5)] }
+  const total = 2500, pad = 14, T = 28
+  const g = mk(total, 6000)
+  g.fillStyle = "#f4f4f2"; g.fillRect(0, 0, total, 6000); g.imageSmoothingQuality = "high"
+  let y = pad
+  const head = (t: string): void => { g.font = "700 24px system-ui"; g.fillStyle = "#222"; g.fillText(t, pad, y + 24); y += 40; g.font = "17px system-ui" }
+  /** One picture fitted in a cell on grey squares. */
+  const cell = (x: number, w: number, h: number, ids: Array<number>, box: [number, number, number, number], label: string): void => {
+    for (let b = 0; b < h; b += 14) for (let a = 0; a < w; a += 14) { g.fillStyle = ((a + b) / 14) % 2 ? "#c9c9c9" : "#b5b5b5"; g.fillRect(x + a, y + b, Math.min(14, w - a), Math.min(14, h - b)) }
+    const q = mk(W, H); put(q, ids)
+    const [x0, y0, x1, y1] = box, s = Math.min(w / (x1 - x0), h / (y1 - y0))
+    g.drawImage(q.canvas, x0, y0, x1 - x0, y1 - y0, x + (w - (x1 - x0) * s) / 2, y + (h - (y1 - y0) * s) / 2, (x1 - x0) * s, (y1 - y0) * s)
+    g.fillStyle = "#222"; g.fillText(label, x, y + h + 20, w)
+  }
+  const row = (n: number, hh: number, make: Array<(x: number, w: number, h: number) => void>): void => { const w = Math.floor((total - pad * (n + 1)) / n); make.forEach((f, i) => { if (i && i % n === 0) y += hh + T + pad; f(pad + (i % n) * (w + pad), w, hh) }); y += hh + T + pad * 2 }
+  head("The picture, kind of layer by kind of layer")
+  row(stages.length, Math.round(((total - pad * 8) / 7 / W) * H), stages.map(([l, ids]) => (x, w, h) => { const q = mk(W, H); q.fillStyle = "#fff"; q.fillRect(0, 0, W, H); put(q, ids); g.drawImage(q.canvas, x, y, w, h); g.fillStyle = "#222"; g.fillText(l, x, y + h + 20, w) }))
+  head("Colour: one folder per part")
+  row(7, 270, parts.map((f) => (x, w, h) => { const ids = all.filter((i) => data[i]!.g === f); cell(x, w, h, ids, boxOf(ids), `${f.slice(7)} · ${ids.length} layers`) }))
+  for (const f of [biggest, parts.find((q) => /hair front/i.test(q)) ?? parts.at(-1)!]) {
+    head(`Inside ${f.slice(7)}, bottom to top, each layer clipped to Base`)
+    const ids = all.filter((i) => data[i]!.g === f), b = boxOf(ids)
+    row(6, 250, ids.map((i) => (x, w, h) => cell(x, w, h, [i], b, `${data[i]!.n} · ${M[data[i]!.m]}`)))
+  }
+  const out = mk(total, Math.ceil(y))
+  out.drawImage(g.canvas, 0, 0)
+  return out.canvas.toDataURL("image/png")
+}, { data, W, H, M: modes })
 writeFileSync(join(dir, "sheet.png"), bytes(url))
 console.log(`  wrote ${join(dir, "sheet.png")}`)
 await b.close()

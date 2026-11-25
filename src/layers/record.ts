@@ -8,9 +8,9 @@
  */
 import type { Mode } from "./stack.ts"
 
-export type Hint = { mode: "auto" | "normal" | "multiply" | "add" | "linearLight" | "overlay"; color?: readonly [number, number, number] }
+export type Hint = { mode: "auto" | "normal" | "multiply" | "add" | "dodge" | "linearLight" | "overlay"; color?: readonly [number, number, number] }
 /** One layer as it leaves the browser: pixels cut to their box, deflated. */
-export type Out = { name: string; group: string; mode: Mode; x: number; y: number; w: number; h: number; pixels: number; data: Uint8Array }
+export type Out = { key: string; name: string; group: string; mode: Mode; x: number; y: number; w: number; h: number; pixels: number; data: Uint8Array }
 
 const deflate = async (b: Uint8Array): Promise<Uint8Array> => new Uint8Array(await new Response(new Blob([b as BlobPart]).stream().pipeThrough(new CompressionStream("deflate"))).arrayBuffer())
 
@@ -19,6 +19,10 @@ export class Recorder {
   readonly notes: Array<string> = []
   w = 0
   h = 0
+  /** The step the next layers come from, as `STEPS` names it, or `flat:<part>`, `detail:<name>`, `print:<name>`. */
+  key = ""
+  /** The drawing's plan of folders, and the layer plan's helpers. */
+  folders: ReadonlyArray<readonly [string, string]> | null = null
   /** Set by the renderer, which knows the size at its scale. */
   size(w: number, h: number): void { this.w = w; this.h = h }
 
@@ -30,7 +34,7 @@ export class Recorder {
     if (!n) { this.notes.push(`${name}: empty, dropped`); return }
     const bw = x1 - x0 + 1, bh = y1 - y0 + 1, cut = new Uint8Array(bw * bh * 4)
     for (let y = 0; y < bh; y++) cut.set(rgba.subarray(((y + y0) * w + x0) * 4, ((y + y0) * w + x1 + 1) * 4), y * bw * 4)
-    const o: Out = { name, group, mode, x: x0, y: y0, w: bw, h: bh, pixels: n, data: await deflate(cut) }
+    const o: Out = { key: this.key, name, group, mode, x: x0, y: y0, w: bw, h: bh, pixels: n, data: await deflate(cut) }
     if (at === undefined) this.out.push(o); else this.out.splice(at, 0, o)
   }
 
@@ -49,12 +53,12 @@ export class Recorder {
     }
     before = clamp(before); after = clamp(after)
     if (hint.mode !== "auto") return this.fitted(name, group, hint.mode, before, after, cover, hint.color)
-    // a tint that darkens some channels and lifts others: what darkens multiplies, what lifts is added on top of that
+    // a tint that darkens some channels and lifts others: what darkens multiplies, what lifts dodges (divides by what is left to white): both are a factor, so neither carries the picture in it
     const mid = [0, 1, 2].map(() => new Float32Array(N))
     let lifts = 0
     for (let c = 0; c < 3; c++) { const b = before[c]!, a = after[c]!, m = mid[c]!; for (let i = 0; i < N; i++) { m[i] = Math.min(b[i]!, a[i]!); if (a[i]! > b[i]! + 0.02) lifts++ } }
     await this.fitted(name, group, "multiply", before, mid, cover)
-    if (lifts) await this.fitted(`${name}, lift`, group, "add", mid, after, cover)
+    if (lifts) await this.fitted(`${name}, lift`, group, "dodge", mid, after, cover)
   }
 
   private async fitted(name: string, group: string, mode: Mode, before: ReadonlyArray<Float32Array>, after: ReadonlyArray<Float32Array>, cover: Float32Array, color?: Hint["color"]): Promise<void> {
@@ -84,6 +88,7 @@ const byte = (v: number): number => Math.max(0, Math.min(255, Math.round(v)))
  * - normal: after = before + (color - before) * alpha
  * - multiply: after = before * (1 + (color/255 - 1) * alpha)
  * - add: after = before + color * alpha
+ * - dodge: after = before + (before / (1 - color/255) - before) * alpha
  * - linearLight (alpha 1): after = before + 2 * color - 255; grey 127.5 does nothing
  * - overlay with a given colour: after = before + (overlay(before, color) - before) * alpha
  */
@@ -101,6 +106,14 @@ export const fit = (mode: Mode, b: ReadonlyArray<number>, a: ReadonlyArray<numbe
     const need = Math.max(...f.map((v) => 1 - Math.min(1, v))), A = alpha8(cover || need, need), t = A / 255
     if (!A) return null
     return [byte(255 * (1 - (1 - Math.min(1, f[0]!)) / t)), byte(255 * (1 - (1 - Math.min(1, f[1]!)) / t)), byte(255 * (1 - (1 - Math.min(1, f[2]!)) / t)), A]
+  }
+  if (mode === "dodge") {
+    // the factor, per channel; where the sum left white it is the one that just reaches it
+    if (d.some((v) => v < -0.05)) return null
+    const q = [0, 1, 2].map((c) => (b[c]! > 0.5 ? Math.max(0, a[c]! / b[c]! - 1) : 0)), A = alpha8(cover || 1, 0), t = A / 255
+    if (!A) return [0, 0, 0, 0]
+    const s = q.map((v) => { const u = v / t; return u / (1 + u) })
+    return [byte(255 * s[0]!), byte(255 * s[1]!), byte(255 * s[2]!), A]
   }
   if (mode === "add") {
     if (d.some((v) => v < -0.05)) return null

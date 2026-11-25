@@ -1,42 +1,66 @@
 # Layers, PSD and CLIP STUDIO PAINT
 
-**Status: works.** A `.clip` written by this repository opens in CLIP STUDIO PAINT 5.0.1 with the right modes, folders and names ([details](#the-clip)). Try it: [`examples/layers/maren/maren.clip`](../examples/layers/maren/maren.clip).
+**The goal: an illustrator opens the file and goes on painting.** So it is organised the way an illustrator keeps a file, the same in every drawing, and a check fails when it is not.
 
-The renderer paints one picture in about forty steps. With `layers=1` every step also comes out as a layer of a drawing program, so the result can be opened, picked apart and refined instead of being a flat image. The stack is written as a layered **PSD** and as a **.clip** for CLIP STUDIO PAINT (CSP), either as a new canvas or added to a canvas someone is working on.
+**Status.** A `.clip` from this repository opens in CLIP STUDIO PAINT 5.0.1 with the right modes, folders and names ([details](#the-clip)); that was the first layout, one layer per paint step. The layout below is newer: clipping, nested folders and color dodge in it have not been opened in CSP yet.
 
 ```sh
-node scripts/layers.ts rig output/layers/rig --clip                           # PSD, .clip, layer PNGs, stack.json, the check
-node scripts/layers.ts rig output/layers/rig --clip --template mine.clip      # into your own canvas (same size: added on top)
-node scripts/layerview.ts output/layers/rig                                   # view.html (switch layers, see one alone, play the stack) and sheet.png
-node scripts/clipcheck.ts output/layers/rig/rig.clip --tree --render output/layers/rig/render.png
+node scripts/layers.ts maren output/layers/maren --clip                       # PSD, .clip, layer PNGs, stack.json, the checks
+node scripts/layers.ts maren output/layers/maren --clip --template mine.clip  # into your own canvas (same size: added on top)
+node scripts/layers.ts maren output/layers/maren --steps                      # the first layout: one layer per paint step
+node scripts/layerview.ts output/layers/maren                                 # view.html (switch layers, see one alone) and sheet.png
+node scripts/clipcheck.ts output/layers/maren/maren.clip --tree --render output/layers/maren/render.png
 ```
 
-![Maren's layers: the stack growing folder by folder, then every step alone](../gallery/layers-maren.jpg)
+![Maren's file: the picture growing, the folder of each part, what two folders hold](../gallery/layers-maren.jpg)
 
-The same for the goggles drawing: [layers-sheet.jpg](../gallery/layers-sheet.jpg).
+## How the file is organised
 
-## What comes out
+As in the layer panel, top first:
 
-Bottom to top, as in CSP's layer panel read upwards. Folders are pass-through, so a multiply inside still multiplies what is under the folder.
+| Folder | Holds |
+|---|---|
+| **Over lines** | Eye lights (and what `front` draws) |
+| **Line art** | `Line` in one ink; `Line colour` clipped to it |
+| **Details** | Brows, Irises, Eye whites, Mouth, Nose, Prints: drawn flat, above the effects, so they stay clean |
+| **Effects** (pass-through) | Grain (linear light), Depth haze, Glow (color dodge), Tint (multiply): over the whole figure |
+| **Colour** (pass-through) | one folder per part, nearest on top: Hands, Headphones, Hair front, Face, …, Hair back |
+| Background | only when `back` draws something; cut out of the white |
+| Paper | CSP's own |
 
-| Layer or folder | Mode | What it is |
+Every part's folder holds the same layers, in the same order, only where there is something to hold. Everything above `Base` is clipped to it, so painting never spills:
+
+| Layer | Mode | What it is |
 |---|---|---|
-| Paper | normal | white; in the .clip it is CSP's own paper layer |
-| Background | normal | what `back` draws around the figure |
-| **Flats** | normal | one layer per part (`hairF`, `face`, `jack`, …), opaque, no gaps: recolour a part, lock its transparency, select by it |
-| **Colour** | normal | gradients, hair hue bands, washes |
-| **Shading** | multiply, add | scatter at the turn, shade, darkest behind the edge, shade lifts, light side warmth, bounce, deep shade, darkest accents |
-| **Materials and light** | normal, multiply | metal, sheen and pores, lit planes, rims, hair lights, gloss, highlights |
-| **Second light** | normal | colour bleed, second light and its inner step |
-| **Finish** | multiply, add, overlay, linear light | blush, air (warm and cool side), focus falloff, depth haze, warm shaded skin (orange overlay), brows, grain on neutral grey |
-| Face and eyes | normal | irises, whites, lid shadows: under the line art |
-| Line art | normal | the artist's lines, coloured as the renderer colours them |
-| Eye lights | normal | what is drawn over the lines |
-| Front | normal | what `front` draws |
+| Blush | normal | late washes on the face |
+| Warm shade | overlay | orange over shaded skin |
+| Reflected light | normal | bounce, colour of neighbours, second light |
+| Highlight | normal | gloss, glints |
+| Light | normal | lit planes, rims, sheen |
+| Metal | normal | the planes of a metal piece |
+| Shadow 2 | multiply | deep shade |
+| Shadow lift | color dodge | a shade getting lighter towards the far side |
+| Shadow edge | multiply | scattering band and the dark just behind the edge |
+| Shadow 1 | multiply | the designed shadow shapes, one flat colour per material |
+| Half tone | multiply | the lighter step before it |
+| Hue bands | normal | hair: bands that move the hue, not the value |
+| Gradient | normal | slow colour over the base |
+| **Base** | normal | the part's flat colours, opaque, hard edged |
 
-A step that does nothing in a drawing gives no layer (`stack.json` lists the notes). With paper: Maren (`maren`, the same line art as `tape`, with the form guide) 84 layers, headphones (`tape`) 74, goggles 72, bell 62.
+Which parts go in which folder is data: `folders` in the drawing (`src/splash/tape-folders.ts`), furthest first. What the face draws is named piece by piece (`details`).
+
+## What "clean" means
+`checkStack` (`src/layers/arrange.ts`) runs at every export and says NOT CLEAN when one fails:
+- every part is in exactly one folder, every paint step has a place;
+- only the five top folders, in order; only names from the list, in order, none twice;
+- every folder starts with `Base`, every other layer is clipped and has no pixel outside it;
+- no empty layer.
+
+And while the layers are made: a layer that hardly shows is left out (and said), islands of a few pixels are swept away, soft edges take the colour of the shape they belong to.
 
 ## How a step becomes a layer
+
+First every paint step is recorded as a layer over the whole figure (`--steps` stops here). Then `arrange.ts` cuts the steps along the parts, which never share a pixel, and merges them as operations (x becomes a·x + b), not as pictures, so a multiply keeps a colour of its own and does not carry what lies under it.
 
 The renderer paints into one float RGB buffer with two operations: `to` (mix towards a colour) and `times` (multiply by a factor). Each call now carries the name of its step (`on("shade")`). Recording, a loop that does several steps per pixel runs once per step, each time doing only that step, and the buffer is kept before and after. Nothing else changes: without `layers=1` every call runs as before, and the render is **pixel-identical** to the one before this work (checked on the goggles at k=2: difference bounding box none).
 
@@ -45,7 +69,7 @@ From before, after, and how strongly the step touched each pixel, a layer is fit
 | Step does | Layer | Pixel |
 |---|---|---|
 | darkens (`times` below 1) | multiply | colour = the factor, alpha = how strongly; one shade over many parts has one colour per part |
-| lifts and darkens at once (a warm tint) | multiply, then add (`…, lift`) | the darkening channels multiply, the lifting ones are added on top |
+| lifts and darkens at once (a warm tint) | multiply, then color dodge (`…, lift`) | the darkening channels multiply, the lifting ones divide: both are factors |
 | mixes towards a colour | normal | colour = the colour it mixed towards, alpha = how much |
 | grain | linear light | 127.5 is no change; lower the opacity to calm it |
 | orange on shaded skin | overlay | the renderer's own overlay colour, alpha = strength |
@@ -55,20 +79,20 @@ What a mode cannot say stays exact in a normal layer next to it, named `… (res
 
 ## Checked
 
-Every number here is from this repository's scripts, on renders at k=2. Run again on 2026-11-26, after `main` with Maren was merged in.
+On renders at k=2, 26 November 2026, the new layout:
 
-| Check | Maren (`maren`) | Goggles (`rig`) | Headphones (`tape`) | Bell (`bell`) |
+| Check | Maren | Goggles (`rig`) | Headphones (`tape`) | Bell (`bell`) |
 |---|---|---|---|---|
-| Render without layers vs `main` | identical (k=3, also `visor`) | identical (k=2) | | |
-| Layers, with paper | 84 | 72 | 74 | 62 |
-| Stack composited (CSP formulas, 8 bit) vs render: pixels off by more than 8 | 0.460% | 0.513% | 0.470% | 0.582% |
-| … more than 3 px inside the figure: largest difference, share off by more than 2 | 4, 0.060% | 3, 0.029% | 3, 0.008% | 3, 0.009% |
-| .clip read back by `clipread.ts`: rule problems | 0 | 0 | 0 | 0 |
-| .clip layers composited from its own tiles vs the preview written into it | max 3 | max 2 | max 2 | max 2 |
+| Render without layers vs before | identical (also `visor`) | identical | | |
+| Folders, layers with paper | 18, 117 | 13, 77 | 18, 94 | 16, 77 |
+| Clean | yes | yes | yes | yes |
+| Stack vs render, whole image: pixels off by more than 2, 8 | 1.91%, 0.47% | 1.12%, 0.52% | 0.61%, 0.47% | 0.73%, 0.58% |
+| More than 3 px inside the figure: off by more than 2 | 2.09% | 0.80% | 0.08% | 0.08% |
+| .clip read back: rule problems | 0 | 0 | 0 | 0 |
 
-From the first round, not run again: the PSD composited by **psd-tools** (an independent reader) was off by more than 8 on 0.518% (goggles) and 0.475% (headphones) of pixels; the storage class of all 166 .clip columns was the same as in CSP's template.
+Maren's PSD composited by **psd-tools** (an independent reader) vs our own composite: max 3.
 
-The bell, whose face is drawn with `lighten` and `darken`, takes the fallback for its face and eye lights.
+**What the order costs.** Warmth of the light side moved from every part into one Tint and Glow over everything, so lit planes and highlights get it too: up to 7 levels there on Maren. Swept crumbs of up to 17 px differ more (up to 116 on a few pixels next to lines). One 104 px piece of a hair light is 11 off, not explained. The bell's eyes are drawn with `lighten`, fitted as normal.
 
 **The one difference by design:** the renderer paints the background over the anti-aliased outer edge of the line art; in the stack the line art lies on top of the background, as an artist keeps it. So the outer contour's edge pixels are a little darker in the stack (up to 58 levels on single edge pixels, up to 148 on loose hair strands that stand alone on the background in `tape` and `bell`, nowhere else). Everything more than 3 px inside the figure is within 4 levels, and 99.9% of it within 2 (the rest is rounding: each of about forty layers is 8 bit).
 
@@ -78,6 +102,7 @@ There is no public spec. The format was put together from two places and then co
 
 **Checked by this repository on 22 files saved by CSP** (the samples of `al3ks1s/clip-tools`, `dobrokot/clip_to_psd`, `wamsoft/clipparse`, `nodamushi/clip_layer_rename`; fetch them to re-run `node scripts/clipcheck.ts *.clip`):
 - The container: `CSFCHUNK`, then `CHNKHead` (whose second u64 is the position of `CHNKSQLi`), one `CHNKExta` per pixel store (40-byte id `extrnlid` + 32 hex digits), `CHNKSQLi` (a whole SQLite database), empty `CHNKFoot`; all big-endian. `ExternalChunk(ExternalID, Offset)` gives every store's position. 0 problems on all 22 files.
+- **Clipping**: a base and the layers clipped to it are one group that keeps the base's alpha. Measured on `Illustration-Referece.clip` against the preview CSP stored in it: 0 error on 19,569 soft pixels; the usual formula (clipped layer times base alpha, over the canvas) is off by up to 64. `LayerClip` is 1. Folders with a normal mode have `LayerComposite` 0.
 - A tile is 256x256, zlib: first the alpha plane row by row (65,536 bytes), then B, G, R, alpha per pixel. Straight alpha. On the files without text, vector or adjustment layers (`Illustration-Pixel`, 24% of its canvas drawn on, and `Illustration-Locks`) the layers composited from the tiles equal the preview CSP stored, **max difference 0**.
 - **The tile checksum**: Adler-32 of the 4-byte little-endian zlib length and the zlib bytes. It matches all 2,448 non-zero checksums in these files (51 are 0). The writer writes it, so it writes what CSP writes.
 - Storage classes: `Offscreen.BlockData` is a BLOB, `ExternalChunk.ExternalID` TEXT, in every file.
@@ -89,13 +114,13 @@ There is no public spec. The format was put together from two places and then co
 - `ExternalID` as BLOB or `BlockData` as TEXT: layers open transparent. A wrong non-zero checksum: "layer image or mask is damaged". `MipmapCount` not equal to the chain: CSP crashes while loading. An empty folder without a mipmap: crash. A stale `CanvasPreview`: the old picture shows until the first redraw. Thumbnails: CSP redraws them when the store is missing and `Thumbnail*NeedRefresh` is 50.
 - CSP opens a layered PSD with names, folders, blend modes, opacity and visibility.
 
-**Opened in CSP by the owner of this repository:** Maren's file, as `layers.ts` wrote it ([`examples/layers/maren/maren.clip`](../examples/layers/maren/maren.clip), 2048x3072, 90 layers and folders), in CLIP STUDIO PAINT 5.0.1 on macOS, 26 November 2026. It opens as expected: layer modes, folders and names are right. So the writer's rules hold in the program itself, not only in our checker. Not reported separately: painting on a layer and saving it again, a canvas injected with `--template`, other CSP versions, Windows and iPad.
+**Opened in CSP by the owner of this repository:** Maren's file in the first layout, as `layers.ts` wrote it then ([`examples/layers/maren/maren.clip`](../examples/layers/maren/maren.clip), 2048x3072, 90 layers and folders), in CLIP STUDIO PAINT 5.0.1 on macOS, 26 November 2026. It opens as expected: layer modes, folders and names are right. So the writer's rules hold in the program itself, not only in our checker. Not reported separately: painting on a layer and saving it again, a canvas injected with `--template`, other CSP versions, Windows and iPad.
 
 When a drawing or the writer changes, look at four things:
 1. It opens; the layer panel shows the folders as in the table above, closed; the canvas has the render's size.
 2. The picture equals `render.png` (apart from the contour's edge) right after opening, at 100% and zoomed out.
-3. `Shading/Shade` is multiply, `Finish/Grain` linear light, `Finish/Warm shaded skin` overlay, the folders pass-through.
-4. Hide `Flats/hairF`: the hair goes white under its shading, nothing else moves. Paint on a layer, save, open again.
+3. `Shadow 1` is multiply, `Shadow lift` color dodge, `Grain` linear light, `Warm shade` overlay; Colour and Effects pass-through, the rest normal.
+4. Paint on a `Shadow 1` outside the part: nothing shows, it is clipped. Change a colour in a `Base`: the shadows follow. Save, open again.
 
 If a .clip fails, open the PSD in CSP and save it as .clip from there. The message CSP gives and which of the four points failed say what to fix.
 
@@ -106,7 +131,9 @@ With `--template` pointing at a .clip of the same size as the render, nothing in
 ## Limits
 
 - Layers are pixels at the render's scale, not vector strokes, and not the renderer's shapes. Edit them like painted layers.
-- A multiply layer follows when a flat is recoloured; a normal layer (lit planes, highlights) keeps its colours. The `… lift` layers and `(rest)` layers were fitted over these flats and are the least editable.
+- Shadows follow when a Base is recoloured; normal layers (Gradient, lights, reflected light) keep their colours.
+- Bases are hard edged and end in the middle of a line; a part does not go on under what covers it.
+- A part's Base holds all its colours in one layer (Jacket: cloth, lining, trim, cuffs).
 - Re-render after changing the drawing's data; the layers are not read back into the code.
 - The background lies under the line art (see above). `cut` renders and the `masks`, `value`, `grey` and `regions` views have no layers.
 
@@ -116,7 +143,8 @@ With `--template` pointing at a .clip of the same size as the render, nothing in
 |---|---|
 | `src/layers/steps.ts` | every step: name, folder, mode |
 | `src/layers/record.ts` | the recorder in the browser, and the fit |
-| `src/layers/stack.ts` | the stack and its composite, with CSP's formulas |
+| `src/layers/arrange.ts` | from paint steps to the illustrator's file, and what clean means |
+| `src/layers/stack.ts` | the stack, its tree and its composite, with CSP's formulas |
 | `src/layers/psd.ts` | the PSD writer |
 | `src/layers/clip.ts` | the .clip writer: new canvas or injected |
 | `src/layers/clipread.ts` | the .clip reader, composite and rule checks |

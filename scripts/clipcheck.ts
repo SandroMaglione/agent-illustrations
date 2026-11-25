@@ -12,7 +12,7 @@ import { decodePng, encodePng } from "../src/layers/png.ts"
 const args = process.argv.slice(2), opt = (f: string): string | undefined => { const i = args.indexOf(f); return i < 0 ? undefined : args[i + 1] }
 const files = args.filter((a, i) => !a.startsWith("--") && !["--render", "--out"].includes(args[i - 1] ?? ""))
 let failed = 0
-const NAMES: Record<number, string> = { 0: "normal", 2: "multiply", 8: "screen", 11: "add", 14: "overlay", 18: "linear light", 30: "pass-through" }
+const NAMES: Record<number, string> = { 0: "normal", 2: "multiply", 8: "screen", 9: "color dodge", 11: "add", 14: "overlay", 18: "linear light", 30: "pass-through" }
 for (const f of files) {
   const c = readClip(readFileSync(f)), skip = new Set<string>()
   const flat = compositeClip(c, skip)
@@ -20,7 +20,7 @@ for (const f of files) {
   for (const p of c.problems.slice(0, 20)) console.log(`  PROBLEM ${p}`)
   if (c.problems.length) failed++
   for (const n of [...skip, ...new Set(c.layers.flatMap((l) => (l.note ? [`${l.note}: ${l.name}`] : [])))].slice(0, 8)) console.log(`  not composited: ${n}`)
-  if (args.includes("--tree")) { const show = (L: ClipLayer): void => { for (const k of [...L.kids].reverse()) { console.log(`  ${"  ".repeat(k.depth - 1)}${k.folder ? "[" + k.name + "]" : k.name}  ${NAMES[k.composite] ?? `mode ${k.composite}`}${k.opacity < 1 ? ` ${Math.round(k.opacity * 100)}%` : ""}${k.visible ? "" : " hidden"}`); show(k) } }; show(c.root) }
+  if (args.includes("--tree")) { const show = (L: ClipLayer): void => { for (const k of [...L.kids].reverse()) { console.log(`  ${"  ".repeat(k.depth - 1)}${k.folder ? "[" + k.name + "]" : (k.clip ? "↳ " : "") + k.name}  ${NAMES[k.composite] ?? `mode ${k.composite}`}${k.opacity < 1 ? ` ${Math.round(k.opacity * 100)}%` : ""}${k.visible ? "" : " hidden"}`); show(k) } }; show(c.root) }
   // against a picture: same size, or the preview's smaller size by box filter
   const against = (label: string, img: { w: number; h: number; rgba: Uint8Array }): void => {
     const sx = c.w / img.w, sy = c.h / img.h

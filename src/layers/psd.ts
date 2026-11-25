@@ -1,11 +1,12 @@
 /**
- * A layered PSD from a stack: raster layers with blend modes, pass-through folders, and the flat picture for readers that
+ * A layered PSD from a stack: raster layers with blend modes and clipping, nested folders (pass-through or normal), and the flat picture for readers that
  * only show that. CLIP STUDIO PAINT opens PSD with layer names, folders, blend modes, opacity and visibility (verified by
  * others in CSP 5.0.4, see docs/layers.md), and saves it as .clip from there. Node only.
  */
-import type { Layer, Mode, Stack } from "./stack.ts"
+import { tree } from "./stack.ts"
+import type { Layer, Mode, Node, Stack } from "./stack.ts"
 
-const KEY: Record<Mode, string> = { normal: "norm", multiply: "mul ", add: "lddg", linearLight: "lLit", overlay: "over", screen: "scrn" }
+const KEY: Record<Mode, string> = { normal: "norm", multiply: "mul ", add: "lddg", dodge: "div ", linearLight: "lLit", overlay: "over", screen: "scrn" }
 
 class Out {
   private parts: Array<Buffer> = []
@@ -45,26 +46,21 @@ const pascal = (s: string): Buffer => { const a = Buffer.from(s.replace(/[^\x20-
 const block = (key: string, body: Buffer): Buffer => { const b = body.length % 2 ? Buffer.concat([body, Buffer.alloc(1)]) : body, o = new Out(); return o.str("8BIM").str(key).u32(b.length).push(b).done() }
 const unicode = (s: string): Buffer => { const o = new Out().u32(s.length); for (const ch of s) o.u16(ch.charCodeAt(0)); return block("luni", o.done()) }
 
-type Rec = { top: number; left: number; w: number; h: number; mode: string; opacity: number; hidden: boolean; name: string; extra: Array<Buffer>; planes: Array<Uint8Array> | null }
+type Rec = { top: number; left: number; w: number; h: number; mode: string; opacity: number; hidden: boolean; clip: boolean; name: string; extra: Array<Buffer>; planes: Array<Uint8Array> | null }
 
-/** Layers bottom first; a run of layers with the same group becomes a pass-through folder. */
+/** Layers bottom first; a run of layers with the same path becomes a folder. */
 export const psd = (s: Stack, flat: Uint8ClampedArray): Buffer => {
   const recs: Array<Rec> = []
-  const leaf = (L: Layer): Rec => { const n = L.w * L.h; return { top: L.y, left: L.x, w: L.w, h: L.h, mode: KEY[L.mode], opacity: Math.round(L.opacity * 255), hidden: !L.visible, name: L.name, extra: [], planes: [3, 0, 1, 2].map((c) => planeOf(L.rgba, n, c)) } }
-  const marker = (name: string, type: number, mode = "pass"): Rec => ({ top: 0, left: 0, w: 0, h: 0, mode: type === 3 ? "norm" : mode, opacity: 255, hidden: false, name, extra: [block("lsct", type === 3 ? new Out().u32(3).done() : new Out().u32(type).str("8BIM").str(mode).done())], planes: null })
-  for (let i = 0; i < s.layers.length;) {
-    const g = s.layers[i]!.group
-    if (!g) { recs.push(leaf(s.layers[i]!)); i++; continue }
-    recs.push(marker("</Layer group>", 3))
-    while (i < s.layers.length && s.layers[i]!.group === g) recs.push(leaf(s.layers[i++]!))
-    recs.push(marker(g, 2))
-  }
+  const leaf = (L: Layer): Rec => { const n = L.w * L.h; return { top: L.y, left: L.x, w: L.w, h: L.h, mode: KEY[L.mode], opacity: Math.round(L.opacity * 255), hidden: !L.visible, clip: L.clip ?? false, name: L.name, extra: [], planes: [3, 0, 1, 2].map((c) => planeOf(L.rgba, n, c)) } }
+  const marker = (name: string, type: number, mode = "pass"): Rec => ({ top: 0, left: 0, w: 0, h: 0, mode: type === 3 ? "norm" : mode, opacity: 255, hidden: false, clip: false, name, extra: [block("lsct", type === 3 ? new Out().u32(3).done() : new Out().u32(type).str("8BIM").str(mode).done())], planes: null })
+  const walk = (nodes: Array<Node>): void => { for (const n of nodes) { if ("layer" in n) { recs.push(leaf(n.layer)); continue } recs.push(marker("</Layer group>", 3)); walk(n.kids); recs.push(marker(n.folder, 2, n.sealed ? "norm" : "pass")) } }
+  walk(tree(s))
   const info = new Out().i16(recs.length), pixels = new Out()
   for (const r of recs) {
     const ch = [-1, 0, 1, 2], data = ch.map((_, c) => { if (!r.planes) return new Out().u16(0).done(); const { counts, data } = rle(r.planes[c]!, r.w, r.h), o = new Out().u16(1); for (const n of counts) o.u16(n); return o.push(data).done() })
     info.i32(r.top).i32(r.left).i32(r.top + r.h).i32(r.left + r.w).u16(4)
     ch.forEach((id, c) => info.i16(id).u32(data[c]!.length))
-    info.str("8BIM").str(r.mode).u8(r.opacity).u8(0).u8((r.hidden ? 2 : 0) | 8).u8(0)
+    info.str("8BIM").str(r.mode).u8(r.opacity).u8(r.clip ? 1 : 0).u8((r.hidden ? 2 : 0) | 8).u8(0)
     const extra = Buffer.concat([new Out().u32(0).u32(0).done(), pascal(r.name), unicode(r.name), ...r.extra])
     info.u32(extra.length).push(extra)
     for (const d of data) pixels.push(d)

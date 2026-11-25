@@ -32,9 +32,9 @@ Full rules: [`docs/process.md`](docs/process.md). The form stage: [`docs/form-gu
 
 ## Layers, PSD and CLIP STUDIO PAINT
 
-**It works in the real program:** Maren's [`.clip`](examples/layers/maren/maren.clip) was opened in CLIP STUDIO PAINT 5.0.1, with layer modes, folders and names as expected.
+**It works in the real program:** Maren's [`.clip`](examples/layers/maren/maren.clip) was opened in CLIP STUDIO PAINT 5.0.1, with layer modes, folders and names as expected. (That file is the first layout, one layer per paint step.)
 
-Every step of the paint comes out as a layer, so the result can be refined in a drawing program: flats one layer per part, shading as multiply layers, lights, second light, finish, line art on top, all in pass-through folders. Written as a layered PSD and as a `.clip` for CLIP STUDIO PAINT, either as a new canvas or added on top of a canvas you are working on. The render itself does not change, and the stack composited gives it back (0.5% of pixels differ by more than 8 levels, all on the outer edge of the contour, where the line art now lies on top of the background).
+The goal is a file an illustrator can pick up: one folder per part (Hair front, Jacket, Player, …), in each the same layers in the same order (Base, Gradient, Shadow 1, Shadow 2, Light, Reflected light, …) clipped to the base; above them effects, face details, and the line art with its colours clipped. Every export checks that it is clean. Written as a layered PSD and as a `.clip` for CLIP STUDIO PAINT, either as a new canvas or added on top of a canvas you are working on. The render itself does not change, and the stack composited gives it back (0.5% of pixels differ by more than 8 levels, almost all on the outer edge of the contour, where the line art now lies on top of the background).
 
 ```sh
 node scripts/layers.ts rig output/layers/rig --clip      # any drawing: PSD, .clip, layer PNGs, check

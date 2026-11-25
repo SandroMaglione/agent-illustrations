@@ -25,11 +25,11 @@ import { DatabaseSync } from "node:sqlite"
 import { deflateSync } from "node:zlib"
 import { randomBytes, randomUUID } from "node:crypto"
 import { decodePng, encodePng } from "./png.ts"
-import { composite } from "./stack.ts"
-import type { Mode, Stack } from "./stack.ts"
+import { composite, tree } from "./stack.ts"
+import type { Mode, Node, Stack } from "./stack.ts"
 
 /** `Layer.LayerComposite`, as measured against CSP's own preview (clipparse docs/CLIP_FORMAT.md §9). */
-export const COMPOSITE: Record<Mode | "passThrough", number> = { normal: 0, multiply: 2, screen: 8, add: 11, overlay: 14, linearLight: 18, passThrough: 30 }
+export const COMPOSITE: Record<Mode | "passThrough", number> = { normal: 0, multiply: 2, screen: 8, dodge: 9, add: 11, overlay: 14, linearLight: 18, passThrough: 30 }
 const BLOCK = 256, EMPTY = 104, FOLDER = 1, CLOSED = 16
 /** How CSP writes every folder row, unlike a raster row (all 14 CSP files here with both agree): no colour expression, masking 32. */
 const FOLDER_ROW = { LayerMasking: 32, LayerColorTypeIndex: null, LayerColorTypeBlackChecked: null, LayerColorTypeWhiteChecked: null }
@@ -232,7 +232,8 @@ const AT_ORIGIN = { LayerOffsetX: 0, LayerOffsetY: 0, LayerRenderOffscrOffsetX: 
  *   raster layer is the model for every new layer and folder and is removed at the end. The paper stays at the bottom.
  * - the file has the stack's size: nothing in it changes, the stack goes on top, in one folder (`into`). This is how layers
  *   go into a canvas someone is working on, for example the one with their line art.
- * The stack's own white "Paper" is left out: CSP has its paper. Folders are pass-through and closed. `flat` is the
+ * The stack's own white "Paper" is left out: CSP has its paper. Folders are closed, pass-through unless the stack seals them; a
+ * clipped layer has `LayerClip` 1, as CSP writes it (its own sample files). `flat` is the
  * finished picture for CanvasPreview when the canvas is made anew; injected, the preview is the old one with the stack on top.
  */
 export const clip = (template: Buffer, s: Stack, flat: Uint8Array, into = "Agent layers"): Buffer => {
@@ -250,15 +251,20 @@ export const clip = (template: Buffer, s: Stack, flat: Uint8Array, into = "Agent
     d.resize(s.w, s.h)
   }
   const full = (L: Stack["layers"][number]): Uint8Array => { const o = new Uint8Array(s.w * s.h * 4); for (let y = 0; y < L.h; y++) { const Y = y + L.y; if (Y < 0 || Y >= s.h) continue; for (let x = 0; x < L.w; x++) { const X = x + L.x; if (X >= 0 && X < s.w) o.set(L.rgba.subarray((y * L.w + x) * 4, (y * L.w + x) * 4 + 4), (Y * s.w + X) * 4) } } return o }
-  const folder = (parent: number, name: string): number => d.add(Number(model.MainId), parent, name, { ...AT_ORIGIN, LayerType: 0, LayerFolder: FOLDER | CLOSED, LayerComposite: COMPOSITE.passThrough, ...FOLDER_ROW }, null, s.w, s.h)
-  const base = same ? folder(root, into) : root, folders = new Map<string, number>()
+  const folder = (parent: number, name: string, sealed = false): number => d.add(Number(model.MainId), parent, name, { ...AT_ORIGIN, LayerType: 0, LayerFolder: FOLDER | CLOSED, LayerComposite: sealed ? COMPOSITE.normal : COMPOSITE.passThrough, ...FOLDER_ROW }, null, s.w, s.h)
+  const base = same ? folder(root, into) : root
   let last = 0
-  for (const L of s.layers) {
-    if (L.name === "Paper" && !L.group) continue
-    if (L.group && !folders.has(L.group)) folders.set(L.group, folder(base, L.group))
-    last = d.add(Number(model.MainId), L.group ? folders.get(L.group)! : base, L.name, { ...AT_ORIGIN, LayerComposite: COMPOSITE[L.mode], LayerOpacity: Math.round(L.opacity * 256), LayerVisibility: L.visible ? 1 : 0 }, full(L), s.w, s.h)
+  const walk = (nodes: Array<Node>, parent: number): void => {
+    for (const n of nodes) {
+      if ("folder" in n) { walk(n.kids, folder(parent, n.folder, n.sealed)); continue }
+      const L = n.layer
+      if (L.name === "Paper" && !L.group) continue
+      last = d.add(Number(model.MainId), parent, L.name, { ...AT_ORIGIN, LayerComposite: COMPOSITE[L.mode], LayerClip: L.clip ? 1 : 0, LayerOpacity: Math.round(L.opacity * 256), LayerVisibility: L.visible ? 1 : 0 }, full(L), s.w, s.h)
+    }
   }
-  if (!same) d.remove(Number(model.MainId))
+  walk(tree(s), base)
+  // a new canvas: the template's paper in English, and the resolution illustrations are kept at
+  if (!same) { d.remove(Number(model.MainId)); d.run("UPDATE Layer SET LayerName='Paper' WHERE LayerType=1584"); d.run("UPDATE Canvas SET CanvasResolution=350") }
   d.run("UPDATE Canvas SET CanvasCurrentLayer=?", last)
   if (same) {
     // the old preview with the new layers on top: exact, because they are on top

@@ -48,6 +48,7 @@ export const RIG: Art = {
   ],
   washes: [{ on: ["ear"], x: 345, y: 500, rx: 50, ry: 80, color: [244, 166, 150], a: 0.35 }],
   face: (g) => { g.fillStyle = "#f6cfc9"; g.beginPath(); g.moveTo(688, 604); g.lineTo(700, 600); g.lineTo(703, 613); g.lineTo(692, 620); g.fill() },
+  folders: [["Hair back", "hairB"], ["Braid", "braid tie"], ["Skin", "neck"], ["Jacket", "colIn jack panel band seam sleeve stripe inner cap patch tape collar trim"], ["Zip and buttons", "zip pull btn"], ["Face", "face ear brow mouth teethM"], ["Hair front", "hairF"], ["Goggle strap", "strap buckIn buckle"], ["Goggles", "bridge frame rim lens screw hw"]],
   over: () => undefined, back: (g) => {
     // floating marks: a gauge behind the shoulder, three speed bars, sparks
     g.lineCap = "round"; g.shadowColor = "rgba(96,206,214,.75)"; g.shadowBlur = 16; g.strokeStyle = "#8fd8de"

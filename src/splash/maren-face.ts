@@ -4,9 +4,9 @@ import { path } from "../bold/shadows.ts"
 type G = CanvasRenderingContext2D
 const fill = (g: G, d: string, c: string): void => { path(g, d, 1); g.fillStyle = c; g.fill() }
 type Eye = { open: string; x: number; y: number; rx: number; ry: number; turn: number; shade: string }
-const inside = (g: G, e: Eye): void => {
+const white = (g: G, e: Eye): void => { g.save(); path(g, e.open, 1); g.clip(); g.fillStyle = "#fffaf8"; g.fillRect(e.x - 70, e.y - 60, 140, 120); fill(g, e.shade, "#cdc5dc"); g.restore() }
+const iris = (g: G, e: Eye): void => {
   g.save(); path(g, e.open, 1); g.clip()
-  g.fillStyle = "#fffaf8"; g.fillRect(e.x - 70, e.y - 60, 140, 120); fill(g, e.shade, "#cdc5dc")
   g.translate(e.x, e.y); g.rotate(e.turn)
   const { rx, ry } = e, el = (x: number, y: number, a: number, b: number, c: string): void => { g.beginPath(); g.ellipse(x, y, a, b, 0, 0, 7); g.fillStyle = c; g.fill() }
   el(0, 0, rx, ry, "#0f2f38"); g.beginPath(); g.ellipse(0, 0, rx * 0.92, ry * 0.92, 0, 0, 7); g.clip()
@@ -30,14 +30,13 @@ const NEAR: Eye = { open: "500,241 512,231~ 526,223~ 544,218~ 562,216 571,219 56
 const FAR: Eye = { open: "394,300 402,292~ 416,284~ 430,279~ 440,277.4 444,281 438,290~ 424,301~ 414,305 402,305", x: 431, y: 288, rx: 16, ry: 14, turn: -0.48, shade: "392,302 404,295 418,288~ 432,284~ 450,281 446,270 400,280" }
 export const NOINK: ReadonlyArray<string> = ["529,224! 541,222! 556,220.4! 558,231! 545,235.6! 532,238.6! 527,232!", "420,291! 430,284! 441,281! 443,285! 434,292! 424,298!", "471.6,209! 479,191! 500,180! 524,171! 562,170.6! 562,178! 530,183! 512,190! 494,200! 478,213!", "374.6,261! 379,247! 396,239.6! 405,247! 391,255.4! 379,263!"]
 export const BROWS = [{ d: "473,206.4! 486,193.6! 504,183.4! 529,176.4! 561,174! 532,181.4! 514,188! 497,197.8! 479,211!", color: "#256053" }, { d: "375.4,255.6! 385,247.6! 396.6,241.8! 401,246.6! 389.4,253.4! 378.6,260.4!", color: "#256053" }]
-export const drawFace = (g: G): void => {
-  inside(g, NEAR); inside(g, FAR)
+const mouth = (g: G): void => {
   fill(g, "484,338 494,328.6~ 508,322.6~ 524,319.4 534,316 527,324~ 512,334~ 500,338.6", "#fff8f4"); fill(g, "488,336 498,328.6~ 512,323.4~ 530,319 526,322 510,327~ 498,332", "#dccfd6"); fill(g, "518,330 528,321~ 537,314 531,322.6~ 522,329.4", "#b9575a")
   g.save(); g.globalAlpha = 0.45; g.filter = "blur(3px)"; fill(g, "498,346 508,345~ 519,339.4~ 524,334 522,341~ 511,348~", "#e0685f"); g.restore()
-  fill(g, "466,296 471,299~ 475,304~ 475,309 468,304~", "#f6cfc3")
 }
+const nose = (g: G): void => fill(g, "466,296 471,299~ 475,304~ 475,309 468,304~", "#f6cfc3")
 /** What is printed on the things. */
-export const drawPrints = (g: G): void => {
+const prints = (g: G): void => {
   g.save(); g.translate(252, 664); g.rotate(0.42); g.fillStyle = "rgba(246,240,232,.92)"; g.font = "800 15px 'Avenir Next Condensed', 'Arial Narrow', sans-serif"; g.fillText("LOW TIDE", 0, 6); g.font = "600 6.5px 'Avenir Next', sans-serif"; g.fillText("RECORD EVERYTHING", 1, 16); g.restore()
   fill(g, "112,1239 226,1245 224,1253 110,1247", "#c2513f"); fill(g, "71,1326 99,1329 94,1350 66,1346", "#c2513f")
   g.fillStyle = "#34323f"; g.save(); g.translate(143, 1264); g.rotate(0.05); g.font = "800 9px 'Avenir Next Condensed', 'Arial Narrow', sans-serif"; g.fillText("SIDE A", 4, 8); g.restore()
@@ -45,3 +44,7 @@ export const drawPrints = (g: G): void => {
   g.fillStyle = "#c8e05a"; g.beginPath(); g.arc(283, 1322, 4, 0, 7); g.fill(); g.fillStyle = "rgba(246,240,232,.8)"; g.font = "700 8px 'Avenir Next', sans-serif"; g.save(); g.translate(252, 1352); g.rotate(0.07); g.fillText("VOL", 0, 0); g.restore()
 }
 export const drawLights = (g: G): void => { light(g, NEAR); light(g, FAR); g.fillStyle = "#fffdfb"; g.beginPath(); g.ellipse(510, 343, 2.4, 1, -0.5, 0, 7); g.fill() }
+export const DETAILS = [
+  { name: "Eye whites", draw: (g: G): void => { white(g, NEAR); white(g, FAR) } }, { name: "Irises", draw: (g: G): void => { iris(g, NEAR); iris(g, FAR) } },
+  { name: "Mouth", draw: mouth }, { name: "Nose", draw: nose }, { name: "Prints", print: true, draw: prints },
+]

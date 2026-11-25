@@ -78,6 +78,10 @@ export type Art = {
   noink: ReadonlyArray<string>
   /** Eyes placed from the lines the artist drew. */
   eyes?: ReadonlyArray<EyeSpec>
+  /** What `face` draws, piece by piece and in the same order, so that each piece can be a layer. `print`: printed on a thing, not part of the face. */
+  details?: ReadonlyArray<{ name: string; print?: boolean; draw: (g: CanvasRenderingContext2D) => void }>
+  /** The folders of the layered file, furthest first: name and the parts in it. Every part in exactly one (`src/layers/arrange.ts`). */
+  folders?: ReadonlyArray<readonly [string, string]>
   face: (g: CanvasRenderingContext2D) => void; over: (g: CanvasRenderingContext2D) => void
   back: (g: CanvasRenderingContext2D) => void; front: (g: CanvasRenderingContext2D) => void
 }

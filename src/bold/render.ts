@@ -89,6 +89,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     R[i] = c[0]; G[i] = c[1]; B[i] = c[2]
   }
   rec?.size(w, h)
+  if (rec) rec.folders = art.folders ?? null
   /* layers: every paint step has a name (`on`). Recording, a loop runs once per step, each time doing only that step */
   let gate: string | null = null, tag = "", stray = 0
   const cover = rec ? new Float32Array(N) : null, on = (t: string): void => { tag = t }
@@ -101,6 +102,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     for (const t of tags) {
       const before = [R.slice(), G.slice(), B.slice()], s = STEPS[t]!
       cover!.fill(0); gate = t; tag = tags[0]!; body(); gate = null
+      rec.key = t
       await rec.step(s.name, s.group, s.hint, before, [R, G, B], cover!)
     }
   }
@@ -120,6 +122,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     if (!t || q === bg || upto === 0) continue
     const f = new Uint8ClampedArray(N * 4)
     for (let i = 0; i < N; i++) if (map[i] === q) { f[i * 4] = t.base[0]; f[i * 4 + 1] = t.base[1]; f[i * 4 + 2] = t.base[2]; f[i * 4 + 3] = 255 }
+    rec.key = `flat:${names[q]!}`
     await rec.keep(names[q]!, "Flats", "normal", f)
   }
   if (upto >= 2 && view !== "regions") {
@@ -393,10 +396,10 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       if (u && bl[i]! > 0.02 && e1[i]! > 0.5) {
         // only a surface brighter than this shade gives anything, and the shade stays a shade
         const now: RGB = [R[i]!, G[i]!, B[i]!], give = smooth(8, 70, luma(u.base) - luma(now)), cap = luma(t.base) * 0.86
-        if (give > 0) { const g = bl[i]! * give * (kd === "dark" || kd === "leather" ? 0.5 : 0.62), c: RGB = [now[0] * (1 + (g * u.base[0]) / 255) + g * u.base[0] * 0.05, now[1] * (1 + (g * u.base[1]) / 255) + g * u.base[1] * 0.05, now[2] * (1 + (g * u.base[2]) / 255) + g * u.base[2] * 0.05], l = luma(c); to(i, l > cap ? [(c[0] * cap) / l, (c[1] * cap) / l, (c[2] * cap) / l] : c, 1) }
+        if (give > 0) { const g = bl[i]! * give * (kd === "dark" || kd === "leather" ? 0.5 : 0.62), c: RGB = [now[0] * (1 + (g * u.base[0]) / 255) + g * u.base[0] * 0.05, now[1] * (1 + (g * u.base[1]) / 255) + g * u.base[1] * 0.05, now[2] * (1 + (g * u.base[2]) / 255) + g * u.base[2] * 0.05], l = luma(c); to(i, l > cap ? [(c[0] * cap) / l, (c[1] * cap) / l, (c[2] * cap) / l] : c, 1); if (rec && gate === tag) cover![i] = g }
       }
       tag = "skyIn"
-      if (s2[i]! > 0.01) to(i, mix([R[i]!, G[i]!, B[i]!], mix(t.neon, [112, 84, 190], 0.35), 0.42), s2[i]!)
+      if (s2[i]! > 0.01) to(i, mix([R[i]!, G[i]!, B[i]!], mix(t.neon, [112, 84, 190], 0.35), 0.42), s2[i]!); if (rec && gate === tag) cover![i] = s2[i]! * 0.42
       tag = "sky"
       if (s1[i]! > 0.01) to(i, t.neon, s1[i]! * 0.92)
     } })
@@ -455,15 +458,16 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       const m = at(ch[0]!) * a, k1 = a * 1.5, p = sp && speck[q]! < sp ? 11 : 0
       img.data[i * 4] = R[i]! + m + at(ch[1]!) * k1 + p; img.data[i * 4 + 1] = G[i]! + m + at(ch[2]!) * k1 * 0.55 + p; img.data[i * 4 + 2] = B[i]! + m + at(ch[3]!) * k1 + p * 0.5; img.data[i * 4 + 3] = 255
     }
-    if (rec) { const after = [0, 1, 2].map((c) => Float32Array.from({ length: N }, (_, i) => img.data[i * 4 + c]!)); await rec.step(STEPS.grain!.name, STEPS.grain!.group, STEPS.grain!.hint, [R, G, B], after, new Float32Array(N).fill(1)) }
+    if (rec) { rec.key = "grain"; const after = [0, 1, 2].map((c) => Float32Array.from({ length: N }, (_, i) => img.data[i * 4 + c]!)); await rec.step(STEPS.grain!.name, STEPS.grain!.group, STEPS.grain!.hint, [R, G, B], after, new Float32Array(N).fill(1)) }
   } else for (let i = 0; i < N; i++) { img.data[i * 4] = R[i]!; img.data[i * 4 + 1] = G[i]!; img.data[i * 4 + 2] = B[i]!; img.data[i * 4 + 3] = 255 }
   const col = mk()
   col.g.putImageData(img, 0, 0)
   const drawn = view !== "masks" && view !== "regions"
   /** What is drawn on the canvas. Recording, it is drawn alone as well: when that layer over the canvas gives the same picture it is kept as it is, otherwise a layer is fitted from before and after. */
-  const paint = async (step: string, draw: (g: CanvasRenderingContext2D) => void, own?: Uint8ClampedArray): Promise<void> => {
+  const paint = async (step: string, draw: (g: CanvasRenderingContext2D) => void, own?: Uint8ClampedArray, key = step, label?: string): Promise<void> => {
     if (!rec) { draw(col.g); return }
-    const st = STEPS[step]!, before = col.g.getImageData(0, 0, w, h).data
+    rec.key = key
+    const st = { ...STEPS[step]!, name: label ?? STEPS[step]!.name }, before = col.g.getImageData(0, 0, w, h).data
     draw(col.g)
     const after = col.g.getImageData(0, 0, w, h).data
     let L = own
@@ -475,7 +479,14 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     const f = (d: Uint8ClampedArray): Array<Float32Array> => [0, 1, 2].map((c) => Float32Array.from({ length: N }, (_, i) => d[i * 4 + c]!))
     await rec.step(st.name, st.group, { mode: "normal" }, f(before), f(after), new Float32Array(N))
   }
-  if (upto >= 8 && drawn) await paint("face", (g) => { g.save(); g.scale(k, k); art.face(g); for (const e of eyes) e.under(g); g.restore() })
+  if (upto >= 8 && drawn) {
+    const scaled = (f: (g: CanvasRenderingContext2D) => void) => (g: CanvasRenderingContext2D): void => { g.save(); g.scale(k, k); f(g); g.restore() }
+    if (!rec || (!art.details && !eyes.length)) await paint("face", scaled((g) => { art.face(g); for (const e of eyes) e.under(g) }))
+    else {
+      for (const d of art.details ?? [{ name: "Face marks", draw: art.face, print: false }]) await paint("face", scaled(d.draw), undefined, `${d.print ? "print" : "detail"}:${d.name}`, d.name)
+      if (eyes.length) await paint("face", scaled((g) => { for (const e of eyes) e.under(g) }), undefined, "detail:Eyes", "Eyes")
+    }
+  }
 
   const line = lineLayer({ ink, map, w, h, k, head: art.head, bg, kinds, z: zs, tones, face: names.indexOf("face"), dark: e1, strokes: refs.strokes, fall: [sun.x, sun.y], print: set(art.print ?? []), softWedges: art.softWedges ?? false, eyes: eyes.map((e) => e.at), back: upto >= 10 ? back : back.map(() => 0) }), li = line.image
   if (upto < 9) for (let i = 0; i < N; i++) { li.data[i * 4] = BLACK[0]; li.data[i * 4 + 1] = BLACK[1]; li.data[i * 4 + 2] = BLACK[2]; li.data[i * 4 + 3] = smooth(0.2, 0.64, ink[i]!) * 255 }
@@ -498,7 +509,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     bk.g.fillStyle = "#fff"; bk.g.fillRect(0, 0, w, h); bk.g.save(); bk.g.scale(k, k); art.back(bk.g); bk.g.restore()
     const d = bk.g.getImageData(0, 0, w, h)
     // recording, the background goes to the bottom of the stack, whole, under the line art
-    if (rec) { const b = new Uint8ClampedArray(d.data); for (let i = 0; i < N; i++) b[i * 4 + 3] = map[i] !== bg ? 0 : 255; await rec.keep(STEPS.back!.name, STEPS.back!.group, "normal", b, 0) }
+    if (rec) { rec.key = "back"; const b = new Uint8ClampedArray(d.data); for (let i = 0; i < N; i++) b[i * 4 + 3] = map[i] !== bg ? 0 : 255; await rec.keep(STEPS.back!.name, STEPS.back!.group, "normal", b, 0) }
     for (let i = 0; i < N; i++) d.data[i * 4 + 3] = map[i] !== bg ? 0 : 255 - li.data[i * 4 + 3]!
     bk.g.putImageData(d, 0, 0); col.g.drawImage(bk.c, 0, 0); await paint("front", (g) => { g.save(); g.scale(k, k); art.front(g); g.restore() })
   }

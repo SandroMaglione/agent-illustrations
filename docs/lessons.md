@@ -230,4 +230,16 @@ The client opened it in CLIP STUDIO PAINT: "It works perfectly! It's exactly as 
 | every step of the renderer already had one job, so it could have a name and a mode | rule | a new paint step gets a name in `src/layers/steps.ts` at once |
 | merging another drawing in met a conflict on a single line | do | after a merge, compare renders byte for byte with the saved ones |
 
-Open: some layers hardly show (`Washes`, `Rims`, `Focus falloff`, `Depth haze`); warmth and air come as a multiply and an add layer each; all first shadows are one `Shade` layer instead of one per part. Nobody has asked for these yet.
+## Layers, second round: a file someone can pick up
+The client: the goal is that an illustrator picks up a clean and organised `.clip` or `.psd`; layers and folders consistent.
+
+| What fell short | Kind | Answer |
+|---|---|---|
+| layers followed the renderer's order, over the whole figure | rule | a folder per part, the same layers in each, clipped to its base |
+| "organised" was an opinion | see | rules that fail: `checkStack`, at every export |
+| 3,503 specks of a few pixels, soft edges crossing into the next part | see | counted, then swept |
+| warmth and air were seven layers that each carried the picture's ghost | do | factors: one Tint, one Glow |
+| how CSP treats a clipped soft edge was guessed, and others had it wrong | see | measured on a file CSP saved: exact |
+| line colour and line shape were one layer | do | one ink, colours clipped on top |
+
+Learned: to reorganise without changing the picture, cut along what never overlaps and merge operations, not pixels.
