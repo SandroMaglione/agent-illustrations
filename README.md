@@ -79,7 +79,7 @@ Numbers, what failed, what is open: [`docs/findings.md`](docs/findings.md).
 
 **Open:** run on two drawings so far; hands, shoes and crate fittings are not designed shape by shape; the shadow shapes are typed points; steps between planes are stronger than in the references; a few parts have no second light.
 
-Line art: `public/visor.png`, data: `src/splash/visor*`. To render it, make its form field once: `node scripts/form.ts visor output/form/v 4 --field`, then `?v=visor`.
+Line art: `public/visor.png`, data: `src/splash/visor*`. To render it, make its form field once: `node scripts/form.ts visor output/form/v 4 --field`, then `?v=visor&k=3`. At scale 2 its fine lines let a few regions leak (a lock by the face, a strap).
 
 ## Earlier drawings
 
