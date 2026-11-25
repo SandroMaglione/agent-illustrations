@@ -24,7 +24,7 @@ export const tone = (hex: string, kind: Kind): Tone => {
     s1: hexRgb("#c9aaa4"), s1in: hexRgb("#b89b97"), s2: hexRgb("#a38386"), s3: hexRgb("#82626c"),
     lt: hexRgb("#fffaf7"), hi: [255, 255, 255], band: hexRgb("#e2b1a5"), rim: hexRgb("#eadfe4"), ink: hexRgb("#85635e"), ao: hexRgb("#cfa8a0"), outer: hexRgb("#654b49"),
   }
-  const k: Record<Exclude<Kind, "skin">, readonly [number, number, number]> = { hair: [0.83, 0.655, 0.5], cloth: [0.7, 0.55, 0.45], dark: [0.71, 0.53, 0.42], pale: [0.86, 0.75, 0.62], sheer: [0.8, 0.64, 0.5], metal: [0.64, 0.43, 0.29], leaf: [0.76, 0.58, 0.46], flat: [0.85, 0.7, 0.55] }
+  const k: Record<Exclude<Kind, "skin">, readonly [number, number, number]> = { hair: [0.77, 0.585, 0.44], cloth: [0.7, 0.55, 0.45], dark: [0.71, 0.53, 0.42], pale: [0.86, 0.75, 0.62], sheer: [0.8, 0.64, 0.5], metal: [0.64, 0.43, 0.29], leaf: [0.76, 0.58, 0.46], flat: [0.85, 0.7, 0.55] }
   const [a, d, e] = k[kind]
   const cold = kind === "pale" ? 0.022 : kind === "hair" ? 0.012 : 0.01
   // how much saturation each shade may gain, and the floor that keeps a cool tint on greys

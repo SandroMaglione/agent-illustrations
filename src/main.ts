@@ -8,7 +8,12 @@ import type { View } from "./passes/engine.ts"
 import { PASSES as SPASSES, render as renderSplash } from "./splash/engine.ts"
 import { TWIN } from "./splash/twin.ts"
 import { BELL } from "./splash/bell.ts"
+import { RIG } from "./splash/rig.ts"
 import { TAPE } from "./splash/tape.ts"
+import { bucketView } from "./bucket/main.ts"
+import { sheetView } from "./tools/sheet.ts"
+import { LOOKS, poster } from "./poster/tape.ts"
+import { CLICKS, WALLS } from "./splash/tape-clicks.ts"
 import { ONI2 } from "./passes/oni.ts"
 import { renderArt } from "./clean/engine.ts"
 import type { Pass } from "./clean/engine.ts"
@@ -84,10 +89,25 @@ const still = (v: string): void => {
     g.font = `600 ${Math.round(w / 26)}px "Avenir Next", sans-serif`
     g.fillText(STEPS[i]!.label, x + 18, y + h - 20)
   })
-  if (v === "twin" || v === "tape" || v === "bell") {
-    const art = v === "bell" ? BELL : v === "tape" ? TAPE : TWIN
+  if (v === "sheet") {
+    const who = q.get("who")
+    void sheetView(who === "rig" ? RIG : who === "bell" ? BELL : who === "twin" ? TWIN : TAPE, q).then((c) => { document.body.innerHTML = ""; c.style.cssText = `display:block;width:${c.width}px;height:${c.height}px`; document.body.style.margin = "0"; document.body.append(c); flag.__ready = true })
+    return
+  }
+  if (v === "bucket") {
+    const art = TAPE, k = Number(q.get("k") ?? 2)
+    void bucketView(art, k, q, { clicks: CLICKS, walls: WALLS }).then((b) => { const z = Number(q.get("zoom") ?? W / art.w); g.drawImage(b, Number(q.get("x") ?? 0) * k, Number(q.get("y") ?? 0) * k, (W / z) * k, (H / z) * k, 0, 0, W, H); flag.__ready = true })
+    return
+  }
+  if (v === "poster") {
+    void poster(LOOKS[q.get("look") ?? "jacket"]!, W / 1200, Number(q.get("k") ?? 2)).then((p) => { document.body.innerHTML = ""; p.style.cssText = "display:block;width:100vw;height:100vh"; document.body.append(p); flag.__ready = true })
+    return
+  }
+  if (v === "twin" || v === "tape" || v === "bell" || v === "rig") {
+    const art = v === "rig" ? RIG : v === "bell" ? BELL : v === "tape" ? (q.has("marks") ? { ...TAPE, clicks: undefined } : TAPE) : TWIN
     const k = Number(q.get("k") ?? 2)
     void renderSplash(art, k, Number(q.get("upto") ?? SPASSES.length - 1), (q.get("view") ?? "normal") as View).then(({ canvas, stats }) => {
+      if (q.has("raw")) { document.body.innerHTML = ""; document.body.append(canvas); if (q.has("stats")) console.error(JSON.stringify(stats)); flag.__ready = true; return }
       const z = Number(q.get("zoom") ?? W / art.w)
       g.imageSmoothingQuality = "high"
       g.drawImage(canvas, Number(q.get("x") ?? 0) * k, Number(q.get("y") ?? 0) * k, (W / z) * k, (H / z) * k, 0, 0, W, H)

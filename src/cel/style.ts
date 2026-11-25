@@ -22,7 +22,7 @@ export type Style = {
   after?: "print" | "soft"
 }
 
-/** Numbers measured off the reference (see docs/style-notes.md). */
+/** Numbers measured off the reference (see docs/earlier/style-notes.md). */
 export const SPLASH: Style = {
   id: "splash", label: "Splash cel", ground: "#ffffff",
   line: { silhouette: 4, outline: 2.4, inner: 1.5, color: "black", pool: 3, taper: 1 },

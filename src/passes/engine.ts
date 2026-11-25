@@ -1,6 +1,6 @@
 /**
  * Line art -> finished illustration in named passes. Every pass adds one decision and can be
- * looked at on its own. Steps and numbers: docs/rendering-steps.md.
+ * looked at on its own. Steps and numbers: docs/earlier/rendering-steps.md.
  */
 import { loop } from "../cel/path.ts"
 import { noise1, rng, smooth } from "../geo.ts"

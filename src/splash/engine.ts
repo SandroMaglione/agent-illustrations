@@ -1,15 +1,31 @@
-/** Passes as in docs/rendering-steps.md, with the splash reference's shading model inside each one. */
+/** Passes as in docs/earlier/rendering-steps.md, with the splash reference's shading model inside each one. */
 import { loop } from "../cel/path.ts"
 import { rng, smooth } from "../geo.ts"
+import { fill, paper } from "../bucket/fill.ts"
+import type { Clicks } from "../bucket/fill.ts"
 import { blur, flood } from "../lineart/flood.ts"
 import { loadInk } from "../lineart/main.ts"
 import { curveless } from "../lineart/poly.ts"
 import type { Seed } from "../lineart/seeds.ts"
+import { inherit } from "../tools/inherit.ts"
+import { bevel } from "../tools/bevel.ts"
+import { aim, UPPER_LEFT } from "../tools/light.ts"
+import type { Light } from "../tools/light.ts"
+import { boxesOf, cast } from "../tools/cast.ts"
+import { eye } from "../tools/eyes.ts"
+import type { EyeSpec } from "../tools/eyes.ts"
+import { refsOf } from "../tools/refs.ts"
+import type { Refs } from "../tools/refs.ts"
+import { linesAnd, slivers } from "../tools/seal.ts"
+import { each, stamper } from "../tools/stamp.ts"
+import type { Patch, Stamped } from "../tools/stamp.ts"
+import { strokesOf, thaw } from "../tools/strokes.ts"
 import { hsv, mix, tone } from "./tones.ts"
 import type { Kind, RGB } from "./tones.ts"
 
 export type Level = "s1" | "s2" | "s3" | "form" | "lt" | "sheen" | "ring" | "hi" | "lift"
-export type Shape = { lv: Level; on: ReadonlyArray<string>; d: string; a: number }
+/** A polygon by coordinates (`d`), or a statement about the drawn lines (`say`, see tools/say.ts) with a name of its own. */
+export type Shape = { lv: Level; on: ReadonlyArray<string>; d: string; a: number; id?: string; say?: string; in?: string }
 export type Wash = { late?: boolean; on: ReadonlyArray<string>; x: number; y: number; rx: number; ry: number; color: RGB; a: number; mode?: "mix" | "mul" }
 export type Art = {
   /** Head height in line-art px (crown to chin): line weight and key lines are judged against it. */
@@ -17,18 +33,31 @@ export type Art = {
   /** Small accessories that must read as their own silhouette: they get a pale key line where they overlap the figure. */
   keyline?: ReadonlyArray<string>
   src: string; w: number; h: number; seeds: ReadonlyArray<Seed>; walls: ReadonlyArray<string>
+  /** Frozen line numbers, for shapes that name lines. */
+  lines?: string
+  /** Bucket mode: one click per patch and the lines the artist left open. Replaces seeds, walls and force. */
+  clicks?: { at: Clicks; walls: ReadonlyArray<string> }
   force: ReadonlyArray<{ label: string; d: string; over?: ReadonlyArray<string> }>
   defs: Readonly<Record<string, { color: string; kind: Kind; z: number; rim?: number; grain?: number }>>
   grads: ReadonlyArray<{ on: ReadonlyArray<string>; a: readonly [number, number]; b: readonly [number, number]; to: RGB; k: number }>
-  casts: ReadonlyArray<readonly [ReadonlyArray<string>, ReadonlyArray<string>, number]>
+  /** Caster, receiver, how far it falls, and the share of that which is deep: things that stand off the surface. */
+  casts: ReadonlyArray<readonly [ReadonlyArray<string>, ReadonlyArray<string>, number, number?]>
+  light?: Light
+  /** Where the eye should land: further out, values close up and lines soften. */
+  focus?: { x: number; y: number; rx: number; ry: number; dim: number }
+  /** Parts that take the shade of what they lie on. */
+  inherits?: ReadonlyArray<readonly [ReadonlyArray<string>, ReadonlyArray<string>]>
+  /** Thickness of hard parts: px of lit rim and shaded rim. */
+  bevels?: ReadonlyArray<{ on: ReadonlyArray<string>; w: number; lit: number; deep?: boolean }>
   shapes: ReadonlyArray<Shape>; soft: ReadonlyArray<readonly [number, number, number]>; washes: ReadonlyArray<Wash>
   noink: ReadonlyArray<string>
+  /** Eyes placed from the lines the artist drew. */
+  eyes?: ReadonlyArray<EyeSpec>
   face: (g: CanvasRenderingContext2D) => void; over: (g: CanvasRenderingContext2D) => void
   back: (g: CanvasRenderingContext2D) => void; front: (g: CanvasRenderingContext2D) => void
 }
 export const PASSES = ["Line art", "Flats", "Gradients", "Contact", "Shadow shapes", "Edges and warm band", "Deep shade", "Ring and light shapes", "Face and eyes", "Colour line", "Finish"] as const
-export const FALL: readonly [number, number] = [0.5, 0.866]
-export type View = "normal" | "grey" | "masks" | "regions"
+export type View = "normal" | "grey" | "value" | "masks" | "regions"
 
 const vote = (wall: Float32Array, w: number, h: number) => (seed: Uint8Array): void => {
   const seen = new Uint8Array(w * h), stack = new Int32Array(w * h)
@@ -53,10 +82,22 @@ const vote = (wall: Float32Array, w: number, h: number) => (seed: Uint8Array): v
 /** Distance in px from each ink pixel to the edge of its stroke (two-pass chamfer). */
 const distance = (ink: Float32Array, w: number, h: number): Float32Array => {
   const d = new Float32Array(w * h)
-  for (let i = 0; i < d.length; i++) d[i] = ink[i]! > 0.93 ? 1e6 : ink[i]! > 0.06 ? ink[i]! : 0
+  for (let i = 0; i < d.length; i++) d[i] = ink[i]! > 0.72 ? 1e6 : ink[i]! > 0.06 ? ink[i]! : 0
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (!d[i]) continue; if (x) d[i] = Math.min(d[i]!, d[i - 1]! + 1); if (y) { d[i] = Math.min(d[i]!, d[i - w]! + 1); if (x) d[i] = Math.min(d[i]!, d[i - w - 1]! + 1.414); if (x < w - 1) d[i] = Math.min(d[i]!, d[i - w + 1]! + 1.414) } }
   for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) { const i = y * w + x; if (!d[i]) continue; if (x < w - 1) d[i] = Math.min(d[i]!, d[i + 1]! + 1); if (y < h - 1) { d[i] = Math.min(d[i]!, d[i + w]! + 1); if (x < w - 1) d[i] = Math.min(d[i]!, d[i + w + 1]! + 1.414); if (x) d[i] = Math.min(d[i]!, d[i + w - 1]! + 1.414) } }
   return d
+}
+/** Local thickness: the largest disc of ink that covers each ink pixel. The same all along a stroke, however heavy. */
+const thickness = (d: Float32Array, w: number, h: number): Float32Array => {
+  const src = new Int32Array(d.length), o = new Float32Array(d.length)
+  for (let i = 0; i < d.length; i++) src[i] = d[i]! > 0 ? i : -1
+  const take = (i: number, j: number): void => { const a = src[j]!; if (a < 0 || src[i]! < 0 || d[a]! <= d[src[i]!]!) return; const dx = (a % w) - (i % w), dy = ((a / w) | 0) - ((i / w) | 0); if (dx * dx + dy * dy <= (d[a]! + 0.7) ** 2) src[i] = a }
+  for (let pass = 0; pass < 2; pass++) {
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) { const i = y * w + x; if (src[i]! < 0) continue; take(i, i - 1); take(i, i - w); take(i, i - w - 1); take(i, i - w + 1) }
+    for (let y = h - 2; y > 0; y--) for (let x = w - 2; x > 0; x--) { const i = y * w + x; if (src[i]! < 0) continue; take(i, i + 1); take(i, i + w); take(i, i + w + 1); take(i, i + w - 1) }
+  }
+  for (let i = 0; i < d.length; i++) o[i] = src[i]! < 0 ? 0 : d[src[i]!]!
+  return o
 }
 /** Separable maximum over a square of radius r. */
 const maxFilter = (src: Float32Array, w: number, h: number, r: number): Float32Array => {
@@ -77,15 +118,17 @@ const maxFilter = (src: Float32Array, w: number, h: number, r: number): Float32A
   return run(run(src, h, w, 1, w), w, h, w, 1)
 }
 
-export const render = async (art: Art, k: number, upto: number, view: View = "normal"): Promise<{ canvas: HTMLCanvasElement; stats: Record<string, number> }> => {
+/** Pass 1's input: which part every pixel belongs to. */
+export const regionsOf = async (art: Art, k: number, by: "marks" | "clicks" = art.clicks ? "clicks" : "marks"): Promise<{ ink: Float32Array; w: number; h: number; names: Array<string>; map: Uint8Array; seg?: Int32Array }> => {
   const { ink, w, h } = await loadInk(art.src, k)
+  if (by === "clicks" && art.clicks) { const P = paper(ink, w, h, art.clicks.walls, k), f = fill(P, w, h, art.clicks.at, k); return { ink, w, h, names: f.names, map: f.map, seg: P.P.seg } }
   const N = w * h
-  const mk = (): { c: HTMLCanvasElement; g: CanvasRenderingContext2D } => { const c = document.createElement("canvas"); c.width = w; c.height = h; return { c, g: c.getContext("2d", { willReadFrequently: true })! } }
-  const tmp = mk()
+  const t = document.createElement("canvas")
+  t.width = w; t.height = h
+  const tmp = { g: t.getContext("2d", { willReadFrequently: true })! }
   const trace = (g: CanvasRenderingContext2D, d: string): void => { g.beginPath(); loop(d).forEach(([x, y], i) => (i ? g.lineTo(x * k, y * k) : g.moveTo(x * k, y * k))); g.closePath() }
   const alphaOf = (): Uint8ClampedArray => tmp.g.getImageData(0, 0, w, h).data
 
-  /* regions */
   const wall = Float32Array.from(ink)
   tmp.g.lineWidth = 2.2 * k; tmp.g.lineCap = "round"
   for (const q of art.walls) { tmp.g.beginPath(); curveless(q).forEach(([x, y], i) => (i ? tmp.g.lineTo(x * k, y * k) : tmp.g.moveTo(x * k, y * k))); tmp.g.stroke() }
@@ -116,6 +159,60 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     const d = alphaOf()
     for (let i = 0; i < N; i++) if (d[i * 4 + 3]! > 127 && (!ok || ok.includes(map[i]!))) map[i] = n
   }
+  return { ink, w, h, names, map }
+}
+
+type Regions = Awaited<ReturnType<typeof regionsOf>>
+/** Lines and statements are always worked out at this scale, so neither the numbers nor the shapes change with the size of the render. */
+const FIXED = 2
+const fixed = new Map<string, Promise<Regions>>(), traced = new Map<string, Promise<Refs>>()
+const fixedOf = (art: Art): Promise<Regions> => { const got = fixed.get(art.src) ?? regionsOf(art, FIXED); fixed.set(art.src, got); return got }
+/** The numbered lines of a drawing. */
+export const linesOf = (art: Art): Promise<Refs> => {
+  const got = traced.get(art.src) ?? fixedOf(art).then((q) => { const l = strokesOf(q.ink, q.w, q.h, FIXED, q.map); return refsOf(art.lines ? thaw(l, art.lines) : l) })
+  traced.set(art.src, got)
+  return got
+}
+/** Every shape that is a statement, as a mask, enlarged to the size of the render. */
+const stamped = new Map<ReadonlyArray<Shape>, Promise<Array<Stamped>>>()
+export const stampsOf = async (art: Art, k: number, q: Pick<Regions, "map" | "names" | "w" | "h">): Promise<Map<string, Stamped>> => {
+  const make = async (): Promise<Array<Stamped>> => {
+    const said = art.shapes.filter((s) => s.say), done = new Map<string, Stamped>()
+    if (!said.length) return []
+    const stamp = stamper({ ...(await fixedOf(art)), k: FIXED, ...(art.light ? { light: art.light } : {}) }, await linesOf(art))
+    for (const s of said) { try { done.set(s.id!, stamp({ id: s.id!, say: s.say!, on: s.on, ...(s.in ? { in: s.in } : {}) }, done)) } catch (e) { console.error(`#${s.id}: ${(e as Error).message}`) } }
+    for (const m of done.values()) if (/LEAK|DEAD/.test(m.note)) console.error(`#${m.id}: ${m.note}`)
+    return [...done.values()]
+  }
+  const got = stamped.get(art.shapes) ?? make()
+  stamped.set(art.shapes, got)
+  const f = await fixedOf(art), on = new Map(art.shapes.map((s) => [s.id, s.on]))
+  return new Map((await got).map((m) => [m.id, k === FIXED ? m : { ...m, ...enlarge(m, f.w, q, on.get(m.id)!) }]))
+}
+const enlarge = (p: Patch, w: number, q: Pick<Regions, "map" | "names" | "w" | "h">, on: ReadonlyArray<string>): Patch => {
+  const ok = new Uint8Array(q.names.length), r = w / q.w
+  for (const n of on) { const i = q.names.indexOf(n); if (i > 0) ok[i] = 1 }
+  const x0 = Math.floor(p.x / r), y0 = Math.floor(p.y / r), W = Math.min(q.w - x0, Math.ceil(p.w / r)), H = Math.min(q.h - y0, Math.ceil(p.h / r)), m = new Uint8Array(Math.max(0, W * H))
+  const at = (x: number, y: number): number => (x < 0 || y < 0 || x >= p.w || y >= p.h ? 0 : p.m[y * p.w + x]!)
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (!ok[q.map[(y + y0) * q.w + x + x0]!]) continue
+    const fx = (x + x0 + 0.5) * r - 0.5 - p.x, fy = (y + y0 + 0.5) * r - 0.5 - p.y, X = Math.floor(fx), Y = Math.floor(fy), u = fx - X, v = fy - Y
+    if (at(X, Y) * (1 - u) * (1 - v) + at(X + 1, Y) * u * (1 - v) + at(X, Y + 1) * (1 - u) * v + at(X + 1, Y + 1) * u * v > 0.5) m[y * W + x] = 1
+  }
+  return { x: x0, y: y0, w: W, h: H, m }
+}
+
+const SKY: RGB = [120, 122, 158]
+export const render = async (art: Art, k: number, upto: number, view: View = "normal", cut = false): Promise<{ canvas: HTMLCanvasElement; stats: Record<string, number> }> => {
+  const { ink, w, h, names, map } = k === FIXED ? await fixedOf(art) : await regionsOf(art, k)
+  const N = w * h
+  const eyes = art.eyes ? await Promise.all(art.eyes.map(async (e) => { const f = await fixedOf(art); return eye(e, await linesOf(art), f.ink, f.w, FIXED) })) : []
+  const mk = (): { c: HTMLCanvasElement; g: CanvasRenderingContext2D } => { const c = document.createElement("canvas"); c.width = w; c.height = h; return { c, g: c.getContext("2d", { willReadFrequently: true })! } }
+  const sun = aim(art.light ?? UPPER_LEFT), FALL = [sun.x, sun.y] as const
+  const tmp = mk()
+  const trace = (g: CanvasRenderingContext2D, d: string): void => { g.beginPath(); loop(d).forEach(([x, y], i) => (i ? g.lineTo(x * k, y * k) : g.moveTo(x * k, y * k))); g.closePath() }
+  const alphaOf = (): Uint8ClampedArray => tmp.g.getImageData(0, 0, w, h).data
+
   const defs = names.map((n) => art.defs[n] ?? null)
   const tones = defs.map((d) => (d ? tone(d.color, d.kind) : null))
   const set = (gs: ReadonlyArray<string>): Uint8Array => { const t = new Uint8Array(names.length); for (const g of gs) { const i = names.indexOf(g); if (i > 0) t[i] = 1 } return t }
@@ -132,7 +229,8 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   /** Shade as a ratio of the part's own base, so gradients and washes below survive. */
   const shadeTo = (i: number, from: RGB, s: RGB, a: number): void => { R[i] = R[i]! * (1 + (s[0] / Math.max(8, from[0]) - 1) * a); G[i] = G[i]! * (1 + (s[1] / Math.max(8, from[1]) - 1) * a); B[i] = B[i]! * (1 + (s[2] / Math.max(8, from[2]) - 1) * a) }
   const wash = (late: boolean): void => {
-    for (const q of art.washes) if (Boolean(q.late) === late) {
+    const blushes: Array<Wash> = eyes.flatMap((e) => (e.blush ? [{ ...e.blush, on: ["face"], color: [250, 196, 176] as RGB, late: true }] : []))
+    for (const q of [...art.washes, ...blushes]) if (Boolean(q.late) === late) {
       const ok = set(q.on)
       for (let y = Math.max(0, Math.floor((q.y - q.ry) * k)); y < Math.min(h, (q.y + q.ry) * k); y++) for (let x = Math.max(0, Math.floor((q.x - q.rx) * k)); x < Math.min(w, (q.x + q.rx) * k); x++) {
         const i = y * w + x
@@ -163,9 +261,11 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       for (let i = 0; i < N; i++) if (zOf[map[i]!] === level) { const t = tones[map[i]!]!; shadeTo(i, t.base, t.ao, 0.5 * smooth(0.06, 0.55, b[i]!)) }
     }
   }
+  const said = await stampsOf(art, k, { map, names, w, h })
   const mask = (lv: ReadonlyArray<Level>): Float32Array => {
     const out = new Float32Array(N), groups = new Map<string, Array<Shape>>()
-    for (const s of art.shapes) if (lv.includes(s.lv)) { const key = `${s.on.join(" ")}|${s.a}`; groups.set(key, [...(groups.get(key) ?? []), s]) }
+    for (const s of art.shapes) if (lv.includes(s.lv) && s.say) { const p = said.get(s.id!); if (p) each(p, w, (i) => { if (s.a > out[i]!) out[i] = s.a }) }
+    for (const s of art.shapes) if (lv.includes(s.lv) && !s.say) { const key = `${s.on.join(" ")}|${s.a}`; groups.set(key, [...(groups.get(key) ?? []), s]) }
     for (const g of groups.values()) {
       const ok = set(g[0]!.on)
       tmp.g.clearRect(0, 0, w, h); tmp.g.fillStyle = "#000"
@@ -176,22 +276,25 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     return out
   }
   const zero = new Float32Array(N)
+  const rims = new Float32Array(N)
   const m1 = upto >= 4 ? mask(["s1", "s2", "s3"]) : zero, m2 = upto >= 6 ? mask(["s2", "s3"]) : zero, m3 = upto >= 6 ? mask(["s3"]) : zero
   if (upto >= 4) {
-    const casts = art.casts.map(([a, b, d]) => ({ a: set(a), b: set(b), dx: FALL[0] * d * k, dy: FALL[1] * d * k }))
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      const i = y * w + x, n = map[i]!
-      for (const c of casts) if (c.b[n]) for (let t = 0.05; t <= 1.001; t += 0.095) {
-        const X = Math.round(x - c.dx * t), Y = Math.round(y - c.dy * t)
-        if (X < 0 || Y < 0 || X >= w || Y >= h) break
-        if (c.a[map[Y * w + X]!]) { m1[i] = 1; break }
-      }
+    const boxes = boxesOf(map, w, h, names.length)
+    for (const [a, b, d, deep] of art.casts) {
+      each(cast(map, w, h, boxes, set(a), set(b), FALL[0] * d * k, FALL[1] * d * k, Math.min(3, d * 0.1) * k), w, (i) => { m1[i] = 1 })
+      if (deep && upto >= 6) each(cast(map, w, h, boxes, set(a), set(b), FALL[0] * d * deep * k, FALL[1] * d * deep * k, Math.min(2.5, d * deep * 0.28) * k), w, (i) => { m2[i] = 1 })
     }
+    for (const [kids, on] of art.inherits ?? []) {
+      const a = set(kids), b = set(on), one = inherit(map, w, h, m1, a, b, 6 * k), two = upto >= 6 ? inherit(map, w, h, m2, a, b, 6 * k) : null
+      for (let i = 0; i < N; i++) { if (one[i]) m1[i] = 1; if (two?.[i]) m2[i] = 1 }
+    }
+    for (const q of art.bevels ?? []) { const on = set(q.on), low = Math.min(...q.on.map((n) => art.defs[n]?.z ?? 0)), over = new Uint8Array(names.length); defs.forEach((d, n) => { if (d && d.z > low && !on[n]) over[n] = 1 }); const b = bevel(map, ink, w, h, on, over, q.w * k, FALL[0], FALL[1]); for (let i = 0; i < N; i++) { if (b[i]! < 0) { m1[i] = 1; if (q.deep && upto >= 6) m2[i] = 1 } else if (b[i]! > 0) rims[i] = q.lit } }
     // a lift is light cut back out of a shadow: the gap between an arm and the body
     const lift = mask(["lift"])
     for (let i = 0; i < N; i++) if (lift[i]! > 0.5) m1[i] = 0
   }
-  const b1 = blur(m1, w, h, Math.max(1, 0.55 * k), 2), near = blur(m1, w, h, 2.3 * k, 2), soft = blur(m1, w, h, 7 * k, 2)
+  if (upto >= 4 && art.lines) { const l = linesAnd(ink, map, w, h, bg), shut = slivers(l.region, Uint8Array.from(m1, (v) => (v > 0.5 ? 1 : 0)), l.dLine, w, h, k); let n = 0; for (const q of shut) { n += q.length; for (const i of q) m1[i] = 1 } console.error(`sealed ${shut.length} slivers, ${Math.round(n / (k * k))} px`) }
+  const b1 = blur(m1, w, h, Math.max(1, 0.75 * k), 2), near = blur(m1, w, h, 2.3 * k, 2), soft = blur(m1, w, h, 7 * k, 2)
   const mf = upto >= 4 ? mask(["form"]) : zero
   const fb = blur(mf, w, h, 4.2 * k, 2), inner = blur(m1, w, h, 4.6 * k, 2)
   const b2 = blur(m2, w, h, Math.max(1, 0.7 * k), 2), b3 = blur(m3, w, h, Math.max(1, 0.6 * k), 2)
@@ -215,9 +318,10 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     const inside = smooth(0.3, 0.72, deep[i]!)
     if (upto >= 5) {
       // light scatters into the shade: a short pale ramp outside, the rosy peak just INSIDE the edge, grey further in
-      const amt = d.kind === "skin" ? 1 : d.kind === "hair" ? 0.42 : d.kind === "pale" ? 0.22 : 0.32
+      const amt = d.kind === "skin" ? 1 : d.kind === "hair" ? 0.24 : d.kind === "pale" ? 0.22 : 0.32
       to(i, t.band, (d.kind === "skin" ? 0.42 : amt * 0.8) * smooth(0.04, 0.46, near[i]!) * (1 - e) * (1 - lost[i]! * 0.5))
-      const core = mix(t.s1, t.s1in, inside)
+      // deep inside a shadow the sky answers: cloth and hair lean cool, skin goes grey
+      const core = mix(t.s1, d.kind === "skin" ? t.s1in : mix(t.s1, SKY, 0.1), inside)
       shadeTo(i, t.base, core, e)
       if (d.kind === "skin") to(i, t.band, 0.8 * (e * (1 - smooth(0.5, 0.97, inner[i]!)) * hard + 0.5 * 4 * turned * (1 - turned)))
     } else shadeTo(i, t.base, t.s1, e)
@@ -226,7 +330,8 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     if (a3 > 0) shadeTo(i, t.s2, t.s3, a3)
   }
   if (upto >= 7) {
-    const lt = mask(["lt"]), sheen = blur(mask(["sheen"]), w, h, 7 * k, 2), ring = mask(["ring"]), hi = mask(["hi"])
+    const lt = mask(["lt"]); for (let i = 0; i < N; i++) if (rims[i]! > lt[i]!) lt[i] = rims[i]!
+    const sheen = blur(mask(["sheen"]), w, h, 7 * k, 2), ring = mask(["ring"]), hi = mask(["hi"])
     const bl = Float32Array.from(blur(lt, w, h, Math.max(1, 0.6 * k), 2)), br = blur(ring, w, h, 1.25 * k, 2), bh = blur(hi, w, h, Math.max(1, 0.5 * k), 1)
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const i = y * w + x, n = map[i]!, t = tones[n], d = defs[n]
@@ -234,16 +339,20 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       to(i, t.lt, bl[i]! * (1 - e1[i]! * 0.9))
       to(i, t.lt, sheen[i]! * 0.85 * (1 - e1[i]! * 0.8))
       const rr = smooth(0.12, 0.88, br[i]!)
-      if (rr > 0.01) to(i, t.lt, rr * 0.92 * (1 - e1[i]! * 0.28))
+      if (rr > 0.01) to(i, t.lt, rr * 0.92 * (1 - e1[i]! * 0.6))
       // a warm pale lip, on the ring's lower edge only
-      if (d.kind === "hair") { const o = Math.round(2.6 * k) * w; const fall = (i - o >= 0 ? br[i - o]! : 0) - (i + o < N ? br[i + o]! : 0); if (fall > 0.15) to(i, [240, 231, 222], 0.62 * smooth(0.3, 0.9, fall) * (1 - e1[i]!)) }
+      if (d.kind === "hair") { const o = Math.round(2.6 * k) * w; const fall = (i - o >= 0 ? br[i - o]! : 0) - (i + o < N ? br[i + o]! : 0); if (fall > 0.15) to(i, [240, 231, 222], 0.42 * smooth(0.3, 0.9, fall) * (1 - e1[i]!)) }
       if (bh[i]! > 0.05) to(i, t.hi, smooth(0.15, 0.7, bh[i]!))
       if (d.rim && e1[i]! > 0.5) { const X = Math.round(x + FALL[0] * d.rim * k + d.rim * k * 0.5), Y = Math.round(y + FALL[1] * d.rim * k * 0.4); if (X < w && Y < h && map[Y * w + X] === bg) to(i, t.rim, 0.7) }
     }
   }
   if (upto >= 8) wash(true)
   const stats: Record<string, number> = {}
+  for (const e of eyes) console.error(`eye: ${e.note}`)
   { const area: Record<string, number> = {}; for (let i = 0; i < N; i++) { const n = names[map[i]!]!; area[n] = (area[n] ?? 0) + 1; if (e1[i]! > 0.5) stats[n] = (stats[n] ?? 0) + 1 } for (const n of Object.keys(stats)) stats[n] = Math.round((100 * stats[n]!) / area[n]!) }
+  // the light falls off from the focus: values close up and cool down
+  const far = new Float32Array(N)
+  if (art.focus && upto >= 10) { const q = art.focus; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; far[i] = smooth(0.85, 2.3, Math.hypot((x / k - q.x) / q.rx, (y / k - q.y) / q.ry)); if (map[i] !== bg && far[i]! > 0) mulc(i, [196, 200, 222], far[i]! * q.dim) } }
   if (view === "masks") for (let i = 0; i < N; i++) { const v = map[i] === bg ? 170 : b3[i]! > 0.5 ? 0 : b2[i]! > 0.5 ? 50 : e1[i]! > 0.5 ? 110 : 250; R[i] = G[i] = B[i] = v }
 
   const r = rng("grain"), gf = new Float32Array(N)
@@ -257,11 +366,12 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   }
   const col = mk()
   col.g.putImageData(img, 0, 0)
-  if (upto >= 8 && view !== "masks" && view !== "regions") { col.g.save(); col.g.scale(k, k); art.face(col.g); col.g.restore() }
+  if (upto >= 8 && view !== "masks" && view !== "regions") { col.g.save(); col.g.scale(k, k); art.face(col.g); for (const e of eyes) e.under(col.g); col.g.restore() }
 
   /* line */
   tmp.g.clearRect(0, 0, w, h); tmp.g.fillStyle = "#000"
   if (upto >= 8) for (const q of art.noink) { trace(tmp.g, q); tmp.g.fill() }
+  if (upto >= 8) for (const e of eyes) { tmp.g.beginPath(); e.hole.forEach(([x, y], i) => (i ? tmp.g.lineTo(x * k, y * k) : tmp.g.moveTo(x * k, y * k))); tmp.g.fill() }
   const hide = alphaOf()
   const fig = new Float32Array(N)
   for (let i = 0; i < N; i++) fig[i] = map[i] === bg ? 0 : 1
@@ -275,7 +385,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   spine.sort((p, q) => p - q)
   const half = Math.max(1.1 * k, spine[Math.floor(spine.length * 0.6)] ?? 2 * k)
   // ink the artist filled is much wider than this drawing's own contour; it deepens smoothly, so junctions leave no dots
-  const wide = maxFilter(dt, w, h, Math.round(half * 1.6))
+  const wide = thickness(dt, w, h)
   const solid = blur(Float32Array.from(wide, (v) => smooth(1.5, 2.5, v / half)), w, h, 2 * k, 2)
   // lines heavier than about 1% of the head are slimmed a little; stroke weight is averaged along the stroke so it never beads
   const goal = (art.head * 0.01 * k) / 2
@@ -285,6 +395,11 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   const fineM = new Float32Array(N)
   for (let i = 0; i < N; i++) { const kd = defs[map[i]!]?.kind; fineM[i] = map[i] === bg || kd === "skin" || kd === "hair" ? 1 : 0 }
   const fine = blur(fineM, w, h, 3 * k, 2), darkNear = blur(e1, w, h, 2.5 * k, 1)
+  tmp.g.clearRect(0, 0, w, h); tmp.g.lineCap = "round"; tmp.g.strokeStyle = "#000"
+  for (const e of eyes) for (const f of e.flick) { tmp.g.lineWidth = (f.half * 2 + 3) * k; tmp.g.beginPath(); f.p.forEach(([x, y], i) => (i ? tmp.g.lineTo(x * k, y * k) : tmp.g.moveTo(x * k, y * k))); tmp.g.stroke() }
+  const lash = eyes.some((e) => e.flick.length) ? alphaOf() : null
+  const tint = new Float32Array(N)
+  for (const e of eyes) for (const t of e.tips) for (let y = Math.max(0, Math.floor((t.y - t.r) * k)); y < Math.min(h, (t.y + t.r) * k); y++) for (let x = Math.max(0, Math.floor((t.x - t.r) * k)); x < Math.min(w, (t.x + t.r) * k); x++) { const a = 0.9 * (1 - smooth(0.1, 1, Math.hypot(x / k - t.x, y / k - t.y) / t.r)); if (a > tint[y * w + x]!) tint[y * w + x] = a }
   const keySet = set(art.keyline ?? [])
   let key: Float32Array | null = null
   if (upto >= 9 && art.keyline?.length) { const m = new Float32Array(N); for (let i = 0; i < N; i++) if (keySet[map[i]!]) m[i] = 1; key = blur(m, w, h, half * 0.9 + art.head * 0.0026 * k, 2) }
@@ -308,9 +423,12 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       c = mix(mat?.outer ?? [30, 25, 33], mat?.ink ?? t.ink, inner)
       if (shared) c = mix(c, [88, 62, 62], 0.62)
       if (kind === "skin") c = mix(c, [82, 59, 60], 0.75 * inner * smooth(0.2, 0.8, darkNear[i]!))
-      { const o = mat?.outer ?? c; c = mix(c, mix([o[0] * 0.56, o[1] * 0.52, o[2] * 0.58], [24, 18, 26], 0.25), solid[i]!) }
+      { const o = mat?.outer ?? c; c = mix(c, mix([o[0] * 0.56, o[1] * 0.52, o[2] * 0.58], [24, 18, 26], 0.55), solid[i]! * (kind === "hair" && inner > 0.9 ? 0.35 : 1)) }
       // in the face, filled ink is lashes and pupils: the darkest mark in the picture
       if (names[n] === "face") c = mix(c, [26, 16, 20], smooth(0.6, 0.82, thick[i]!))
+      if (far[i]! > 0 && n !== bg) c = mix(c, mix(c, mat?.s2 ?? c, 0.5), far[i]!)
+      if (lash && lash[i * 4 + 3]! > 100) c = [38, 26, 32]
+      if (tint[i]!) c = mix(c, [140, 74, 62], tint[i]!)
       // the silhouette closes with a slightly heavier line; interior lines thin out
       const e = 1 - Math.abs(silT[i]! - 0.5) * 2
       a = Math.max(a * (n !== bg && inner > 0.9 ? 0.9 : 1), smooth(0.6, 0.95, e) * (kind === "skin" ? 0.5 : 0.8) * smooth(0.12, 0.4, thick[i]!))
@@ -318,11 +436,11 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     if (upto >= 9) {
       // the face's own ink is never touched
       const room = names[n] === "face" ? 0 : Math.max(0, Math.min(weight[i]!, half * 1.3) - goal)
-      const cut = (1 - solid[i]!) * Math.min(weight[i]! * 0.28, room * (kind === "skin" ? 0.55 : kind === "hair" ? 0.4 : 0.3))
+      const cut = (1 - solid[i]!) * Math.min(weight[i]! * 0.46, room * (kind === "skin" ? 0.9 : kind === "hair" ? 0.66 : 0.5))
       if (cut > 0.2) a *= smooth(cut - 0.7, cut + 0.7, dt[i]!)
     }
     // the key line sits just outside the accessory's own contour, and only on top of the figure
-    if (key && n !== bg && !keySet[n] && a < 0.6) { const q = smooth(0.02, 0.045, key[i]!) * (1 - smooth(0.095, 0.14, key[i]!)); if (q > 0.02) { c = mix(c, mix([R[i]!, G[i]!, B[i]!], [242, 239, 243], 0.7), Math.max(0, 1 - a * 1.6)); a = Math.max(a, q * 0.9) } }
+    if (key && n !== bg && !keySet[n] && a < 0.6) { const q = smooth(0.02, 0.045, key[i]!) * (1 - smooth(0.095, 0.14, key[i]!)); if (q > 0.02 && e1[i]! < 0.6) { c = mix(c, mix([R[i]!, G[i]!, B[i]!], [242, 239, 243], 0.7), Math.max(0, 1 - a * 1.6)); a = Math.max(a, q * 0.9 * (1 - e1[i]!)) } }
     li.data[i * 4] = c[0]; li.data[i * 4 + 1] = c[1]; li.data[i * 4 + 2] = c[2]; li.data[i * 4 + 3] = a * 255
   }
   if (upto >= 9 && k > 1) {
@@ -337,8 +455,14 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   if (view === "masks") col.g.globalAlpha = 0.4
   col.g.drawImage(ic.c, 0, 0)
   col.g.globalAlpha = 1
-  if (upto >= 9 && view !== "masks" && view !== "regions") { col.g.save(); col.g.scale(k, k); art.over(col.g); col.g.restore() }
-  if (upto >= 10 && view !== "masks") {
+  // cut out: where the page was, only the ink is left, so the figure can stand on any background
+  if (cut) {
+    const d = col.g.getImageData(0, 0, w, h)
+    for (let i = 0; i < N; i++) if (map[i] === bg) for (let c = 0; c < 4; c++) d.data[i * 4 + c] = li.data[i * 4 + c]!
+    col.g.putImageData(d, 0, 0)
+  }
+  if (upto >= 9 && view !== "masks" && view !== "regions") { col.g.save(); col.g.scale(k, k); art.over(col.g); for (const e of eyes) e.over(col.g); col.g.restore() }
+  if (upto >= 10 && view !== "masks" && !cut) {
     // page: white, a breath of shade around the figure, graphics behind it
     const bk = mk()
     bk.g.fillStyle = "#fff"; bk.g.fillRect(0, 0, w, h)
@@ -357,6 +481,15 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   }
   // the figure against the references: how greyed it is, and how much of it is near black
   { const d = col.g.getImageData(0, 0, w, h).data; let n = 0, low = 0, dark = 0; for (let i = 0; i < N; i++) if (map[i] !== bg) { const p: RGB = [d[i * 4]!, d[i * 4 + 1]!, d[i * 4 + 2]!]; n++; if (hsv(p) < 0.3) low++; if (p[0] * 0.3 + p[1] * 0.59 + p[2] * 0.11 < 30) dark++ } stats._lowSat = Math.round((100 * low) / n); stats._dark = Math.round((1000 * dark) / n) / 10; stats._line = Math.round((20 * half) / k) / 10 }
+  if (art.focus) {
+    // the head against the rest: how light, how much edge contrast (5 px windows at the size of the line art)
+    const d = col.g.getImageData(0, 0, w, h).data, L = (i: number): number => d[i * 4]! * 0.3 + d[i * 4 + 1]! * 0.59 + d[i * 4 + 2]! * 0.11, q = art.focus, v: [Array<number>, Array<number>] = [[], []], e: [number, number] = [0, 0], st = Math.max(1, Math.round((k * art.h) / 620))
+    for (let y = st * 3; y < h - st * 3; y += st) for (let x = st * 3; x < w - st * 3; x += st) { const i = y * w + x; if (map[i] === bg) continue; const s = Math.hypot((x / k - q.x) / q.rx, (y / k - q.y) / q.ry) < 1.15 ? 0 : 1; let a = 0, b = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const t = L(i + (dy * w + dx) * st); a += t; b += t * t } a /= 25; v[s].push(L(i)); e[s] += Math.sqrt(Math.max(0, b / 25 - a * a)) }
+    const med = (a: Array<number>): number => Math.round(a.sort((x, y) => x - y)[a.length >> 1] ?? 0)
+    stats._head = med(v[0]); stats._rest = med(v[1]); stats._pull = Math.round((100 * (e[0] / v[0].length)) / (e[1] / v[1].length)) / 100
+  }
+  // the value sheet: three groups, squinted
+  if (view === "value") { const t = mk(); t.g.filter = `blur(${Math.round(art.head * 0.012 * k)}px)`; t.g.drawImage(col.c, 0, 0); const d = t.g.getImageData(0, 0, w, h); for (let i = 0; i < N; i++) { const l = d.data[i * 4]! * 0.3 + d.data[i * 4 + 1]! * 0.59 + d.data[i * 4 + 2]! * 0.11, g = map[i] === bg ? 255 : l < 85 ? 24 : l < 170 ? 122 : 232; d.data[i * 4] = d.data[i * 4 + 1] = d.data[i * 4 + 2] = g } col.g.putImageData(d, 0, 0) }
   if (view === "grey") { const d = col.g.getImageData(0, 0, w, h); for (let i = 0; i < N; i++) { const v = d.data[i * 4]! * 0.3 + d.data[i * 4 + 1]! * 0.59 + d.data[i * 4 + 2]! * 0.11; d.data[i * 4] = d.data[i * 4 + 1] = d.data[i * 4 + 2] = v } col.g.putImageData(d, 0, 0) }
   return { canvas: col.c, stats }
 }
