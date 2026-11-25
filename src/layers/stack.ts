@@ -39,7 +39,7 @@ export const blend = (m: Mode, b: number, s: number): number => {
 }
 /**
  * Composites onto an opaque canvas (the bottom layer covers it, or white does). A base and the layers clipped to it are one
- * group that keeps the base's alpha, as CSP does it (0 error on 19,569 soft pixels of a file CSP saved, `docs/layers.md`).
+ * group that keeps the base's alpha, as CSP does it (0 error on 19,569 soft pixels of a file CSP saved, `docs/layers-internals.md`).
  * Folders need nothing: pass-through ones are only an order, and a sealed one holds clipping groups or normal layers alone.
  * `bits8` rounds after every layer, as an 8-bit program would; otherwise it stays in floats.
  */

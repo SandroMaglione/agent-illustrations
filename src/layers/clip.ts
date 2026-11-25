@@ -4,7 +4,7 @@
  * A .clip is a big-endian chunk container (`CSFCHUNK`: `CHNKHead`, one `CHNKExta` per pixel store, `CHNKSQLi`, `CHNKFoot`)
  * around a SQLite database that holds the canvas, the layer tree and where every pixel store sits. There is no spec: this
  * follows what others found and confirmed by opening their files in CSP (wamsoft/clipparse docs/CLIP_FORMAT.md and
- * WRITE_TEST*.md, Aodaruma/clipfile-rs docs/), and what this repository checked itself on 22 files made by CSP (docs/layers.md).
+ * WRITE_TEST*.md, Aodaruma/clipfile-rs docs/), and what this repository checked itself on 22 files made by CSP (docs/layers-internals.md).
  *
  * The file is made from a template that CSP itself saved (a new, empty canvas), never from nothing: most of the 56 columns
  * of a layer row and the 35 of the canvas mean things nobody has decoded, so rows are copied and only known columns change.

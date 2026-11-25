@@ -298,9 +298,17 @@ From the line art, with the documented steps. It carried over; what fell short w
 
 Every paint step became a layer with the blend mode that says what it does. The `.clip` format has no public spec, so a reader and checker came first, tested on files CLIP STUDIO PAINT had saved; then the writer. The client opened Maren's file: modes, folders and names as expected.
 
+**Learned:** check a format on real files before writing one. [How it is done](layers-internals.md).
+
+## 19. Layers an illustrator can pick up
+
+**Asked:** a clean, organised file; then more control on eyes, face and hair; then sets of related marks, not a layer per stroke.
+
+The stack was turned from the renderer's order into an illustrator's: a folder per part, the same clipped layers in each. Going stroke by stroke (202 layers) was too much; sets of marks brought it to 128. How CSP composites a clipped soft edge was measured on a file it saved, not guessed.
+
 ![Layers](../gallery/layers-maren.jpg)
 
-**Learned:** check a format on real files before writing one. [How it is done](layers.md).
+**Learned:** more layers is not more control. [How the file is structured](layers.md).
 
 ## What it cost
 

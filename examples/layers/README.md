@@ -2,9 +2,11 @@
 
 ## Maren (`maren/`)
 
-`maren.clip`: 2048x3072, 84 layers in six folders on CSP's own paper, 28 MB. **Opened in CLIP STUDIO PAINT 5.0.1: modes, folders and names are right.** Made with `node scripts/layers.ts maren out --clip`, which also writes the PSD (49 MB, not kept here). `stack.json`: every layer's name, folder, mode and box, and the check.
+`maren.clip`: 2048x3072, 128 layers, 27 MB, organised as [`docs/layers.md`](../../docs/layers.md) says. Made with `node scripts/layers.ts maren out --clip`, which also writes the PSD (not kept here). `stack.json`: every layer's name, folder, mode and box, and the check.
 
-## The goggles drawing
+## The goggles drawing: the first layout
+
+One layer per paint step over the whole figure, as `--steps` still writes it. Kept to compare; the layout in use is Maren's.
 
 Exported before Maren was merged in; the render has changed slightly since (cooler hair shade, no light at the picture's border).
 

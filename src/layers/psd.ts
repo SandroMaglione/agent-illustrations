@@ -1,7 +1,7 @@
 /**
  * A layered PSD from a stack: raster layers with blend modes and clipping, nested folders (pass-through or normal), and the flat picture for readers that
  * only show that. CLIP STUDIO PAINT opens PSD with layer names, folders, blend modes, opacity and visibility (verified by
- * others in CSP 5.0.4, see docs/layers.md), and saves it as .clip from there. Node only.
+ * others in CSP 5.0.4, see docs/layers-internals.md), and saves it as .clip from there. Node only.
  */
 import { tree } from "./stack.ts"
 import type { Layer, Mode, Node, Stack } from "./stack.ts"
