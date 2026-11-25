@@ -3,7 +3,7 @@
 The stage that made the largest difference. A 3D model of the figure is built **to understand it**, not to render it. Straight mesh shading looks soft and blobby and ruins hair; used as a guide under the line art it makes the agent see where planes turn.
 
 ## 1. Blockout: `src/splash/<name>-form.ts`
-Same view as the drawing: x right, y down, z towards the viewer, in line-art px. Every form is a mesh with a name and a group (the regions it stands for).
+`scripts/new.ts` writes a starting file. Same view as the drawing: x right, y down, z towards the viewer, in line-art px. Every form is a mesh with a name and a group (the regions it stands for).
 
 | Use | For |
 |---|---|
@@ -42,7 +42,7 @@ The first command writes `public/wip/<name>-field.bin`; set `field: "/wip/<name>
 | pale yellow | faces the light |
 
 ## 3. Shadow design: `src/splash/<name>-shadows.ts`
-One line per shape: `parts | tone | x,y x,y~ x,y …`, later lines on top. `~` makes a soft point. `+` in front adds to a part's own shading, otherwise the design replaces it.
+A starting file comes from `scripts/new.ts`. One line per shape: `parts | tone | x,y x,y~ x,y …`, later lines on top. `~` makes a soft point. `+` in front adds to a part's own shading, otherwise the design replaces it.
 
 | Tone | Means |
 |---|---|
@@ -52,10 +52,11 @@ One line per shape: `parts | tone | x,y x,y~ x,y …`, later lines on top. `~` m
 | `L` `C` | lit plane, light cut back in |
 | `R` | a lighter step inside a shade |
 | `B` | second light along the far edge, with its own darker inner step |
+| `W` | hair highlight: one clean block per lock, wavy below, flat in colour |
 
 Per piece, in this order: the big turn (`S`), what is cast on it (`X`), half tone beside the turn, deep in folds and under overlaps, lit plane, **`B` on every teal edge with air behind it**. Run polygons past the outline: they are clipped to their part. Put each free edge on a drawn line, or cross a plane cleanly; never 2 to 6 px beside a line.
 
-Taken from the mesh as it is (`formed`, `meshCasts` in the drawing): only simple solids and long casts. Never `face`, never hair, never metal.
+Taken from the mesh as it is (`formed`, `meshCasts` in the drawing): only simple solids and long casts. Never `face`, never hair, never metal. A patch that open lines gave to the wrong part (a strand of hair read as cheek) is moved with `force` first, or every shadow on it is wrong.
 
 ## What was tried and dropped
 1. Mesh shading straight into the render: right, soft, blobby, hair ruined.

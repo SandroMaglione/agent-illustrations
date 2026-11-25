@@ -1,63 +1,66 @@
 # agent-illustrations
 
-Illustrations coloured entirely by code (TypeScript and Canvas 2D). No image generation: a person supplies line art and directs, an AI agent writes the shapes, rules and numbers.
+Illustrations coloured entirely by code (TypeScript and Canvas 2D). No image generation: a person supplies line art and directs, an AI agent writes the shapes, rules and numbers. The goal is not one picture but a process that gets better with each one.
 
-![Goggles](gallery/rig.jpg)
-
-This drawing has no typed coordinate in its light and shadow shapes. Line art to first version took about 17 minutes and four rounds; a second pass added a declared light, thickness and a value plan. Colours, gradients, washes and floating marks are still chosen and typed by hand.
-
-![Cast](gallery/cast.jpg)
-
-Goggles is the current process. The others were rendered along the way and use parts of it. The headphones character also has two announcement cards (own fictional brand, two hair colours from one drawing):
-
-![Cards](gallery/cards.jpg)
+![Visor](gallery/visor.jpg)
 
 ## How it works
 
-> **25 November 2026:** the renderer was replaced (`src/bold`) to reach a new set of references. Images on this page are from the one before. State and open points: [`docs/lessons.md`](docs/lessons.md).
+3D blockout, form guide, shadow design, greyscale, result:
 
-**Light and value first.** Each drawing states one light and one focus. The big parts get three values, so the face is the lightest mass.
+![Steps](gallery/visor-steps.jpg)
 
-**Name things, do not measure them.** Regions are numbered patches and the drawn lines are numbered. A shape is a sentence about a line: `band s544[0..1] r 0 26 46`. The engine works out the geometry, stops at the ink, and says when a shape leaked, did nothing or could not find its place.
+1. **Regions.** The agent names numbered patches of the line art; the engine fills them.
+2. **Light and value plan.** One light, one focus, which parts are dark, mid and light, and which neighbours must stand apart. Checked in greyscale after every stage.
+3. **Blockout.** The whole figure as a low-poly mesh in the drawing's own view, with depth. It is pulled onto the drawn outlines and measured: the right form shows on 97% of the figure. It is there to understand the form, not to render it.
 
-![Numbered patches](gallery/rig-patches.jpg)
-![Numbered lines](gallery/rig-lines.jpg)
+   ![The blockout turned](gallery/visor-turn.jpg)
+4. **Form guide.** The mesh marks under the line art where surfaces turn, what casts on what, where reflected light belongs.
+5. **Shadow design.** The agent draws every shadow shape over the guide. The form says where, the drawn line says how.
+6. **Second light.** Reflected light as bold planes on far edges, always darker than the light.
+7. **Face and eyes.** Painted between the artist's lines, which are never redrawn.
+8. **The rest by rule.** Scattering, deep shade, materials, line colour, air, grain as measured on the references.
+9. **Review piece by piece.** Line art, colour, shadow design and grey of one piece at a time.
+10. **Last look, always.** Greyscale and three values beside the references. A script fails when big neighbours are too close; someone still has to look.
 
-**One light drives the rest.** Cast shadows with a deep part, shaded sides of tubes and balls, folds, rims and hair shade all ask the same light.
+![Detail](gallery/visor-detail.jpg)
 
-**Passes.** Flats, gradients, contact, shadow shapes, edges and warm band, deep shade, ring and lights, face and eyes, line colour, finish:
+**Where the form is not followed:** the face is never modelled, hair is one simple shape per lock, shadows that tell a distance always stay, shaded skin is warm. The style decides, the form argues.
 
-![Passes](gallery/rig-passes.jpg)
-
-**Checks.** Final, three value groups, shadow masks, every named shape:
-
-![Checks](gallery/rig-checks.jpg)
-
-Full rules: [`docs/process.md`](docs/process.md). Every tool: [`docs/tools.md`](docs/tools.md).
+Full rules: [`docs/process.md`](docs/process.md). The form stage: [`docs/form-guide.md`](docs/form-guide.md). Every tool: [`docs/tools.md`](docs/tools.md).
 
 ## What was learned
 
-1. **Light and value come before detail.** The client saw that nothing attracted the eye; the numbers confirmed it: the jacket was lighter (172) than the head (154).
-2. **Objects need thickness.** Every overlap casts, hard parts get a lit and a shaded rim.
-3. **An agent reads numbers on a drawing well and coordinates badly.** Naming lines took typed coordinates in shapes from 2,954 to 18, then 0, and lit slivers from 150 to 0.
-4. **Large planes first, accents second, then a separate round for lights.**
-5. **A person draws, code colours.** Rendering rules transfer between drawings; drawing in code did not.
-6. **Reviews must be doable.** Neon gave 12 findings with a place, a measurement, the exact change and a check. Most held when measured.
+1. **Understand the form before shading it.** Answering notes spot by spot only moved the problem. A blockout ended that.
+2. **A 3D model is a better guide than renderer.** Shading straight from the mesh was right and blobby.
+3. **Value first, with a check that can fail, and eyes on it.** Numbers found a pass that washed out the darks. Looking found what the numbers had passed: hair that vanished into the page.
+4. **Simple beats correct.** One clean shape per plane or lock.
+5. **What the client approved needs a check that fails when it disappears.** New systems quietly dropped reflected light, and before that cast shadows.
+6. **A person draws, code colours.** The artist's lines stay, above all in the face. Rendering rules transfer between drawings; drawing in code did not.
+7. **Every note is sorted by cause:** could not see, did not ask, had no tool, forgot, or a rule of ours caused it. [`docs/lessons.md`](docs/lessons.md)
 
-Before and after the light and value pass. The jacket changed colour to fix the value:
+Rounds three, five and ten of the same drawing. Between the last two: blockout, guide, shadow design, and a new value plan.
+
+![Rounds](gallery/visor-rounds.jpg)
+
+Numbers, what failed, what is open: [`docs/findings.md`](docs/findings.md).
+
+**Open:** proven on one drawing; hands, shoes and crate fittings are not designed shape by shape; the shadow shapes are typed points; steps between planes are stronger than in the references; a few parts have no second light.
+
+This drawing's line art and data are not in the repository, so it cannot be re-rendered from here; its renderer, tools and process are.
+
+## Earlier drawings
+
+![Goggles](gallery/rig.jpg)
+![Cast](gallery/cast.jpg)
+
+Coloured with the renderer before, from shapes said as sentences about numbered lines (`band s544[0..1] r 0 26 46`). They still run in the current renderer and look different there; the images are from then. Goggles first showed that light and value come before detail:
 
 ![Before and after](gallery/rig-before-after.jpg)
 
-| Goggles, head against the rest | First | Final | Closest reference |
-|---|---|---|---|
-| Head median luma | 154 | 141 | 183 |
-| Rest median luma | 172 | 84 | 85 |
-| Rest that is dark | 27% | 51% | 50% |
-| Local contrast, head over rest | 1.12 | 1.97 | 1.24 |
+The headphones character also has two announcement cards (own fictional brand, two hair colours from one drawing):
 
-All numbers, what failed, and what is still open: [`docs/findings.md`](docs/findings.md).
-
-**Open:** body contrast is still below the reference (9.6 against 12.7), choosing the shapes is still judgement, light and focus exist on one drawing of four, and a timed third drawing is missing.
+![Cards](gallery/cards.jpg)
 
 ## Run
 
@@ -68,6 +71,10 @@ node scripts/look.ts "v=rig" whole.png face.png:430,330,440,440:3    # render on
 node scripts/side.ts out.png 800 a.png b.png                         # compare
 node scripts/pixel.ts whole.png 2 662,515 740,520                    # colour and luma at points
 pnpm check rig                                                       # alarms: numbers measured on the references
+node scripts/form.ts <name> output/form/a 4 head:385,0,330,330       # blockout: fit table, turntable, rotatable view.html
+node scripts/guide.ts <name> output/form/g 5 20 arm:375,295,180,150  # form guide under the line art (after form.ts --field)
+node scripts/gate.ts <name>                                          # value plan and second light, per stage
+node scripts/finish.ts <name> render.png 2 410 1070,410              # the last check, always: scale, head height and head centre in render px
 ```
 
 | Query | Shows |
@@ -76,7 +83,7 @@ pnpm check rig                                                       # alarms: n
 | `&upto=0..10` | stop after a pass |
 | `&view=value`, `grey`, `masks`, `regions` | three values, greyscale, shadow design, regions |
 | `&k=2` or `3` | scale, an integer. At 1 a few regions can leak |
-| `v=sheet&who=rig&box=x,y,w,h&z=4` | numbered lines; `&probe=x,y` names what is there; `&show=shapes`, `&show=pools` (patches), `&show=pools&named=1` |
+| `v=sheet&who=rig&box=x,y,w,h&z=4` | numbered lines; `&show=facets&part=…`; `&probe=x,y` names what is there; `&show=shapes`, `&show=pools` (patches), `&show=pools&named=1` |
 | `v=thumbs&who=rig` | ideas for light, value and colour from `rig-plans.ts` |
 | `v=faults&who=rig` | slivers red, edges beside lines blue |
 | `v=poster&look=jacket` or `hair` | an announcement card |
@@ -86,18 +93,20 @@ Text uses Avenir Next, so it looks different off macOS. A full render takes abou
 ## New drawing
 
 ```sh
-node scripts/new.ts name line-art.png                                 # files in src/splash, line art in public/wip (not in Git)
+node scripts/new.ts name line-art.png                                 # files in src/splash (blockout and shadow stubs too), line art in public/wip (not in Git)
 node scripts/look.ts "v=sheet&who=name&show=pools&z=2" patches.png    # number the patches, write them in name-names.txt
 node scripts/name.ts name                                             # names to regions
 node scripts/look.ts "v=thumbs&who=name" thumbs.png                   # ideas in name-plans.ts, after parts have a material in name.ts
 node scripts/freeze.ts name                                           # number the lines, once, when the regions are final
 ```
 
-Then follow [`docs/process.md`](docs/process.md). `rig*.ts` is the example to read.
+Then follow [`docs/process.md`](docs/process.md) and, for the blockout and shadow shapes, [`docs/form-guide.md`](docs/form-guide.md).
 
 ## Documents
 
 - [`docs/process.md`](docs/process.md): the current rules, in order
+- [`docs/form-guide.md`](docs/form-guide.md): from line art to shadow shapes, with the 3D blockout
+- [`docs/lessons.md`](docs/lessons.md): every note on a result, sorted by cause
 - [`docs/tools.md`](docs/tools.md): how shapes are said, placed and checked
 - [`docs/findings.md`](docs/findings.md): what works, what does not, numbers
 - [`docs/journey.md`](docs/journey.md): the full story with images, step by step
@@ -124,7 +133,11 @@ The steps before, oldest first. Code and results are kept; each has its story an
 | 9 | Rules fixed, cast re-rendered | shades must not gain saturation | `docs/process.md` |
 | 10 | Named lines instead of coordinates | the naming approach, hair and cloth kits, eye rig | `src/tools/` |
 | 11 | A new drawing from zero | the process repeats | `src/splash/rig.ts` |
-| 12 | One light, real form, values | what is at the top of this page | `src/tools/light.ts` |
+| 12 | One light, real form, values | scattered light is the fault people see first | `src/tools/light.ts` |
+| 13 | A fresh agent with only this repository | sort every miss by its cause | `docs/lessons.md` |
+| 14 | A new target and renderer | value, hard planes and line weight do more than colour | `src/bold/` |
+| 15 | Form first: blockout, guide, shadow design | the form says where, the drawn line says how | `src/form/` |
+| 16 | Face, grain, a mandatory last look | what is at the top of this page | `scripts/finish.ts` |
 
 ![Earlier characters, sketch engine](gallery/journey/1d-styles.jpg)
 ![Figure drawn in code](gallery/journey/2b-courier.jpg)
@@ -139,4 +152,4 @@ Also here: [a reel of the sketch engine](gallery/reel.mp4) and [its studio in on
 
 Style reference screenshots and every comparison image that contains them are other people's art, so they stay local, as do full-size renders, which the code regenerates. Numbers that mention references cannot be re-run without them.
 
-Line art in `public/` was supplied by the owner. Check its rights before making this public.
+Line art in progress stays out too (`public/wip`). Line art in `public/` was supplied by the owner.

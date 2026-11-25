@@ -4,7 +4,7 @@ Every note on a result, sorted by why the maker missed it. A lesson starts as a 
 
 Kinds: **see** (no view showed it), **ask** (nobody asked the question), **do** (no tool), **forgot** (known and skipped), **rule** (a rule of ours caused it).
 
-## Checkpoint, 25 November 2026: what holds after `crate` and nine rounds on `visor`
+## Checkpoint, 25 November 2026: what holds after `crate` and ten rounds on `visor`
 Confirmed by the client on `visor`; still trial until a second drawing.
 
 | Holds | First seen |
@@ -21,10 +21,14 @@ Confirmed by the client on `visor`; still trial until a second drawing.
 | Scattering band on soft turns, none on casts | 4th |
 | Inner lines coloured, lines between front and back dark | 3rd |
 | Fine line art, parts at the back softer | 2nd |
+| Artist's eye, nose and mouth lines untouched; paint between them; lips a touch of red | 10th |
+| Hair a value mass of its own, under the face | 10th |
+| Three-value sheet looked at and shown at the end, every time | 10th |
+| Coloured grain by tone and material, as measured | 10th |
 | Piece by piece review, large | 3rd |
 | Peel without a glint, reflection by material | 2nd |
 
-**The pattern behind the misses:** each new system quietly dropped what the one before it did (solids dropped facets' bounce, the mesh dropped casts, the design dropped bounce). A thing the client approved needs a check that fails when it disappears. Second light and value have one now; casts, scattering and materials do not.
+**The pattern behind the misses:** each new system quietly dropped what the one before it did (solids dropped facets' bounce, the mesh dropped casts, the design dropped bounce). A thing the client approved needs a check that fails when it disappears. Second light, value and the distance between big neighbours have one now; casts, scattering and materials do not. And a check is only as right as its plan: look at the sheet as well.
 
 ## Cold start, `crate`, 25 November 2026
 A fresh agent, repository only, 52 minutes. Client's notes in their own words, then what was measured. Sorted here; the client then named e, f and g as the only target (a to d are out) and asked for value first, blocky shapes, and hair bands that move hue and not value. Status in the last section.
@@ -195,4 +199,4 @@ Open: the share says present or not, not whether the shapes are good. Tassel, be
 Measured: grain, luma noise in darks 3.1 (references 2.7, 3.2, 3.1), mids 2.9 (2.7, 2.2, 3.5), coarseness 0.28 to 0.47 (0.0 to 0.5). Hair 176 to 156, face 242: 86 apart. Head area dark 29, mid 36, light 36 (e 16 27 57, f 48 31 20, g 39 35 26).
 Learned: the gate had passed while the head was missing, because it checked bands per group and nothing checked neighbours. And I had put hair in the light group: a plan can be wrong, so the sheet must be looked at, not only passed. Smaller steps inside a form lighten the whole, so base colours had to go down with them. Moving hair down in value pulls it to orange; take the hue back separately.
 Cost: dark fills 22 to 20% (limit 20), jacket against hair 70 (limit 70), jacket against trousers 19 (limit 18): no room left there.
-Open: steps between planes 34 (references 19 to 23); highlights cross lock lines in places; the hollow beside the far eye is messy; hands, shoes, crate fittings as before.
+Open: steps between planes 35 (references 19 to 23); highlights cross lock lines in places; the hollow beside the far eye is messy; hands, shoes, crate fittings as before.

@@ -2,40 +2,46 @@
 
 Newest first. Full story: [`journey.md`](journey.md). Measurements and disagreements: [`history.md`](history.md). Notes one by one: [`lessons.md`](lessons.md).
 
-## Checkpoint of 25 November 2026, evening: form as a guide
-One drawing (`visor`), nine rounds with the client. After the eighth: "This works. We reached a good point." The ninth put the second light back and is not judged yet. One drawing proves little: everything here is trial until it helps another.
+## Checkpoint of 25 November 2026: form as a guide, value as a gate
+One drawing (`visor`), ten rounds with the client. The client: "This works." One drawing proves little: everything here is trial until it helps another.
 
 ### What made the difference, most first
-1. **Understanding the form before shading it.** A blockout mesh of the whole figure, measured against the line art, gave the agent what it lacked: where a surface turns, what lies in front, what casts on what. It ended the chase of one note after another.
+1. **Understanding the form before shading it.** A blockout mesh of the whole figure, measured against the line art, showed the agent where a surface turns, what lies in front, what casts on what. It ended the chase of one note after another.
 2. **Using it as a guide, not a renderer.** Three tries: mesh shading (right but blobby), mesh bent by folds (noise), mesh under the line art with shapes drawn by the agent (clear win).
 3. **Knowing where not to follow it.** Face flat, hair one shape per lock, skin warm, distance shadows kept. The style decides; the form argues.
-4. **A gate on value at every stage.** It found a pass that lifted darks from 21 to 18%, and later a change of light that cost 4 points.
-5. **Reading references as numbers** for skin shade, reflected light and line weight, instead of words.
+4. **Greyscale, checked and looked at.** The gate found a pass that lifted darks and a light that cost 4 points. The three-value sheet found what the gate had passed: hair that vanished into the page.
+5. **The artist's lines are the artist's.** Painting between eye and mouth lines looked refined; drawing over them looked thick and wrong at once.
+6. **Reading references as numbers** for skin shade, reflected light, line weight and grain, instead of words.
 
 ### What did not work
 - Notes answered one by one with typed facets. Each fix moved the problem.
 - Mesh shading, fold ridges, physical casts taken as they are.
 - Removing shadows because they looked like blots: they carried the depth.
-- Building a system without a check for what the last one did: the second light and the distance casts were lost that way.
+- Building a system without a check for what the last one did: second light and distance casts were lost that way.
+- A check whose plan was wrong: hair stood in the light group, so the gate agreed with a missing head.
+- Softening the shades without lowering the base: the whole picture went light.
 
 ### Numbers
 | | |
 |---|---|
 | Blockout | 105 forms, 24,970 triangles; right form on 97.2% of the figure, 84% as first typed |
 | Limbs, left and right | upper arm 170/173, forearm 168/182, thigh 275/287, shin 278/294 px |
-| Shadow design | 145 shapes, 1,093 typed points |
-| Dark fills (under luma 85) | 22%; references 9, 37, 33 |
-| Darkest twentieth | 38; references 47, 22, 41 |
-| Skin shade, hue and saturation | 3 to 10, 27 to 36%; references 357 to 8, 28 to 34% (the two warm ones) |
-| Second light on far edges | 59%; round 8 far less, not measured |
+| Shadow design | 151 shapes, 1,164 typed points |
+| Figure by value, upper body at one head size | dark 29, mid 36, light 36; references e 16 27 57, f 48 31 20, g 39 35 26 |
+| Hair against face, median luma | 156 and 242; two rounds earlier hair 176 |
+| Dark fills, whole figure | 20% (limit 20); darkest twentieth 38 (limit 42) |
+| Skin shade, hue and saturation | 3 to 11, 27 to 36%; the two warm references 357 to 8, 28 to 34% |
+| Second light on far edges | 59% (limit 45) |
+| Grain in darks, mids | 3.1, 2.9; references 2.7 to 3.2, 2.2 to 3.5 |
+| Step between planes, median | 35; references 19 to 23 |
 
 ### Open
-- Hands, shoes, crate fittings, belt and hair mass are not designed shape by shape.
-- The hair highlight zigzag is mechanical; hair-on-hair casts are a little ragged at 400%.
-- The eyes are typed, not from the eye rig.
-- Steps between planes were 34 at round 5 against 19 to 23 in the references; not measured since.
-- Typed points are back (1,093 in the shadow design), against our own finding below that naming lines beats coordinates. It works here because the guide shows the place, shapes are clipped to their part and edges follow a drawn line by eye. Snapping them to lines is the obvious next tool.
-- Time per drawing not measured.
+- Hands, shoes, crate fittings and belt are not designed shape by shape; tassel, belt, hips, crate edges, shoe straps and one ankle band have no second light.
+- The hollow beside the far eye is messy; some highlights cross a lock line; hair-on-hair casts a little ragged at 400%.
+- Steps between planes are still stronger than the references'.
+- Jacket against hair and against trousers sits at its limit.
+- Typed points are back, against our own finding below that naming lines beats coordinates. It works because the guide shows the place, shapes are clipped to their part and edges follow a drawn line by eye. Snapping them to lines is the obvious next tool.
+- No check yet for casts, scattering or materials. Time per drawing not measured.
 
 ## Earlier on 24 and 25 November: named lines and one light
 

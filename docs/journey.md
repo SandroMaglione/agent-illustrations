@@ -1,6 +1,6 @@
 # The journey, step by step
 
-Fifteen steps, 24 and 25 November 2026. What was asked, what was built, what went wrong and what stayed. Older steps describe older code; the current process is in [`process.md`](process.md) and the conclusions in [`findings.md`](findings.md).
+Sixteen steps, 24 and 25 November 2026. What was asked, what was built, what went wrong and what stayed. Older steps describe older code; the current process is in [`process.md`](process.md) and the conclusions in [`findings.md`](findings.md).
 
 ## 1. Can a drawn look be code?
 
@@ -260,11 +260,27 @@ Three references, one goal: the drawing should fit beside them. A new renderer (
 
 The figure was modelled in the drawing's own view (about 25,000 triangles) and measured against the line art: 84% of pixels showed the right form as typed, 97% after the outlines were pulled onto the drawn lines. It can be turned around.
 
+![The blockout turned](../gallery/visor-turn.jpg)
+
+
 **Asked:** no full 3D render needed; use it to find better shapes. Shading straight from the mesh was blobby. Printed as a guide under the line art, with the agent drawing the shadow shapes over it, it worked.
 
 Then four corrections that became rules: keep the shadows that tell a distance, simplify uneven ones even against the form, never model the face, warm the skin's shade. And one regression: the second light had vanished, so the gate now measures it.
 
+![Blockout, guide, shadow design, grey, result](../gallery/visor-steps.jpg)
+
 **Learned:** the form says where, the drawn line says how, the style says where not. [How it is done](form-guide.md).
+
+## 16. The face, the grain, the last look
+
+**Asked:** the subtle noise of the references, a cleaner face, and a greyscale check at the end, every time.
+
+Grain was measured and rebuilt: fine, coloured, strongest in darks, gathered towards the far side of hair and cloth. The first try at the face drew new lashes and lips over the artist's, and was rejected at once: their lines stay, paint goes between. The greyscale sheet showed what every number had passed: in three values the hair vanished into the page. The hair became a mass that frames the face, and its hue was pulled back to blonde.
+
+![Rounds](../gallery/visor-rounds.jpg)
+![Detail](../gallery/visor-detail.jpg)
+
+**Learned:** a check that passes is not a picture that works. Look.
 
 ## What it cost
 

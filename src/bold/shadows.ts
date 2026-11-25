@@ -14,3 +14,5 @@ export const path = (g: CanvasRenderingContext2D, d: string, k: number): void =>
   }
   g.closePath()
 }
+/** One shape per line, "parts | tone | points"; # is a comment, a leading + adds to a part's own shading instead of replacing it. */
+export const read = (text: string): Array<Shadow> => text.trim().split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#")).map((l) => { const [on, tone, d] = l.replace(/^\+/, "").split("|").map((q) => q.trim()) as [string, Shadow["tone"], string]; return { on: on.split(/\s+/), tone, d, ...(l.startsWith("+") ? { add: true } : {}) } })

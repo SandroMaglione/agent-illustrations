@@ -3,7 +3,7 @@
  * head size, and the same numbers for all. node scripts/finish.ts name render.png scale head cx,cy   (scale: px of the render per line-art px)
  * Writes output/bold/finish-<name>.png. Nothing is shown to anyone before this sheet was looked at.
  */
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { bytes, dataUrl, open } from "./page.ts"
 
 const [name, file, scale, head, at] = process.argv.slice(2), [cx, cy] = at!.split(",").map(Number), { b, p } = await open()
@@ -34,7 +34,7 @@ const r = await p.evaluate(async ([list, name, scale]) => {
   const med = (names: ReadonlyArray<string>): number => { const a = names.flatMap((m) => by.get(m) ?? []).sort((x, y) => x - y); return Math.round(a[a.length >> 1] ?? -1) }
   return { png: c.toDataURL("image/png"), rows, pairs: ((art.apart ?? []) as ReadonlyArray<readonly [string, string, number]>).map(([a, b, least]) => [a, med(a.split(" ")), b, med(b.split(" ")), least] as const) }
 }, [list, name, Number(scale)] as const)
-writeFileSync(`output/bold/finish-${name}.png`, bytes(r.png)); for (const t of r.rows) console.log(t)
+mkdirSync("output/bold", { recursive: true }); writeFileSync(`output/bold/finish-${name}.png`, bytes(r.png)); for (const t of r.rows) console.log(t)
 let bad = 0
 for (const [a, x, q, y, least] of r.pairs) { const ok = Math.abs(x - y) >= least; if (!ok) bad++; console.log(`  ${ok ? "ok  " : "FAIL"} ${a} ${x} | ${q} ${y}: ${Math.abs(x - y)} apart, at least ${least}`) }
 await b.close(); process.exit(bad ? 1 : 0)
