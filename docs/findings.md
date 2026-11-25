@@ -2,6 +2,9 @@
 
 Newest first. Full story: [`journey.md`](journey.md). Measurements and disagreements: [`history.md`](history.md). Notes one by one: [`lessons.md`](lessons.md).
 
+## 26 November 2026: rendering works, open drawing does not
+Eleven attempts at drawing, by two agents, none approved. Copying loses the shape, inventing gives symbols, and no check sees either. [`drawing/`](drawing/README.md).
+
 ## 26 November 2026: a second drawing, and layers that open in CLIP STUDIO PAINT
 - **The process carried over** to the headphones line art (`maren`): right form on 96.2%, limbs 391/370 and 379/393, second light on 49% of far edges, step between planes 24 (visor 35, references 19 to 23). What fell short were tools and one colour rule.
 - **The render opens as a layered `.clip`.** Maren's first layout, 84 layers in six folders, was opened by the client in CSP 5.0.1 with modes, folders and names as expected. [`layers-internals.md`](layers-internals.md).

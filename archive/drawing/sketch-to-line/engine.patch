@@ -1,0 +1,207 @@
+diff --git a/src/bold/line.ts b/src/bold/line.ts
+index f61e6d1..1faa473 100644
+--- a/src/bold/line.ts
++++ b/src/bold/line.ts
+@@ -48,6 +48,12 @@ export type LineIn = {
+   /** Parts with printed marks. */
+   /** Inside one form a short thick spot takes the line's colour: only a real filled black stays black. */
+   softWedges?: boolean
++  /** Drawn by `src/draw`: the ink is taken as it is. */
++  drawn?: boolean
++  /** The ink is a pencil drawing: its greys are kept. */
++  pencil?: boolean
++  strandInk?: number
++  faceInk?: RGB
+   print: Uint8Array
+   /** How far back each part lies. */
+   back: ReadonlyArray<number>
+@@ -72,7 +78,7 @@ export const lineLayer = (q: LineIn): { image: ImageData; half: number } => {
+   const alone = (n: number, x: number, y: number): boolean => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) for (const m of cell.get(`${Math.floor(x / 4) + dx},${Math.floor(y / 4) + dy}`) ?? []) if (m !== n) return false; return true }
+   const core = (x: number, y: number): boolean => { const X = Math.round(x * k), Y = Math.round(y * k); return X >= 0 && Y >= 0 && X < w && Y < h && solid[Y * w + X]! > 0 }
+   // a drawing whose lines are already fine is left as the artist inked it
+-  const fine = half < head * k * 0.0105
++  const fine = q.drawn || half < head * k * 0.0105
+   for (const [id, s] of fine ? [] : [...q.strokes.entries()]) {
+     // an end that no ink supports was guessed by the tracer
+     const inked = ([x, y]: P2): boolean => (ink[Math.round(y * k) * w + Math.round(x * k)] ?? 0) > 0.4
+@@ -117,18 +123,18 @@ export const lineLayer = (q: LineIn): { image: ImageData; half: number } => {
+   for (let i = 0; i < N; i++) {
+     const n = map[i]!, v = ink[i]!, t0 = T[i * 4 + 3]! / 255
+     if (v < 0.06 && t0 < 0.01) continue
+-    const raw = fine ? smooth(0.1, 0.8, v) : smooth(0.22, 0.6, v), near = q.eyes.some((e) => ((i % w) / k - e.x) ** 2 + (((i / w) | 0) / k - e.y) ** 2 < e.r * e.r), mine = fine || near || n === q.face, keep = mine || !F[i * 4 + 3] ? 1 : solid[i]!, a = mine ? raw : Math.max(t0, raw * keep)
++    const raw = q.pencil ? v : fine ? smooth(0.1, 0.8, v) : smooth(0.22, 0.6, v), near = q.eyes.some((e) => ((i % w) / k - e.x) ** 2 + (((i / w) | 0) / k - e.y) ** 2 < e.r * e.r), mine = fine || near || n === q.face, keep = mine || !F[i * 4 + 3] ? 1 : solid[i]!, a = mine ? raw : Math.max(t0, raw * keep)
+     if (a < 0.01) continue
+     const x = i % w, y = (i / w) | 0, r = Math.max(2, Math.round(wide[i]! + 2))
+     let page = n === bg, lo = z[n] ?? 0, hi = lo, skin = kinds[n] === "skin", other = -1
+     for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r], [r, r], [-r, r], [r, -r], [-r, -r]] as const) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= w || Y >= h) continue; const m = map[Y * w + X]!; if (m !== n) other = m; if (m === bg) page = true; else if (m) { lo = Math.min(lo, z[m] ?? 0); hi = Math.max(hi, z[m] ?? 0); if (kinds[m] === "skin") skin = true } }
+     const inside = smooth(0.35, 0.75, bf[i]! / Math.max(0.01, bs[i]!)) * (page ? 0 : 1), heavy = q.print[n] ? 1 : q.softWedges ? 0 : smooth(1.3, 1.9, bw[i]! / Math.max(0.01, bs[i]!)), t = tones[n] ?? tones[other < 0 ? 0 : other] ?? null, sh = smooth(0.25, 0.7, shade[i]!)
+-    let c: RGB = BLACK, soft = 1
++    let c: RGB = n === q.face && q.faceInk ? q.faceInk : BLACK, soft = 1
+     if (t && n !== q.face) {
+       // a line inside one form only says where it bends: a darker step of the colour it lies on. A line between forms separates, and stays dark
+       const own = skin ? mix([196, 128, 124], [126, 62, 74], sh) : mix(mul(t.base, t.s1), mul(t.base, t.s2), 0.35 + 0.65 * sh)
+       const sep = mix(BLACK, skin ? [92, 40, 46] : t.ink, 0.3)
+-      c = mix(sep, own, inside * (1 - heavy * 0.85))
++      c = mix(sep, own, inside * (1 - heavy * 0.85) * (q.strandInk && kinds[n] === "hair" ? 1 - q.strandInk : 1))
+       soft = 1 - 0.12 * inside * (1 - heavy)
+     }
+     { const d = page ? Math.max(0, ...[n, other].filter((m) => m >= 0 && m !== bg).map((m) => q.back[m] ?? 0)) : Math.min(q.back[n] ?? 0, other < 0 || other === bg ? 1 : q.back[other] ?? 0); if (d) c = mix(c, [150, 148, 186], d * 0.55) }
+diff --git a/src/bold/locks.ts b/src/bold/locks.ts
+index 97a7b66..b7e7a89 100644
+--- a/src/bold/locks.ts
++++ b/src/bold/locks.ts
+@@ -18,6 +18,8 @@ export type Hair = {
+   shade?: number
+   /** false: no light streaks by rule, the highlights are drawn (tone W). */
+   streaks?: boolean
++  /** false: no bands of turned hue. */
++  hues?: boolean
+ }
+ /** shade, deep, light: planes. hue: −1..1, a streak that only turns the hue. v: root to tip. ring: highlight. */
+ export type Locks = { shade: Float32Array; deep: Float32Array; light: Float32Array; hue: Float32Array; v: Float32Array; ring: Float32Array; any: Uint8Array }
+@@ -77,7 +79,7 @@ export const locks = (q: { ink: Float32Array; map: Uint8Array; names: ReadonlyAr
+           if (v < s2.a || v > s2.b) continue
+           const t = (v - s2.a) / (s2.b - s2.a), hw = s2.w * Math.sin(Math.PI * Math.min(1, t * 1.25)) ** 0.8 * (t > 0.8 ? (1 - t) / 0.2 : 1), a = sm(-0.6, 0.6, (hw - Math.abs(u - s2.u)) * c)
+           if (a <= 0) continue
+-          if (s2.lit) o.light[i] = Math.max(o.light[i]!, a); else if (Math.abs(a) > Math.abs(o.hue[i]!)) o.hue[i] = a * s2.hue
++          if (s2.lit) o.light[i] = Math.max(o.light[i]!, a); else if (f.hues !== false && Math.abs(a) > Math.abs(o.hue[i]!)) o.hue[i] = a * s2.hue
+         }
+         if (f.ring) {
+           const x = (i % w) / k - f.ring.at[0], y = (((i / w) | 0) / k - f.ring.at[1]) / (f.ring.squash ?? 1), an = (Math.atan2(y, x) * 180) / Math.PI, R = Math.hypot(x, y)
+diff --git a/src/bold/render.ts b/src/bold/render.ts
+index 03a6356..f199401 100644
+--- a/src/bold/render.ts
++++ b/src/bold/render.ts
+@@ -77,7 +77,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
+   const mk = (): { c: HTMLCanvasElement; g: CanvasRenderingContext2D } => { const c = document.createElement("canvas"); c.width = w; c.height = h; return { c, g: c.getContext("2d", { willReadFrequently: true })! } }
+   const tmp = mk(), trace = (g: CanvasRenderingContext2D, d: string): void => { g.beginPath(); loop(d).forEach(([x, y], i) => (i ? g.lineTo(x * k, y * k) : g.moveTo(x * k, y * k))); g.closePath() }
+   const alphaOf = (): Uint8ClampedArray => tmp.g.getImageData(0, 0, w, h).data
+-  const defs = names.map((n) => art.defs[n] ?? null), kinds = defs.map((d) => d?.kind as Kind | undefined), tones = defs.map((d) => (d ? tone(d.color, d.kind as Kind) : null)), zs = defs.map((d) => d?.z ?? 0), bg = names.indexOf("bg")
++  const defs = names.map((n) => art.defs[n] ?? null), kinds = defs.map((d) => d?.kind as Kind | undefined), tones = defs.map((d) => (d ? tone(d.color, d.kind as Kind, d.deep) : null)), zs = defs.map((d) => d?.z ?? 0), bg = names.indexOf("bg")
+   const set = (gs: ReadonlyArray<string>): Uint8Array => { const t = new Uint8Array(names.length); for (const g of gs) { const i = names.indexOf(g); if (i > 0) t[i] = 1 } return t }
+   const of = (kind: ReadonlyArray<Kind>): Uint8Array => Uint8Array.from(kinds, (d) => (d && kind.includes(d) ? 1 : 0))
+ 
+@@ -378,6 +378,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
+   if (upto >= 7 && view !== "regions") {
+     const meanC: Array<number> = [], cnt: Array<number> = []
+     if (P) { for (let i = 0; i < N; i += 2) { const d = P.id[i]!; if (d) { meanC[d] = (meanC[d] ?? 0) + P.far[i]! + P.near[i]!; cnt[d] = (cnt[d] ?? 0) + 1 } } for (let d = 1; d < meanC.length; d++) meanC[d] = (meanC[d] ?? 0) / (cnt[d] ?? 1) }
++    const dry = set(art.noBleed ?? [])
+     const rounds = art.solids ? set(art.solids.flatMap((q) => q.on)) : null, tally = new Map<string, [number, number]>(), far: Array<number> = []
+     const most = Math.ceil(H * 0.075), air = (m: number, n: number): boolean => m === bg || (art.depth?.[names[m]!] ?? 0) - (art.depth?.[names[n]!] ?? 0) >= 0.15, bleed = new Float32Array(N), from = new Uint8Array(N)
+     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+@@ -400,7 +401,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
+         const C = P && P.id[i] ? meanC[P.id[i]!]! : 0, p = P && P.id[i] ? P.side[i]! : 0.5, big = C > H * 0.13 && kd !== "hair", taper = smooth(0.02, 0.16, p) * (1 - smooth(0.72, 0.97, p)), W = big ? Math.max(H * 0.012, Math.min(0.15 * C, H * 0.055) * taper) : H * 0.0125
+         if (paper <= W) sky[i] = 1
+         else if (big && paper <= W * 1.75) skyIn[i] = 1
+-      } else if (zs[m]! < zs[n]!) { const L = H * 0.034; if (paper < L) { bleed[i] = 1; from[i] = m } }
++      } else if (zs[m]! < zs[n]! && !dry[n]) { const L = H * 0.034; if (paper < L) { bleed[i] = 1; from[i] = m } }
+     }
+     { const bx = boxesOf(map, w, h, names.length); cutAll([sky, skyIn, bleed], map, kinds, names.length, bx, w, h, Math.max(1, H * 0.014), Math.max(1, H * 0.004), designed) }
+     // a drawn plane of second light has a darker step towards the light
+@@ -435,7 +436,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
+     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+       const i = y * w + x
+       if (map[i] === bg) continue
+-      const t = ((x / w - 0.5) * sun.x + (y / h - 0.5) * sun.y) * 1.5, a = Math.min(0.13, Math.abs(t) * 0.16)
++      const t = ((x / w - 0.5) * sun.x + (y / h - 0.5) * sun.y) * 1.5, a = Math.min(0.13, Math.abs(t) * 0.16) * (art.air ?? 1)
+       if (t < 0) { tag = "airWarm"; times(i, [1.06, 1.015, 0.93], a * 5) } // air tints, it never lifts a dark
+       else { tag = "airCool"; times(i, [0.86, 0.88, 1.02], a * 2.2) }
+       tag = "focus"
+@@ -519,7 +520,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
+     }
+   }
+ 
+-  const line = lineLayer({ ink, map, w, h, k, head: art.head, bg, kinds, z: zs, tones, face: names.indexOf("face"), dark: e1, strokes: refs.strokes, fall: [sun.x, sun.y], print: set(art.print ?? []), softWedges: art.softWedges ?? false, eyes: eyes.map((e) => e.at), back: upto >= 10 ? back : back.map(() => 0) }), li = line.image
++  const line = lineLayer({ ink, map, w, h, k, head: art.head, bg, kinds, z: zs, tones, face: names.indexOf("face"), dark: e1, strokes: refs.strokes, fall: [sun.x, sun.y], print: set(art.print ?? []), softWedges: art.softWedges ?? false, drawn: Boolean(art.drawn), pencil: Boolean(art.drawn?.sketch), ...(art.strandInk ? { strandInk: art.strandInk } : {}), ...(art.faceInk ? { faceInk: art.faceInk } : {}), eyes: eyes.map((e) => e.at), back: upto >= 10 ? back : back.map(() => 0) }), li = line.image
+   if (upto < 9) for (let i = 0; i < N; i++) { li.data[i * 4] = BLACK[0]; li.data[i * 4 + 1] = BLACK[1]; li.data[i * 4 + 2] = BLACK[2]; li.data[i * 4 + 3] = smooth(0.2, 0.64, ink[i]!) * 255 }
+   if (upto >= 8) {
+     tmp.g.clearRect(0, 0, w, h); tmp.g.fillStyle = "#000"
+diff --git a/src/bold/tones.ts b/src/bold/tones.ts
+index 4b96cc3..55efb9d 100644
+--- a/src/bold/tones.ts
++++ b/src/bold/tones.ts
+@@ -24,7 +24,7 @@ export type Tone = { base: RGB; neon: RGB; s1: RGB; s2: RGB; half: RGB; lt: RGB;
+ export const SUN: RGB = [255, 243, 214], SKY: RGB = [120, 142, 222], BLACK: RGB = [19, 15, 23]
+ /** The same colour, no lighter than a value: reflected light stays below the light. */
+ const under = (c: RGB, most: number): RGB => { const l = luma(c); return l > most ? mul(c, [most / l, most / l, most / l]) : c }
+-export const tone = (color: string, kind: Kind): Tone => {
++export const tone = (color: string, kind: Kind, deep = 1): Tone => {
+   const base = hexRgb(color), l = luma(base), h = hueOf(base), s = hsv(base)
+   // how warm the colour is: warm colours darken through rose, cool ones through violet blue
+   const dh = Math.abs(((h - 32 + 540) % 360) - 180), warm = (1 - smooth(45, 95, dh)) * smooth(0.06, 0.28, s)
+@@ -35,7 +35,7 @@ export const tone = (color: string, kind: Kind): Tone => {
+     dark: [[0.5, 0.5, 0.66], [0.2, 0.2, 0.34]], leather: [two([0.54, 0.54, 0.7], [0.62, 0.49, 0.66]), two([0.26, 0.26, 0.4], [0.34, 0.24, 0.42])], plastic: [two([0.72, 0.73, 0.88], [0.84, 0.72, 0.8]), two([0.42, 0.42, 0.62], [0.56, 0.42, 0.62])],
+     peel: [[0.88, 0.63, 0.8], [0.62, 0.36, 0.7]], leaf: [[0.46, 0.63, 0.72], [0.26, 0.38, 0.5]], metal: [[0.62, 0.6, 0.78], [0.36, 0.34, 0.52]], glass: [[0.6, 0.62, 0.84], [0.38, 0.4, 0.62]], flat: [[0.72, 0.7, 0.84], [0.5, 0.48, 0.64]], sheer: [[0.7, 0.66, 0.8], [0.5, 0.45, 0.64]],
+   }
+-  const [s1, s2] = S[kind], shade = mul(base, s1)
++  const [s1, s2] = deep === 1 ? S[kind] : (S[kind].map((v) => v.map((c) => c ** deep)) as unknown as readonly [RGB, RGB]), shade = mul(base, s1)
+   const cold = l < 70 ? [104, 146, 236] : kind === "skin" || kind === "peel" ? [255, 188, 158] : warm > 0.45 ? (s < 0.3 ? [150, 140, 224] : [214, 84, 214]) : [112, 176, 255]
+   return {
+     neon: under(mix(shade, cold as unknown as RGB, l < 70 ? 0.72 : 0.66), kind === "dark" || kind === "leather" || l < 60 ? 84 : l * (warm > 0.45 || kind === "skin" ? 0.84 : 0.92)),
+diff --git a/src/splash/engine.ts b/src/splash/engine.ts
+index 50a5904..f4d5d4f 100644
+--- a/src/splash/engine.ts
++++ b/src/splash/engine.ts
+@@ -1,4 +1,6 @@
+ /** What a drawing is made of, and what every tool reads: regions, numbered lines, named shapes. Drawn by src/bold/render.ts. */
++import { drawnRegions } from "../draw/draw.ts"
++import type { Drawn } from "../draw/draw.ts"
+ import type { Detail } from "../bold/eye.ts"
+ import { loop } from "../cel/path.ts"
+ import { fill, paper } from "../bucket/fill.ts"
+@@ -35,7 +37,7 @@ export type Art = {
+   /** Bucket mode: one click per patch and the lines the artist left open. Replaces seeds, walls and force. */
+   clicks?: { at: Clicks; walls: ReadonlyArray<string>; /** What open lines gave to the wrong part: an outline that takes pixels from `over` for `label`. */ move?: ReadonlyArray<{ label: string; d: string; over?: ReadonlyArray<string> }> }
+   force: ReadonlyArray<{ label: string; d: string; over?: ReadonlyArray<string> }>
+-  defs: Readonly<Record<string, { color: string; kind: Kind; z: number; rim?: number; grain?: number }>>
++  defs: Readonly<Record<string, { color: string; kind: Kind; z: number; rim?: number; grain?: number; /** Shades stronger than the kind's own: 1 as usual. */ deep?: number }>>
+   grads: ReadonlyArray<{ on: ReadonlyArray<string>; a: readonly [number, number]; b: readonly [number, number]; to: RGB; k: number }>
+   /** Caster, receiver, how far it falls, and the share of that which is deep: things that stand off the surface. */
+   casts: ReadonlyArray<readonly [ReadonlyArray<string>, ReadonlyArray<string>, number, number?]>
+@@ -79,6 +81,16 @@ export type Art = {
+   noink: ReadonlyArray<string>
+   /** Eyes placed from the lines the artist drew. */
+   eyes?: ReadonlyArray<EyeSpec>
++  /** Line art drawn here, over a sketch, instead of a picture of it (`src/draw/draw.ts`). `src` is then only a key. */
++  drawn?: Drawn
++  /** Parts that take no colour from their neighbours. */
++  noBleed?: ReadonlyArray<string>
++  /** How strong the warm and cool air over the whole figure is: 1 as usual. */
++  air?: number
++  /** 0 to 1: lines inside hair towards the dark of a separating line. */
++  strandInk?: number
++  /** The ink on a face, instead of black. */
++  faceInk?: RGB
+   /** What `face` and `over` draw, piece by piece and in the same order, so that each piece can be a layer (`bold/eye.ts`). */
+   details?: ReadonlyArray<Detail>
+   /** The folders of the layered file, furthest first (`src/layers/arrange.ts`). Every part in exactly one. */
+@@ -115,6 +127,7 @@ const vote = (wall: Float32Array, w: number, h: number) => (seed: Uint8Array): v
+ 
+ /** Pass 1's input: which part every pixel belongs to. */
+ export const regionsOf = async (art: Art, k: number, by: "marks" | "clicks" = art.clicks ? "clicks" : "marks"): Promise<{ ink: Float32Array; w: number; h: number; names: Array<string>; map: Uint8Array; seg?: Int32Array }> => {
++  if (art.drawn) return drawnRegions(art.drawn, art.w, art.h, art.head, k, art.drawn.sketch ? (await loadInk(art.drawn.sketch.src, k)).ink : undefined)
+   const { ink, w, h } = await loadInk(art.src, k)
+   if (by === "clicks" && art.clicks) { const P = paper(ink, w, h, art.clicks.walls, k), f = fill(P, w, h, art.clicks.at, k)
+     // what the artist's lines leave open: a patch that belongs to another part
+diff --git a/src/splash/maren-form.ts b/src/splash/maren-form.ts
+index 42c1ace..4fbbf79 100644
+--- a/src/splash/maren-form.ts
++++ b/src/splash/maren-form.ts
+@@ -13,7 +13,7 @@ const sheet = (outline: string, thick = 8, step = 24): Mesh => drape(pts(outline
+ 
+ // ---------------------------------------------------------------- head
+ const row = (y: number, ...q: ReadonlyArray<readonly [number, number]>): Array<V3> => [...q.map(([x, z]): V3 => [x, y - 0.5, z]), ...q.slice(1, -1).reverse().map(([x, z]): V3 => [-x, y - 0.5, z])]
+-const rows: Array<Array<V3>> = [
++export const skullRows: Array<Array<V3>> = [
+   row(0.01, [0, 0.06], [0.03, 0.05], [0.05, 0.02], [0.06, -0.04], [0.05, -0.09], [0.03, -0.12], [0, -0.14]), row(0.07, [0, 0.21], [0.09, 0.2], [0.17, 0.15], [0.24, 0.03], [0.24, -0.1], [0.16, -0.29], [0, -0.35]),
+   row(0.19, [0, 0.34], [0.12, 0.33], [0.23, 0.26], [0.33, 0.1], [0.35, -0.08], [0.25, -0.38], [0, -0.47]), row(0.34, [0, 0.4], [0.13, 0.385], [0.26, 0.31], [0.37, 0.13], [0.395, -0.06], [0.29, -0.42], [0, -0.52]),
+   row(0.49, [0, 0.415], [0.13, 0.395], [0.27, 0.31], [0.365, 0.13], [0.395, -0.05], [0.29, -0.42], [0, -0.51]), row(0.55, [0, 0.4], [0.11, 0.37], [0.26, 0.295], [0.355, 0.13], [0.385, -0.04], [0.28, -0.39], [0, -0.48]),
+@@ -23,7 +23,7 @@ const rows: Array<Array<V3>> = [
+ ]
+ export const marks: ReadonlyArray<readonly [V3, readonly [number, number], number]> = [[[-0.165, 0.11, 0.335], [424, 290], 1], [[0.165, 0.11, 0.335], [540, 229], 1], [[0, 0.255, 0.465], [473, 306], 1.4], [[0, 0.36, 0.39], [512, 328], 1], [[0, 0.5, 0.335], [526, 412], 1], [[0.38, 0.13, -0.04], [632, 250], 0.8]]
+ export const face = solve(marks, { yaw: -0.35, pitch: -0.1, roll: -0.4, k: 345, x: 500, y: 235, z: 60 }, ["k", "pitch"])
+-const skull = (): Mesh => move(skin(smooth(rows)), (v) => place(face.pose, v))
++const skull = (): Mesh => move(skin(smooth(skullRows)), (v) => place(face.pose, v))
+ put("face", "head", skull())
+ put("ear", "ear", ball([412, 352, 30], [20, 30, 14], { turn: -20, rows: 6, seg: 8 }))
+ put("earr", "earring L", torus([438, 396, 110], [15, 30], 7, [0.1, 0, 1], 14, 6)); put("earr", "earring R", torus([625, 345, 100], [12, 36], 7, [0.1, 0, 1], 14, 6))

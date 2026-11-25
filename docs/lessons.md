@@ -268,3 +268,8 @@ The client: no layer for each single detail; a layer for a set of related detail
 | hands, ear and arms in three folders with the same skin | see | Skin is one, the ear is with the face |
 
 Learned: control is a layer that targets a feature, and that a hand can find. More layers is not more control.
+
+## Drawing, and sketches into line art
+Rejected each time. The causes, sorted, are in [`drawing/log.md`](drawing/log.md). Two that hold for rendering too:
+- A maker who knows what was meant is no judge: use a fresh critic with names removed, beside one known good and one known bad.
+- Check the input before starting. Open shapes, unclear hands or hair, areas larger than a head with nothing in them: ask, do not fill in.

@@ -1,6 +1,6 @@
 # The journey, step by step
 
-Sixteen steps, 24 and 25 November 2026. What was asked, what was built, what went wrong and what stayed. Older steps describe older code; the current process is in [`process.md`](process.md) and the conclusions in [`findings.md`](findings.md).
+Twenty steps, 24 to 26 November 2026. What was asked, what was built, what went wrong and what stayed. Older steps describe older code; the current process is in [`process.md`](process.md) and the conclusions in [`findings.md`](findings.md).
 
 ## 1. Can a drawn look be code?
 
@@ -309,6 +309,14 @@ The stack was turned from the renderer's order into an illustrator's: a folder p
 ![Layers](../gallery/layers-maren.jpg)
 
 **Learned:** more layers is not more control. [How the file is structured](layers.md).
+
+## 20. Drawing
+
+**Asked:** line art from rough sketches; in a second thread, the drawing itself. Then a log of all of it.
+
+Eleven attempts, none approved.
+
+**Learned:** rendering carries out decisions, it does not make them. [The log](drawing/README.md).
 
 ## What it cost
 
