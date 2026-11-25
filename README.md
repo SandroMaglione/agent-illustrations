@@ -204,4 +204,4 @@ Also here: [a reel of the sketch engine](gallery/reel.mp4) and [its studio in on
 
 Style reference screenshots and every comparison image that contains them are other people's art, so they stay local, as do full-size renders, which the code regenerates. Numbers that mention references cannot be re-run without them.
 
-Line art in progress stays out too (`public/wip`). Line art in `public/` was supplied by the owner; `visor.png` and `tape.png` (Maren) are image-generated. The twin-tails drawing of step 6, by another artist, and every image made from it were removed on 26 November 2026; numbers and reviews that mention it stay.
+Line art in progress stays out too (`public/wip`). Line art in `public/` was supplied by the owner; `visor.png`, `tape.png` (Maren), `rig.png` and `bell.png` are image-generated. The twin-tails drawing of step 6, by another artist, and every image made from it were removed on 26 November 2026; numbers and reviews that mention it stay.

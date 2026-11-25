@@ -17,7 +17,9 @@ Each can fail, and says which of the three causes it is about. Judge them blind:
 
 Stop at the first one that fails, and work there. Nobody has run 1 to 3: the attempts started at 6 and 7.
 
-**Pick**, beside these: twenty line arts made the way the owner makes them; agent and owner each keep three without seeing the other's. Passes with two in common. It says whether picking can be learned, and needs the owner's recipe first.
+**Four corners**, beside these: an odd concept or a plain one, one prompt or five rounds of direction, three images each, shuffled. The owner marks slop. It says which of the differences in [the lead](README.md#the-lead) matters.
+
+**Pick**: twenty line arts made the way the owner makes them; agent and owner each keep three without seeing the other's. Passes with two in common. It says whether picking can be learned. The recipe is in [`README.md`](README.md#the-lead).
 
 ## Critic's brief
 What was used for the comparison in the log. Change it when it misses.
