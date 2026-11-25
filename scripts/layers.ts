@@ -47,6 +47,15 @@ for (let i = 0; i < w * h; i++) for (let c = 0; c < 3; c++) rgb[i * 3 + c] = ren
 const flat8 = composite(stack, true), flatF = composite(stack, false)
 const report = (label: string, f: Uint8ClampedArray): string => { const r = compare(f, rgb); return `${label}: max ${r.max}, mean ${r.mean.toFixed(3)}, ${(100 * r.over2 / r.n).toFixed(3)}% of pixels off by more than 2, ${(100 * r.over8 / r.n).toFixed(4)}% by more than 8` }
 const check = [report("composited in 8 bit", flat8), report("composited in float", flatF)]
+// the outer contour differs by design (the line art lies over the background): inside the figure, 3 px from its edge, it must not
+{
+  let on = new Uint8Array(w * h)
+  for (const L of stack.layers) if (L.group === "Flats") for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) if (L.rgba[(y * L.w + x) * 4 + 3]) on[(y + L.y) * w + x + L.x] = 1
+  for (let r = 0; r < 3; r++) { const n = on.slice(); for (let i = 0; i < w * h; i++) { const x = i % w; if (!on[i] || (x > 0 && !on[i - 1]) || (x < w - 1 && !on[i + 1]) || (i >= w && !on[i - w]) || (i < w * (h - 1) && !on[i + w])) n[i] = 0 } on = n }
+  let max = 0, n = 0, over = 0
+  for (let i = 0; i < w * h; i++) if (on[i]) { n++; let m = 0; for (let c = 0; c < 3; c++) m = Math.max(m, Math.abs(flat8[i * 3 + c]! - rgb[i * 3 + c]!)); if (m > max) max = m; if (m > 2) over++ }
+  check.push(`inside the figure, 3 px from its edge: max ${max}, ${((100 * over) / Math.max(1, n)).toFixed(3)}% of pixels off by more than 2`)
+}
 for (const c of check) console.log(`  ${c}`)
 // where they differ, as a picture: grey render, red where off by more than 2
 const diff = new Uint8Array(w * h * 4)

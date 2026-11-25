@@ -5,10 +5,13 @@ The renderer paints one picture in about forty steps. With `layers=1` every step
 ```sh
 node scripts/layers.ts rig output/layers/rig --clip                           # PSD, .clip, layer PNGs, stack.json, the check
 node scripts/layers.ts rig output/layers/rig --clip --template mine.clip      # into your own canvas (same size: added on top)
+node scripts/layerview.ts output/layers/rig                                   # view.html (switch layers, see one alone, play the stack) and sheet.png
 node scripts/clipcheck.ts output/layers/rig/rig.clip --tree --render output/layers/rig/render.png
 ```
 
-![Layers of the goggles drawing, each alone](../gallery/layers-sheet.jpg)
+![Maren's layers: the stack growing folder by folder, then every step alone](../gallery/layers-maren.jpg)
+
+The same for the goggles drawing: [layers-sheet.jpg](../gallery/layers-sheet.jpg).
 
 ## What comes out
 
@@ -29,7 +32,7 @@ Bottom to top, as in CSP's layer panel read upwards. Folders are pass-through, s
 | Eye lights | normal | what is drawn over the lines |
 | Front | normal | what `front` draws |
 
-A step that does nothing in a drawing gives no layer (`stack.json` lists the notes). Goggles: 72 layers, headphones (`tape`): 74, bell: 61.
+A step that does nothing in a drawing gives no layer (`stack.json` lists the notes). With paper: Maren (`maren`, the same line art as `tape`, with the form guide) 84 layers, headphones (`tape`) 74, goggles 72, bell 62.
 
 ## How a step becomes a layer
 
@@ -50,22 +53,22 @@ What a mode cannot say stays exact in a normal layer next to it, named `… (res
 
 ## Checked
 
-Every number here is from this repository's scripts, on renders made in this container (Chromium, k=2).
+Every number here is from this repository's scripts, on renders at k=2. Run again on 2026-11-26, after `main` with Maren was merged in.
 
-| Check | Goggles (`rig`) | Headphones (`tape`) |
-|---|---|---|
-| Render without layers vs before this work | identical (no pixel differs) | |
-| Layers | 72 and paper | 74 and paper |
-| Stack composited (CSP formulas, 8 bit) vs render: pixels off by more than 8 | 0.508% | 0.466% |
-| … more than 3 px inside the figure: largest difference, share off by more than 2 | 4, 0.09% | 4, 0.02% |
-| PSD composited by **psd-tools** (an independent reader) vs render, off by more than 8 | 0.518% | 0.475% |
-| .clip read back by `clipread.ts`: rule problems | 0 | 0 |
-| .clip layers composited from its own tiles vs the preview written into it | max 2 | max 2 |
-| .clip storage class of every column vs CSP's template | all 166 the same | all 166 the same |
+| Check | Maren (`maren`) | Goggles (`rig`) | Headphones (`tape`) | Bell (`bell`) |
+|---|---|---|---|---|
+| Render without layers vs `main` | identical (k=3, also `visor`) | identical (k=2) | | |
+| Layers, with paper | 84 | 72 | 74 | 62 |
+| Stack composited (CSP formulas, 8 bit) vs render: pixels off by more than 8 | 0.460% | 0.513% | 0.470% | 0.582% |
+| … more than 3 px inside the figure: largest difference, share off by more than 2 | 4, 0.060% | 3, 0.029% | 3, 0.008% | 3, 0.009% |
+| .clip read back by `clipread.ts`: rule problems | 0 | 0 | 0 | 0 |
+| .clip layers composited from its own tiles vs the preview written into it | max 3 | max 2 | max 2 | max 2 |
 
-The bell (`bell`), whose face is drawn with `lighten` and `darken`, takes the fallback for its face and eye lights and comes out the same way: 61 layers, 0 .clip problems, within 4 levels inside the figure.
+From the first round, not run again: the PSD composited by **psd-tools** (an independent reader) was off by more than 8 on 0.518% (goggles) and 0.475% (headphones) of pixels; the storage class of all 166 .clip columns was the same as in CSP's template.
 
-**The one difference by design:** the renderer paints the background over the anti-aliased outer edge of the line art; in the stack the line art lies on top of the background, as an artist keeps it. So the outer contour's edge pixels are a little darker in the stack (up to 58 levels on single edge pixels, nowhere else). Everything more than 3 px inside the figure is within 4 levels, and 99.9% of it within 2 (the rest is rounding: each of about forty layers is 8 bit).
+The bell, whose face is drawn with `lighten` and `darken`, takes the fallback for its face and eye lights.
+
+**The one difference by design:** the renderer paints the background over the anti-aliased outer edge of the line art; in the stack the line art lies on top of the background, as an artist keeps it. So the outer contour's edge pixels are a little darker in the stack (up to 58 levels on single edge pixels, up to 148 on loose hair strands that stand alone on the background in `tape` and `bell`, nowhere else). Everything more than 3 px inside the figure is within 4 levels, and 99.9% of it within 2 (the rest is rounding: each of about forty layers is 8 bit).
 
 ## The .clip
 
@@ -114,6 +117,6 @@ With `--template` pointing at a .clip of the same size as the render, nothing in
 | `src/layers/clip.ts` | the .clip writer: new canvas or injected |
 | `src/layers/clipread.ts` | the .clip reader, composite and rule checks |
 | `src/layers/template/` | the empty CSP canvas the writer copies from (wamsoft/clipparse, MIT) |
-| `scripts/layers.ts`, `scripts/clipcheck.ts` | the two commands |
+| `scripts/layers.ts`, `scripts/clipcheck.ts`, `scripts/layerview.ts` | the commands: export, read back, look |
 
 Sources, read for this work: [wamsoft/clipparse](https://github.com/wamsoft/clipparse) 322a273 (format notes and CSP test log), [Aodaruma/clipfile-rs](https://github.com/Aodaruma/clipfile-rs) bd88467 (`docs/format-analysis.md`, `docs/writing.md`), [dreaifekks/csp-ai-enhancer](https://github.com/dreaifekks/csp-ai-enhancer) 7a80c19 (what opened in CSP), [dobrokot/clip_to_psd](https://github.com/dobrokot/clip_to_psd) e8db68c, [al3ks1s/clip-tools](https://github.com/al3ks1s/clip-tools) e1d3d7e, [nodamushi/clip_layer_rename](https://github.com/nodamushi/clip_layer_rename) 83b01db (sample files). No code was copied; the writer and reader here are new.

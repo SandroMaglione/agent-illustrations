@@ -37,7 +37,7 @@ Every step of the paint also comes out as a layer, so the result can be refined 
 node scripts/layers.ts rig output/layers/rig --clip
 ```
 
-![Layers of the goggles drawing, each alone](gallery/layers-sheet.jpg)
+![Maren's layers: the stack growing folder by folder, then every step alone](gallery/layers-maren.jpg)
 
 The `.clip` keeps every rule others found by opening files in CSP, and reads back clean with this repository's checker, which was tested on 22 files CSP saved. It has not been opened in CSP here, as there is none in this environment: the PSD is the safe way in. What was checked, what was learned from others, what to look at in CSP: [`docs/layers.md`](docs/layers.md).
 
@@ -89,6 +89,7 @@ node scripts/guide.ts <name> output/form/g 5 20 arm:375,295,180,150  # form guid
 node scripts/gate.ts <name>                                          # value plan and second light, per stage
 node scripts/finish.ts <name> render.png 2 410 1070,410              # the last check, always: scale, head height and head centre in render px
 node scripts/layers.ts <name> output/layers/<name> --clip           # the render as layers: PSD and .clip, with a check that they give it back
+node scripts/layerview.ts output/layers/<name>                      # look through the layers: view.html and sheet.png
 node scripts/clipcheck.ts file.clip --tree                          # read a .clip: rules, layer tree, composite against its preview
 ```
 
