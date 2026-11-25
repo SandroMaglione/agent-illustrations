@@ -116,3 +116,6 @@ The client preferred the Opus bell overall, the face and eyes above all; Neon di
 | Borders under ink cleaned by majority vote | comb specks | clean |
 
 Part of the bell's saturation gain comes from slightly greyer flats (coat, brass, braid), not only the rule. Not re-reviewed by Neon.
+
+## Goggles character: client notes and Neon's practical review (2026-11-25)
+Client: objects lack 3D form, light scattered, no contrast or focal point. Measured: the jacket was lighter than the head (172 against 154) and local contrast at the head only 1.12 times the rest. Fixes, numbers and which of Neon's 12 findings held: `findings.md`. Full review: `reviews/rig-neon.md`. The first correction overshot (body 71% dark), so it was lifted again. Not re-reviewed by Neon.
