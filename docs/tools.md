@@ -58,6 +58,9 @@ How shapes are placed and checked. Code in `src/tools` and `src/splash`. Why the
 | Eye rig | lash, lid, iris, crease lines | iris fitted to the drawn arcs; every layer placed in shares of the eye (`eyes.ts`) |
 | Cast v2 | caster, receiver, distance | moved along the light, edge calmed in proportion to the distance (`cast.ts`) |
 | Blockout | `loft`, `tube`, `ball`, `strip`, `drape`, `box`, `solve` (`src/form/mesh.ts`) | the figure in 3D in the drawing's view, settled onto the drawn outlines (`settle.ts`), with a fit table, turntable and a viewer (`scripts/form.ts`) |
+| Form guide | `node scripts/guide.ts name dir zoom step piece:x,y,w,h` | what the blockout says, in colours under the line art |
+| Shadow design | `sleeveL \| S \| x,y x,y~ …` | S turns away, X cast, H half, D deep, L lit, R reflected, C cut back; `~` is a soft point (`bold/shadows.ts`) |
+| Folds | `folds: [{ on, at, w, side, steep }]` | a ridge that tilts the mesh; only where nothing better is drawn (`bold/folds.ts`) |
 | Seal | nothing | lit slivers under 4 px between shadow and line are closed and counted (`seal.ts`) |
 | Lint | `pnpm check tape` | slivers, edges beside lines, worst places with coordinates (`lint.ts`) |
 

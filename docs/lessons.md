@@ -126,3 +126,15 @@ How it is made: each form is typed from what is seen (its two outlines) and what
 Checks that do not need taste: the right form shows at 97.3% of the figure's pixels (84% as first typed), 2.0% outside it. A wrong depth shows up as the wrong form in front. Left and right limbs must be equally long in space: 170/173, 168/182, 275/287, 278/294 px. Pose landmarks miss by about 8 px.
 Learned: limb lengths fix most of the depth. Forms that come toward the viewer need rings that tip back; computed from depth, not typed. Typed outlines were off by 3 to 10 px, always the same way; do not retype, settle. Ear-clipped cloth has slivers; use even triangles.
 Open: folds are not in the mesh; hair is a mass with few locks, the bun a ball; face planes are a standard head, not this face; what no line shows (backs, far sides) is a guess. Shading is not driven by it yet.
+
+## Seventh round, `visor`: shading from the blockout (trial)
+| Client's note | Kind | Answer |
+|---|---|---|
+| no full 3D render needed: understand the form, see where it breaks the basic cylinders, find better shapes | see, do | `form.ts --field` asks the mesh per pixel (facing, casts by rays, enclosure). `scripts/guide.ts` prints that as a guide under the line art: shade blue, half tone pale, cast violet, far side teal. An agent then draws the shadow shapes over it, snapped to the artist's lines (`shadows`, `bold/shadows.ts`) |
+
+Tried in this order, each looked at beside the last round:
+1. Mesh shading straight into the render: right, but soft-edged, blobby, hair ruined, trousers without folds. Better than nothing, worse than round five.
+2. Facets and fold ridges tilting the mesh normals: noisy steps, edges where no artist would put one.
+3. Mesh as a guide, shapes drawn by the agent: clear win. Form decides where, the drawn line decides the edge.
+Learned: the mesh is for understanding, not for rendering. Use it directly only for simple solids (fruit, crate, leaves, bands) and long casts; draw everything the artist has lines for; leave hair to its locks. A physically right cast can still read as a blot (leaf shadows floating on the fruit): keep it attached. A change of light to please one spot cost dark value everywhere: the gate showed it (24 to 20%), so the light went back.
+Open: hands, shoes, belt, crate fittings, hair not designed yet; shapes are typed points; one fully shaded part (coat) is under its value band.

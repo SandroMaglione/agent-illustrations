@@ -26,6 +26,8 @@ Lengths are line-art px; sizes that matter are shares of head height.
 4. **Cast list.** Every overlap pair gets a cast: caster, receiver, distance, deep share. A cast must reach further than the shade of any closer part, or it cannot be seen.
 4b. **Blockout (trial).** `src/splash/<name>-form.ts`: every form as a mesh with depth. `node scripts/form.ts name outdir [zoom piece:x,y,w,h]` until the right form shows at 95% of the pixels, left and right limbs are equally long, and it reads as a solid figure in `turn.png` and `view.html`. No shade before that.
 
+4c. **Shadow design (trial).** `form.ts --field`, then `scripts/guide.ts`: draw the shadow shapes of every piece over the guide, along the drawn lines (`<name>-shadows.ts`). The form says where shade falls, the nearest drawn line says where its edge runs. Only simple solids and long casts are taken from the mesh as they are (`formed`, `meshCasts`). Compare every piece with the last version.
+
 5. **Form.** State the solid behind every round thing (`solids`): limbs tubes, shoulders, knees, fruit balls. Look at `view=masks` with nothing else on. It must turn like that solid before any fold or cast exists. **Then the exceptions, each on top:** casts, folds, facets.
    **Gate:** `node scripts/gate.ts name` with a value plan (`values`). Run it after flats, form, every fine pass, and at the end. FAIL means stop and fix values first.
    Turning planes of each part, computed from the light (`turn`, `ball`). Then hair by lock, folds and seams from the kits, deep shade inside parents. Judge it in `view=masks`.

@@ -26,7 +26,7 @@ if (!existsSync(`${cache}.json`) || process.argv.includes("--fresh")) {
 }
 const R = JSON.parse(readFileSync(`${cache}.json`, "utf8")) as { w: number; h: number; names: Array<string>; map: string; ink: string }, map = new Uint8Array(Buffer.from(R.map, "base64")), ink = new Uint8Array(Buffer.from(R.ink, "base64")), { w, h, names } = R
 drawing({ w, h, map, names })
-const raw = (await import(`../src/splash/${name}-form.ts`)) as { parts: ReadonlyArray<Part>; groups: Readonly<Record<string, string>>; bones?: ReadonlyArray<readonly [string, number, number]>; pivot: V3 }
+const raw = (await import(`../src/splash/${name}-form.ts`)) as { parts: ReadonlyArray<Part>; groups: Readonly<Record<string, string>>; bones?: ReadonlyArray<readonly [string, number, number]>; pivot: V3; light?: { fall: readonly [number, number]; up: number }; head?: number }
 const groupOf = new Map<string, string>()
 for (const [g, l] of Object.entries(raw.groups)) for (const n of l.split(/\s+/)) groupOf.set(n, g)
 const M = { ...raw, parts: process.argv.includes("--raw") ? raw.parts : settle(raw.parts, { w, h, map, names }, groupOf) }
@@ -84,3 +84,14 @@ writeFileSync(`${dir}/turn.png`, row([-60, -30, 0, 35, 90].map((a) => shot("clay
 writeFileSync(`${dir}/clay.png`, row([shot("clay", all, 1)]))
 for (const j of pieces) { const [id, bx] = j.split(":"), q = bx!.split(",").map(Number) as [number, number, number, number], z = Number(zoom); writeFileSync(`${dir}/${id}.png`, row([shot("wire", q, z), shot("parts", q, z), shot("miss", q, z)])); const c: V3 = [q[0] + q[2] / 2, q[1] + q[3] / 2, 0]; writeFileSync(`${dir}/${id}-turn.png`, row([-70, -35, 0, 35, 70].map((a) => { const t = turned((a * Math.PI) / 180), o = t(c); return shot("clay", q, z * 0.6, (v) => { const m = t(v); return [m[0] - o[0] + c[0], m[1], m[2]] }) }))) }
 writeFileSync(`${dir}/view.html`, viewer(M.parts, M.pivot, w, h, ink, hue))
+
+// ---- what it says about every pixel, for the renderer
+if (process.argv.includes("--field")) {
+  const { field } = await import("../src/form/field.ts"), q = raw.light ?? { fall: [0.8, 0.6], up: 0.5 }, l = Math.hypot(...q.fall), flat = Math.sqrt(1 - q.up * q.up), f = field(M.parts, { w, h, map, names }, groupOf, [(-q.fall[0]! / l) * flat, (-q.fall[1]! / l) * flat, q.up], raw.head ?? 205)
+  // nx ny, depth, distance to what casts on it, enclosure, sky: one byte each
+  const o = new Uint8Array(w * h * 7)
+  for (let i = 0; i < w * h; i++) if (f.has[i]) { o[i * 7] = 1; o[i * 7 + 1] = Math.round(f.n[i * 3]! * 127 + 128); o[i * 7 + 2] = Math.round(f.n[i * 3 + 1]! * 127 + 128); o[i * 7 + 3] = Math.max(0, Math.min(255, Math.round(f.z[i]! / 2 + 128))); o[i * 7 + 4] = f.hit[i]! > 0 ? Math.max(1, Math.min(255, Math.round(f.hit[i]!))) : 0; o[i * 7 + 5] = Math.round(Math.min(1, f.shut[i]!) * 255); o[i * 7 + 6] = f.sky[i]! * 255 }
+  writeFileSync(`public/wip/${name}-field.bin`, o)
+  const L3: V3 = [(-q.fall[0]! / l) * flat, (-q.fall[1]! / l) * flat, q.up], pic = (fn: (i: number) => number): { rgb: Uint8Array; W: number; H: number } => { const rgb = new Uint8Array(w * h * 3).fill(255); for (let i = 0; i < w * h; i++) if (f.has[i]) { const k = 1 - ink[i]! / 255; rgb[i * 3] = rgb[i * 3 + 1] = rgb[i * 3 + 2] = fn(i) * k } return { rgb, W: w, H: h } }, lam = (i: number): number => f.n[i * 3]! * L3[0] + f.n[i * 3 + 1]! * L3[1] + f.n[i * 3 + 2]! * L3[2]
+  writeFileSync(`${dir}/tones.png`, row([pic((i) => (lam(i) < 0.1 ? 110 : lam(i) < 0.34 ? 190 : 250)), pic((i) => (lam(i) < 0.1 ? 110 : f.hit[i]! > 0 ? (f.hit[i]! < 14 ? 60 : 150) : 250)), pic((i) => 250 - f.shut[i]! * 240)]))
+}
