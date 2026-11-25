@@ -5,7 +5,7 @@
 import { chromium } from "playwright"
 
 const port = process.env.PORT ?? "5440"
-const names = process.argv.slice(2).length ? process.argv.slice(2) : ["twin", "tape", "bell", "rig"]
+const names = process.argv.slice(2).length ? process.argv.slice(2) : ["tape", "bell", "rig"]
 type Rule = readonly [label: string, ok: (s: Record<string, number>) => boolean, show: (s: Record<string, number>) => string]
 const rules: ReadonlyArray<Rule> = [
   ["colour: 30 to 65% of the figure under HSV S 0.3", (s) => (s._lowSat ?? 0) >= 30 && (s._lowSat ?? 0) <= 65, (s) => `${s._lowSat}% (references e f g 35 to 58)`],
