@@ -1,75 +1,73 @@
 # The process
 
-Colour clean line art so that the result could stand beside the target references: crisp, blocky, value first, black where it counts, rich shadows, real materials. The renderer is `src/bold`, the tools `src/tools` ([list](tools.md)), the notes behind it [`lessons.md`](lessons.md). One drawing is a few data files.
+Colour clean line art so that the result could stand beside the target references: crisp, blocky, value first, rich shadows, real materials. The renderer is `src/bold`, the form tools `src/form`, everything else `src/tools` ([list](tools.md)). One drawing is a few data files in `src/splash`. Why each rule exists: [`findings.md`](findings.md). Every note ever given: [`lessons.md`](lessons.md).
 
-**The only judge that counts:** `node scripts/lineup.ts out.png render.png <head px> <cx,cy>`, in colour and in greyscale. The references stay local (`public/refs`, e f g).
+**Two judges.** `node scripts/lineup.ts out.png render.png <head px> <cx,cy>` puts the drawing between the references, in colour and greyscale (they stay local). `node scripts/gate.ts name` measures value and second light: a FAIL means stop and fix before going on.
 
 Lengths are line-art px; sizes that matter are shares of head height.
 
-## Priorities
-1. **Light and value before detail.** One light, one focus, three values. If it does not read in black and white, no shading saves it.
-2. **Face and eyes.** They carry the picture. Give them the most time, the most layers and the strongest contrast, and protect their ink.
-3. **Form through shadows.** Thickness, undersides and what casts on what. Every overlap casts.
-4. **Large shapes.** Hair mass, coat, value groups.
-5. **Small accessories.** Each needs its own clean silhouette and real contrast.
+## Principles
+1. **Value before everything.** If it does not read in greyscale, nothing later saves it. Look at grey after every stage.
+2. **Form before shade.** Know the solid behind every piece before drawing a shadow on it. An arm is a cylinder first; folds, casts and facets come on top.
+3. **The form says where, the drawn line says how.** Shade falls where the form turns; its edge runs along the artist's nearest line.
+4. **Simple beats correct.** One clean shape per plane or lock. A right but uneven edge is worse than a simple one.
+5. **The face is an exception**, and so are the shadows that tell a distance (next section).
+6. **Reflected light is its own step.** It is the one most often lost.
+7. **Change one thing, look at it beside the last version.** Check the file was really rewritten first.
+
+## Where the form is followed, and where not
+| What | Rule |
+|---|---|
+| Solids: arms, legs, fruit, boxes, bags | as the form says |
+| Cloth | where the form says, along the drawn folds, one shape per plane |
+| Hair | one simple shape per lock, root to tip. Never the form's own edge |
+| **Face** | **never modelled.** Clean and almost flat: shadow of the hair, a small nose mark, perhaps the lower lid, a thin sliver at the chin towards the neck. No side plane. The neck carries the shade |
+| Casts that show a distance (leaf on fruit, hat on hair, belt and bag on legs) | always kept, drawn clear of what casts them. Before removing a shadow, ask what distance it tells |
+| Skin in shade | warm: overlay orange. Never grey, never cold |
+| Second light | bold planes on far edges with open air behind, pointed at both ends, inside the shade, always darker than the light. No cold light where the surroundings are not cold: another surface gives its own colour. None on face, ear, peel, leaf |
 
 ## Brief for the line art
 - Closed lines. Gaps under 3 px on straps and knots get closed before filling.
-- Contour weight about 0.7 to 1% of head height, tapered, thinner on skin and hair. Heavier works, but reads as another studio.
-- Lower lids drawn. Without them the eye rig guesses.
-- Same part names on every character.
+- Fine contours, tapered, thinner on skin and hair. Fine line art carries more form than heavy.
+- Lower lids drawn. Same part names on every character.
 
 ## Order
-1. **Regions.** `scripts/clean.ts` if the line art has grey fills, `scripts/new.ts`, patch sheet, names by number, `scripts/name.ts`, until `show=pools&named=1` has no red "?" and no leak. A wall splits a patch that two parts share. Set `head` and, in `defs`, each part's material and height in the stack (`z`).
-2. **Thumbnails: light and value.** Four to six plans in `<name>-plans.ts` that differ in more than hue: where the light comes from, which mass is lightest, which is darkest, where the accent sits. Look at `v=thumbs`: at the small size, in three values, where does the eye land? The numbers under it say the focus against the rest. Value is luma, not HSV V or HSL L. Someone with taste picks one; then its `light`, `focus` and colours go into the drawing.
-3. **Lines and eyes.** Freeze the line numbers, print numbered sheets per area. Nothing after this uses a coordinate grid. Eyes from their named lines.
-4. **Cast list.** Every overlap pair gets a cast: caster, receiver, distance, deep share. A cast must reach further than the shade of any closer part, or it cannot be seen.
-4b. **Blockout (trial).** `src/splash/<name>-form.ts`: every form as a mesh with depth. `node scripts/form.ts name outdir [zoom piece:x,y,w,h]` until the right form shows at 95% of the pixels, left and right limbs are equally long, and it reads as a solid figure in `turn.png` and `view.html`. No shade before that.
-
-4c. **Shadow design (trial).** `form.ts --field`, then `scripts/guide.ts`: draw the shadow shapes of every piece over the guide, along the drawn lines (`<name>-shadows.ts`). The form says where shade falls, the nearest drawn line says where its edge runs. Only simple solids and long casts are taken from the mesh as they are (`formed`, `meshCasts`). Compare every piece with the last version.
-
-   **Where the form is followed, and where not (rule for the whole 3D workflow):**
-   - *Solids* (arms, legs, fruit, boxes, bags): as the form says.
-   - *Cloth and hair:* where the form says, but one simple shape per plane or lock. A simple clean edge beats a correct uneven one.
-   - *The face: never.* It stays clean and almost flat. Shadows: hair on the face, perhaps nose and lower lid, a sliver at the chin towards the neck. No side plane.
-   - *Casts that show a distance* (leaf on fruit, hat on hair, belt and pack on legs) always stay, drawn clear of what casts them.
-   - *Skin in shade* is warm: overlay orange. Never grey, never cold.
-
-5. **Form.** State the solid behind every round thing (`solids`): limbs tubes, shoulders, knees, fruit balls. Look at `view=masks` with nothing else on. It must turn like that solid before any fold or cast exists. **Then the exceptions, each on top:** casts, folds, facets.
-   **Gate:** `node scripts/gate.ts name` with a value plan (`values`). Run it after flats, form, every fine pass, and at the end. FAIL means stop and fix values first.
-   Turning planes of each part, computed from the light (`turn`, `ball`). Then hair by lock, folds and seams from the kits, deep shade inside parents. Judge it in `view=masks`.
-6. **Children.** Trim, buttons and piping inherit the shade they lie on. Bevels on hard parts, never where something lies on top.
-7. **Lights.** A separate round: one lit plane per mass, one lit strand per lock, one glint per hard thing. A light stands on a line or crosses a whole plane.
-8. **Fine rendering, one piece at a time.** After the big planes stand: `show=facets&part=…` numbers every facet of a piece, write tones in `<name>-tones.txt` (L lit, H half, S shade, D deep, K darkest, T round, B second light), `scripts/tone.ts name` (it lists facets left plain and numbers that belong elsewhere). Then `scripts/review.ts name dir piece:box …` and look at each piece alone: does every plane follow a line, does it turn, does it read in grey? Fix the worst piece, repeat. Not done until every piece was looked at.
-9. **Value, again:** `scripts/value.ts`, `lineup.ts`.
-10. **Fix** DEAD and LEAK warnings, `pnpm check`, crops at 200% of head, hands and accessories. Fix the worst thing, repeat.
-11. **Critic**, optional (below).
+1. **Regions.** `scripts/clean.ts` if there are grey fills (never change it after numbering), `scripts/new.ts`, patch sheet, names by number, `scripts/name.ts`, until `show=pools&named=1` has no red "?" and no leak. Each part gets a material (`kind`) and a height in the stack (`z`).
+2. **Light and value plan.** Four to six thumbnails in `<name>-plans.ts` that differ in more than hue; someone with taste picks one. State light, focus and `values` (which parts are dark, mid, light). **Gate.**
+3. **Blockout.** The figure as a mesh in the drawing's own view. No shade before it stands. [How](form-guide.md).
+4. **Form guide and shadow design.** Draw every piece's shadow shapes over the guide, biggest planes first, then deep, half and lit. [How](form-guide.md). **Gate**, and `view=masks`: it must read as a drawing.
+5. **Casts.** Near ones from the list (`casts`), far ones drawn. A cast must reach past the shade of anything closer.
+6. **Second light.** Tone `B` on every far edge of the design. The gate lists the parts that have none. **Gate.**
+7. **What the design does not cover:** facets and tones for small pieces, hair by lock, bevels, children that inherit.
+8. **Face and eyes.** The most time, the strongest contrast, protected ink, brows under the hair.
+9. **Materials and lights.** Automatic by `kind`. Orange peel has no round glint; metal darkest beside brightest.
+10. **Piece by piece.** `scripts/review.ts name dir piece:box …`: line art, colour, shadow design and grey of one piece. Does every plane follow a line? Does it turn? Does it read in grey? Fix the worst, repeat, until every piece was looked at alone.
+11. **End.** Gate, `scripts/value.ts`, lineup, `pnpm check`, crops at 200% of head, hands, accessories.
 
 ## What the renderer does
 | # | Pass | Rule |
 |---|---|---|
-| 1 | Flats | three value groups apart. `kind` is the material: skin hair cloth pale dark leather plastic glass peel leaf metal flat |
-| 2 | Hue | slow gradients; hair gets bands along its strands that turn the hue and hardly move the value |
-| 4 | Planes | `forms`: each patch, part or mass turns away from the light somewhere. Casts, kits and hand-made shapes on top. Everything is cut into straight runs |
-| 5 | Edges | hard. Skin takes one pale step before its form shade; the colour is richest where shade begins; reflected light in the last stretch on the far side |
-| 6 | Deep shade | beside a caster, in folds. Under anything that stands well off: black |
-| 7 | Materials | metal: 6 bands, darkest beside brightest. Leather, plastic: one see-through plane. Fruit: broad and soft. Cloth: a lit plane. Skin, matte: none |
-| 8 | Face | clean: short fringe shadow, black lash, crisp iris steps, one spark, a nose patch and a mark only where the line art leaves room |
-| 9 | Line | black, at the references' weight, heavier away from the light; a dark colour only inside a lit plane. Filled blacks and face ink are the artist's |
-| 10 | Air | lit side warmer, far side cooler, grain |
+| 1 | Flats | three value groups apart. `kind`: skin hair cloth pale dark leather plastic glass peel leaf metal flat |
+| 2 | Hue | slow gradients; hair bands turn the hue and hardly move the value |
+| 4 | Planes | the shadow design, or the mesh, or planes from line to line, in that order. Cut into straight runs |
+| 5 | Edges | hard. A band of richer colour where a soft form starts to turn (scattering); darkest just behind the edge, then lighter towards the far side |
+| 6 | Deep shade | beside a caster, in folds. Black only under what stands well off |
+| 7 | Materials, second light | by `kind`; reflected light as planes with a darker inner step, capped below the light |
+| 8 | Face | drawn eyes, blush, brows |
+| 9 | Line | black at silhouettes and between front and back; inside one form a darker step of its own colour |
+| 10 | Air | tints by multiplying, never lifts a dark; depth softens what lies behind; orange overlay on shaded skin; grain |
 
-Shade is a colour multiplied on the base: warm colours go through rose to violet, cool ones to blue. Look at `view=grey` before judging a colour.
+Shade is a colour multiplied on the base: warm colours go through rose, cool ones through blue.
 
 ## Accessories
-- List small metal and props in `keyline`: they get a thin pale line where they overlap the figure, never inside a shadow. Leave buttons and long straps out, or they look like stickers.
 - Keep every drawn hole and tooth; check them at 200%.
-- Darkest metal tone next to the brightest chip. One spark per piece.
-- Floating graphics: few, crisp edge with a glow, away from the face.
+- One spark per metal piece. Darkest metal tone next to the brightest.
+- `keyline`: a thin pale line for small props that overlap the figure. Leave out buttons and straps.
 
-## Critic
-A second model gets the references, the line art, the render, the value and mask views, the declared light, and the list of operations the maker can execute. No opinion. Each finding must say where, what, evidence, the exact change, and how to see it is fixed. Then measure every claim before acting, and measure again after. Label gaps RULE, SHAPE or LINE ART.
+## Critic, optional
+A second model gets the references, the line art, the render, the value and mask views, the declared light, and the operations the maker can execute. Each finding must say where, what, evidence, the exact change, and how to see it is fixed. Measure every claim before acting.
 
 ## Known limits
-- Choosing the shapes is still the main cost, and still judgement: which folds get a shadow, ridge or valley, how a boundary bulges, how many lights, the face as a whole.
-- One pose, one angle. No animation.
-- Cannot invent tapered lines the artist did not draw.
+- Proven end to end on one drawing. The rules above are trial until they help a second one.
+- The blockout and the shadow shapes are typed by the agent; that is the main cost, and judgement.
+- One pose, one angle. Cannot invent tapered lines the artist did not draw.

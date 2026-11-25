@@ -20,7 +20,6 @@ import { chords, planes } from "./planes.ts"
 import type { Planes } from "./planes.ts"
 import { solids } from "./solids.ts"
 import { formField } from "./formfield.ts"
-import { layFolds } from "./folds.ts"
 import { path } from "./shadows.ts"
 import { BLACK, hexRgb, hsv, luma, mix, SKY, SUN, tone, turnHue } from "./tones.ts"
 import type { Kind, RGB } from "./tones.ts"
@@ -128,7 +127,6 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   if (FF) {
     const face = names.indexOf("face")
     // a face is never modelled by the form: it stays clean, with the shadows of the hair on it
-    if (art.folds) layFolds(FF, art.folds, map, names, w, h, k)
     FF.light()
     // what hair is, its strands say; the mesh keeps out of it
     const formed = art.formed ? set(art.formed) : Uint8Array.from(kinds, (kd) => (kd === "hair" || kd === "metal" ? 0 : 1)), under = set(art.meshCasts ?? names), sc = blur(FF.cast, w, h, Math.max(1, H * 0.012), 2)
@@ -161,7 +159,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     for (let i = 0; i < N; i++) if (!formShade[i]) { softOnly[i] = 0; refl[i] = 0; m2[i] = 0 } else mh[i] = 0
   }
   /* the shadow design: shapes drawn over the form */
-  const designed = set((art.shadows ?? []).filter((q) => !q.add).flatMap((q) => q.on))
+  const drawnB = new Uint8Array(N), designed = set((art.shadows ?? []).filter((q) => !q.add).flatMap((q) => q.on))
   if (art.shadows && upto >= 4) {
     for (let i = 0; i < N; i++) if (designed[map[i]!]) { formShade[i] = 0; softOnly[i] = 0; refl[i] = 0; m2[i] = 0; mh[i] = 0; ml[i] = 0; if (P) P.turned[i] = 0; if (FF) FF.cast[i] = 0; if (kinds[map[i]!] === "hair") m1[i] = 0 }
     for (const q of art.shadows) {
@@ -175,8 +173,9 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
         else if (q.tone === "H") { if (!formShade[i]) mh[i] = 1; ml[i] = 0 }
         else if (q.tone === "D") { formShade[i] = 1; refl[i] = 0; mh[i] = 0; if (upto >= 6) m2[i] = 1 }
         else if (q.tone === "L") { if (!formShade[i]) { ml[i] = 1; mh[i] = 0 } }
+        else if (q.tone === "B") { sky[i] = 1; drawnB[i] = 1; formShade[i] = 1; m2[i] = 0; mh[i] = 0; ml[i] = 0; refl[i] = 0 }
         else if (q.tone === "R") { if (formShade[i] && !m2[i]) refl[i] = 1 }
-        else { formShade[i] = 0; softOnly[i] = 0; mh[i] = 0; m2[i] = 0; refl[i] = 0 }
+        else { formShade[i] = 0; softOnly[i] = 0; mh[i] = 0; m2[i] = 0; refl[i] = 0; sky[i] = 0 }
       }
     }
   }
@@ -309,10 +308,12 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       if (hi[i]! > 0.01 && kd !== "peel") to(i, [255, 253, 248], hi[i]! * (1 - e1[i]! * 0.6))
     }
   }
+  const bounce: Record<string, number> = {}
   /* reflected light. Open air behind an edge: the cold second light, as a plane with a darker step inside it. Another surface behind it: that surface's own colour, as a soft bleed */
   if (upto >= 7 && view !== "regions") {
     const meanC: Array<number> = [], cnt: Array<number> = []
     if (P) { for (let i = 0; i < N; i += 2) { const d = P.id[i]!; if (d) { meanC[d] = (meanC[d] ?? 0) + P.far[i]! + P.near[i]!; cnt[d] = (cnt[d] ?? 0) + 1 } } for (let d = 1; d < meanC.length; d++) meanC[d] = (meanC[d] ?? 0) / (cnt[d] ?? 1) }
+    const rounds = art.solids ? set(art.solids.flatMap((q) => q.on)) : null, tally = new Map<string, [number, number]>(), far: Array<number> = []
     const most = Math.ceil(H * 0.075), air = (m: number, n: number): boolean => m === bg || (art.depth?.[names[m]!] ?? 0) - (art.depth?.[names[n]!] ?? 0) >= 0.15, bleed = new Float32Array(N), from = new Uint8Array(N)
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const i = y * w + x, n = map[i]!, kd = kinds[n]
@@ -322,7 +323,9 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       if (m === n) continue
       if (FF?.has[i] && kd === "hair") continue
       if (n === names.indexOf("face") || n === names.indexOf("ear") || (kd === "hair" && designed[n])) continue // a face answers with a soft turn, not with a strip
-      if (F0?.has[i] && air(m, n) && kd !== "peel") { if (ink[i]! <= 0.3) { if (F0.away[i]! > 0.84) sky[i] = 1; else if (F0.away[i]! > 0.72 && !designed[n]) skyIn[i] = 1 } continue }
+      if (air(m, n) && paper <= H * 0.02 && ink[i]! <= 0.3 && kd !== "peel" && kd !== "leaf" && kd !== "hair") far.push(i)
+      if (designed[n] && air(m, n)) continue
+      if (F0?.has[i] && air(m, n) && kd !== "peel" && (!FF || !rounds || rounds[n])) { if (ink[i]! <= 0.3) { if (F0.away[i]! > 0.84) sky[i] = 1; else if (F0.away[i]! > 0.72 && !designed[n]) skyIn[i] = 1 } continue }
       const rough = kd === "peel" || kd === "leaf"
       if (air(m, n)) {
         if (rough || ink[i]! > 0.3) continue
@@ -333,8 +336,12 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
         else if (big && paper <= W * 1.75) skyIn[i] = 1
       } else if (zs[m]! < zs[n]!) { const L = H * 0.034; if (paper < L) { bleed[i] = 1; from[i] = m } }
     }
-    { const bx = boxesOf(map, w, h, names.length); cutAll([sky, skyIn, bleed], map, kinds, names.length, bx, w, h, Math.max(1, H * 0.014), Math.max(1, H * 0.004)) }
+    { const bx = boxesOf(map, w, h, names.length); cutAll([sky, skyIn, bleed], map, kinds, names.length, bx, w, h, Math.max(1, H * 0.014), Math.max(1, H * 0.004), designed) }
+    // a drawn plane of second light has a darker step towards the light
+    for (let i = 0; i < N; i++) if (sky[i]! > 0.5 && drawnB[i]) for (let t = 1; t < H * 0.026; t++) { const j = Math.round(((i / w) | 0) - sun.y * t) * w + Math.round((i % w) - sun.x * t); if (j < 0 || map[j] !== map[i]) break; if (sky[j]! < 0.5 && e1[j]! > 0.5) skyIn[j] = 1 }
     for (const [mk2, least] of [[sky, H * 0.05 * H * 0.0065], [skyIn, (H * 0.03) ** 2], [bleed, (H * 0.04) ** 2]] as const) { const seen = new Uint8Array(N); for (let q = 0; q < N; q++) if (mk2[q]! > 0.5 && !seen[q]) { const c = [q]; seen[q] = 1; for (let t = 0; t < c.length; t++) { const j = c[t]!, x = j % w; for (const g of [x > 0 ? j - 1 : -1, x < w - 1 ? j + 1 : -1, j - w, j + w, j - w - 1, j - w + 1, j + w - 1, j + w + 1]) if (g >= 0 && g < N && !seen[g] && mk2[g]! > 0.5) { seen[g] = 1; c.push(g) } } if (c.length < least) for (const j of c) mk2[j] = 0 } }
+    for (const i of far) { const n = names[map[i]!]!, t = tally.get(n) ?? [0, 0]; t[0]++; if (sky[i]! > 0.5 || skyIn[i]! > 0.5) t[1]++; tally.set(n, t) }
+    for (const [n, [a, b]] of tally) { bounce[`far:${n}`] = Math.round(a / (k * k)); bounce[`lit:${n}`] = Math.round(b / (k * k)) }
     const s1 = crisp(sky, 0.5), s2 = crisp(skyIn, 0.5), bl = blur(bleed, w, h, Math.max(1, H * 0.009), 2)
     for (let i = 0; i < N; i++) {
       const n = map[i]!, t = tones[n]
@@ -351,9 +358,9 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   }
   if (upto >= 8 && view !== "regions") wash(true)
   if (upto >= 8 && view !== "regions") for (const q of art.brows ?? []) { tmp.g.clearRect(0, 0, w, h); trace(tmp.g, q.d); tmp.g.fill(); const d = alphaOf(), c = hexRgb(q.color), f = names.indexOf("face"); for (let i = 0; i < N; i++) if (d[i * 4 + 3]) to(i, c, (d[i * 4 + 3]! / 255) * (map[i] === f ? 1 : kinds[map[i]!] === "hair" ? 0.38 : 0)) }
-  const stats: Record<string, number> = {}
+  const stats: Record<string, number> = { ...bounce }
   for (const e of eyes) console.error(`eye: ${e.note}`)
-  { const area: Record<string, number> = {}; for (let i = 0; i < N; i++) { const n = names[map[i]!]!; area[n] = (area[n] ?? 0) + 1; if (e1[i]! > 0.5) stats[n] = (stats[n] ?? 0) + 1 } for (const n of Object.keys(stats)) stats[n] = Math.round((100 * stats[n]!) / area[n]!) }
+  { const area: Record<string, number> = {}; for (let i = 0; i < N; i++) { const n = names[map[i]!]!; area[n] = (area[n] ?? 0) + 1; if (e1[i]! > 0.5) stats[n] = (stats[n] ?? 0) + 1 } for (const n of Object.keys(stats)) if (area[n]) stats[n] = Math.round((100 * stats[n]!) / area[n]!) }
   if (view === "masks") for (let i = 0; i < N; i++) { const v = map[i] === bg ? 170 : e3[i]! > 0.5 ? 0 : e2[i]! > 0.5 ? 50 : e1[i]! > 0.5 ? 110 : 250; R[i] = G[i] = B[i] = v }
   /* 10: the air. The lit side of the whole picture a breath warmer, the far side cooler */
   if (upto >= 10 && view !== "masks" && view !== "regions") {

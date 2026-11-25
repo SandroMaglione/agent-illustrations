@@ -16,7 +16,6 @@ import { strokesOf, thaw } from "../tools/strokes.ts"
 import type { Kind, RGB } from "../bold/tones.ts"
 import type { Hair } from "../bold/locks.ts"
 import type { Form } from "../bold/planes.ts"
-import type { Fold } from "../bold/folds.ts"
 import type { Shadow } from "../bold/shadows.ts"
 import type { Solid } from "../bold/solids.ts"
 
@@ -52,8 +51,6 @@ export type Art = {
   solids?: ReadonlyArray<Solid>
   /** The blockout's field (scripts/form.ts --field): the base of all shading, in place of `solids`. */
   field?: string
-  /** Where cloth breaks the basic form (bold/folds.ts). */
-  folds?: ReadonlyArray<Fold>
   /** The shadow design (bold/shadows.ts). A part named here takes its shade from it alone. */
   shadows?: ReadonlyArray<Shadow>
   /** Parts the blockout shades (all it covers, if left out), and those on which its cast shadows replace the typed ones. */

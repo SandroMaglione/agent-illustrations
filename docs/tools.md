@@ -1,6 +1,6 @@
 # Tools
 
-How shapes are placed and checked. Code in `src/tools` and `src/splash`. Why they exist: [`findings.md`](findings.md). Research with sources: [`research-precision-tools.md`](research-precision-tools.md).
+How shapes are placed and checked. Code in `src/form`, `src/bold`, `src/tools` and `src/splash`. In use now: the form stage ([how](form-guide.md)), then regions, facets, hair, checks. `say` sentences (`band`, `warp`, kits) still work and draw the older drawings. Why they exist: [`findings.md`](findings.md). Research with sources: [`research-precision-tools.md`](research-precision-tools.md).
 
 ## Principles
 1. **Name things, do not measure them.** Point at line 41, right side. Never at 474,150.
@@ -34,13 +34,13 @@ How shapes are placed and checked. Code in `src/tools` and `src/splash`. Why the
 | Depth | `depth: { tail: 0.45 }` | softer, paler, bluer at the back |
 | Clean | `node scripts/clean.ts in.png out.png` | grey fills to paper, before numbering |
 | Wedge | `wedge s12 away 14 .25` | a fold with straight runs and pointed ends |
-| Solids | `solids: [{ on: ["armL"], tube: "484,360,44 466,390,32" }, { on: ["fruitA"], ball: "512,648,74" }]` | the base shade of a form; radius measured from the outline when left out |
-| Gate | `node scripts/gate.ts name` | values per stage and group against the plan; exit 1 on a miss |
+| Solids | `solids: [{ on: ["armL"], tube: "484,360,44 466,390,32" }, { on: ["fruitA"], ball: "512,648,74" }]` | the base shade without a blockout; with one, it names the parts that turn round |
+| Gate | `node scripts/gate.ts name` | values per stage and group against the plan, and second light on far edges; exit 1 on a miss |
 | Facets | `?v=sheet&who=name&show=facets&part=legR` | every facet of a piece, numbered (`tools/facets.ts`) |
 | Tones | `node scripts/tone.ts name` | facet numbers in `<name>-tones.txt` to points in `<name>-tones.ts`; `tones` in the drawing |
 | Review | `node scripts/review.ts name dir piece:x,y,w,h …` | line art, colour, shadow design, grey of each piece |
 | Value | `node scripts/value.ts out.png render.png:box:head` | greyscale and numbers beside the references |
-| Second light | tone `B`; automatic on edges with air behind them | cold plane on the far side; a surface behind gives its own colour instead |
+| Second light | tone `B` (design or facets); automatic on undesigned edges with air behind | cold plane on the far side, peach on skin; a surface behind gives its own colour instead |
 | Scatter | `scatter: ["bust"]` | round parts whose own shade starts with a band of richer colour |
 | Brows, print | `brows: [{ d, color }]`, `print: ["flap"]` | eyebrows; parts whose inner lines are printed |
 | Lineup | `node scripts/lineup.ts out.png render.png head cx,cy` | the drawing between the references, colour and grey |
@@ -59,13 +59,13 @@ How shapes are placed and checked. Code in `src/tools` and `src/splash`. Why the
 | Cast v2 | caster, receiver, distance | moved along the light, edge calmed in proportion to the distance (`cast.ts`) |
 | Blockout | `loft`, `tube`, `ball`, `strip`, `drape`, `box`, `solve` (`src/form/mesh.ts`) | the figure in 3D in the drawing's view, settled onto the drawn outlines (`settle.ts`), with a fit table, turntable and a viewer (`scripts/form.ts`) |
 | Form guide | `node scripts/guide.ts name dir zoom step piece:x,y,w,h` | what the blockout says, in colours under the line art |
-| Shadow design | `sleeveL \| S \| x,y x,y~ …` | S turns away, X cast, H half, D deep, L lit, R reflected, C cut back; `~` is a soft point (`bold/shadows.ts`) |
-| Folds | `folds: [{ on, at, w, side, steep }]` | a ridge that tilts the mesh; only where nothing better is drawn (`bold/folds.ts`) |
+| Shadow design | `sleeveL \| S \| x,y x,y~ …` | S turns away, X cast, H half, D deep, L lit, R lighter inside a shade, B second light, C cut back; `~` soft point, `+` adds (`bold/shadows.ts`) |
 | Seal | nothing | lit slivers under 4 px between shadow and line are closed and counted (`seal.ts`) |
 | Lint | `pnpm check tape` | slivers, edges beside lines, worst places with coordinates (`lint.ts`) |
 
 ## Not built
-- A layer stack in the engine: shapes have names and parents, not layers.
-- Snapping typed polygons to lines, automatic side proposals, a model sheet by part kind.
-- Mouth, nose mark, prints, gradients, washes and floating marks are still typed coordinates.
-- Declared light, focus and value checks exist only for `rig`. `tape` uses named lines; `bell` and `twin` are still typed polygons.
+- Automatic first proposals for shadow shapes from the guide; snapping of typed shapes to lines.
+- Checks that fail when casts, scattering or a material reflection disappear.
+- A model sheet by part kind (hand, shoe, buckle), and a blockout kit for common figures.
+- Mouth, nose mark, prints, gradients, washes, brows and eyes of `visor` are typed coordinates.
+- `tape`, `bell` and `twin` have no declared light or focus; only `visor` has a blockout, a value plan and a shadow design.

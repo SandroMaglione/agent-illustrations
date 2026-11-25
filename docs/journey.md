@@ -1,6 +1,6 @@
 # The journey, step by step
 
-Twelve steps, 24 and 25 November 2026. What was asked, what was built, what went wrong and what stayed. Older steps describe older code; the current process is in [`process.md`](process.md) and the conclusions in [`findings.md`](findings.md).
+Fifteen steps, 24 and 25 November 2026. What was asked, what was built, what went wrong and what stayed. Older steps describe older code; the current process is in [`process.md`](process.md) and the conclusions in [`findings.md`](findings.md).
 
 ## 1. Can a drawn look be code?
 
@@ -245,6 +245,26 @@ Notes on the last drawing: objects without thickness, light from everywhere, no 
 ![Values](../gallery/journey/12b-value.jpg)
 ![Goggles](../gallery/journey/12c-goggles.jpg)
 ![Face](../gallery/journey/12d-face.jpg)
+
+## 13. Can a fresh agent do it?
+
+A new agent with only the repository coloured new line art in 52 minutes. The client liked the colours and the overall shape; the rest was washed out, with lines too coloured, an invented nose shadow, one highlight for every material. Each note was sorted by cause (could not see, did not ask, could not do, forgot, or our rule was wrong). Two rules came from references that were no longer the target. [Lessons](lessons.md).
+
+## 14. A new target, a new renderer
+
+Three references, one goal: the drawing should fit beside them. A new renderer (`src/bold`): value first, hard blocky planes, black line, materials, hair by lock. On a finer line art (`visor`) five rounds followed: planes from line to line, fine rendering by facets, reflected light and scattering, solids behind limbs, a value gate. Better each time, and each time new notes on single spots.
+
+## 15. Form first
+
+**Asked:** stop chasing spots. Map the forms in 3D, with triangles, and only then shade them.
+
+The figure was modelled in the drawing's own view (about 25,000 triangles) and measured against the line art: 84% of pixels showed the right form as typed, 97% after the outlines were pulled onto the drawn lines. It can be turned around.
+
+**Asked:** no full 3D render needed; use it to find better shapes. Shading straight from the mesh was blobby. Printed as a guide under the line art, with the agent drawing the shadow shapes over it, it worked.
+
+Then four corrections that became rules: keep the shadows that tell a distance, simplify uneven ones even against the form, never model the face, warm the skin's shade. And one regression: the second light had vanished, so the gate now measures it.
+
+**Learned:** the form says where, the drawn line says how, the style says where not. [How it is done](form-guide.md).
 
 ## What it cost
 

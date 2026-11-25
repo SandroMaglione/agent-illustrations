@@ -4,6 +4,28 @@ Every note on a result, sorted by why the maker missed it. A lesson starts as a 
 
 Kinds: **see** (no view showed it), **ask** (nobody asked the question), **do** (no tool), **forgot** (known and skipped), **rule** (a rule of ours caused it).
 
+## Checkpoint, 25 November 2026: what holds after `crate` and nine rounds on `visor`
+Confirmed by the client on `visor`; still trial until a second drawing.
+
+| Holds | First seen |
+|---|---|
+| Greyscale at every stage; a gate that fails | 3rd, 5th |
+| Base shade from the solid, exceptions on top | 5th |
+| A 3D blockout as understanding, not as rendering | 6th, 7th |
+| Form says where, the drawn line says how; shapes drawn by the agent | 7th |
+| Simple shapes beat correct uneven ones; hair one shape per lock | 8th |
+| Face never modelled; neck carries the shade | 8th |
+| Casts that tell a distance stay, clear of their caster | 8th |
+| Warm skin shade by orange overlay | 8th |
+| Second light as bold planes, only against open air, below the light | 4th, 9th |
+| Scattering band on soft turns, none on casts | 4th |
+| Inner lines coloured, lines between front and back dark | 3rd |
+| Fine line art, parts at the back softer | 2nd |
+| Piece by piece review, large | 3rd |
+| Peel without a glint, reflection by material | 2nd |
+
+**The pattern behind the misses:** each new system quietly dropped what the one before it did (solids dropped facets' bounce, the mesh dropped casts, the design dropped bounce). A thing the client approved needs a check that fails when it disappears. Second light and value have one now; casts, scattering and materials do not.
+
 ## Cold start, `crate`, 25 November 2026
 A fresh agent, repository only, 52 minutes. Client's notes in their own words, then what was measured. Sorted here; the client then named e, f and g as the only target (a to d are out) and asked for value first, blocky shapes, and hair bands that move hue and not value. Status in the last section.
 
@@ -150,3 +172,13 @@ Open: hands, shoes, belt, crate fittings, hair not designed yet; shapes are type
 Measured, skin shade: references e 205/148/148 and 225/187/181, f 205/136/140, g 188/153/169 (cool light in that piece). Hue 357 to 8, saturation 28 to 34.
 Learned: the mesh guide is an argument, the style decides. Three kinds of part: solids follow the form; cloth and hair follow it in simplified shapes; the face does not follow it. Before removing a shadow, ask whether it tells a distance.
 Open: hands, shoes, crate fittings not designed; edges of strand casts on the bangs a little ragged at 400%.
+
+## Ninth round, `visor`: the second light had vanished again (trial)
+| Client's note | Kind | Answer |
+|---|---|---|
+| bounce light is missing, it was there before | forgot, see | two causes: with a mesh, every part counted as "round" and the strict test for round parts almost never passed; and the shadow design had no tone for it, so designing a part deleted it |
+
+Built: tone `B` in the shadow design, with an automatic darker inner step; undesigned parts find it from line to line again; skin answers in peach, not pink. `gate.ts` measures second light on far edges (59%, must be 45%) and lists parts with almost none.
+Learned: the guide's teal had shown the place all along. A step that is nobody's job gets lost.
+Cost: darkest twentieth 33 to 38 (limit 42), because strips that were deep are now lit.
+Open: the share says present or not, not whether the shapes are good. Tassel, belt, hips, crate edges, shoe straps and tongue, right ankle band have none.

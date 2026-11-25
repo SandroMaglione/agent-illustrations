@@ -1,5 +1,5 @@
 /** Shadow shapes an agent drew over the form. */
-export type Shadow = { on: ReadonlyArray<string>; tone: "S" | "X" | "H" | "D" | "L" | "R" | "C"; d: string; add?: boolean }
+export type Shadow = { on: ReadonlyArray<string>; tone: "S" | "X" | "H" | "D" | "L" | "R" | "C" | "B"; d: string; add?: boolean }
 export const path = (g: CanvasRenderingContext2D, d: string, k: number): void => {
   const p = d.trim().split(/\s+/).map((t) => { const [x, y] = t.replace("~", "").split(",").map(Number); return { x: x! * k, y: y! * k, soft: t.endsWith("~") } }), n = p.length
   const s = Math.max(0, p.findIndex((q) => !q.soft))

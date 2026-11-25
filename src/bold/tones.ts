@@ -36,7 +36,7 @@ export const tone = (color: string, kind: Kind): Tone => {
     peel: [[0.86, 0.55, 0.85], [0.55, 0.3, 0.85]], leaf: [[0.46, 0.63, 0.72], [0.26, 0.38, 0.5]], metal: [[0.62, 0.6, 0.78], [0.36, 0.34, 0.52]], glass: [[0.6, 0.62, 0.84], [0.38, 0.4, 0.62]], flat: [[0.72, 0.7, 0.84], [0.5, 0.48, 0.64]], sheer: [[0.7, 0.66, 0.8], [0.5, 0.45, 0.64]],
   }
   const [s1, s2] = S[kind], shade = mul(base, s1)
-  const cold = l < 105 ? [104, 146, 236] : kind === "skin" || kind === "peel" ? [250, 176, 218] : warm > 0.45 ? [214, 84, 214] : [156, 196, 255]
+  const cold = l < 105 ? [104, 146, 236] : kind === "skin" || kind === "peel" ? [255, 188, 158] : warm > 0.45 ? [214, 84, 214] : [156, 196, 255]
   return {
     neon: under(mix(shade, cold as unknown as RGB, l < 105 ? 0.72 : 0.66), kind === "dark" || kind === "leather" || l < 60 ? 84 : l * 0.84),
     base, s1, s2, half: kind === "skin" ? [0.965, 0.885, 0.89] : mix([1, 1, 1], s1, 0.44),

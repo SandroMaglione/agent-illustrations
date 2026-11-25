@@ -4,7 +4,7 @@ import { aim } from "../tools/light.ts"
 import type { Light } from "../tools/light.ts"
 
 /** lam: how squarely the surface meets the light. away: how much it faces the far side. cast: something is in between, hit: how far off it is (px of the line art). shut: how enclosed. */
-export type FormField = { has: Uint8Array; lam: Float32Array; away: Float32Array; cast: Float32Array; near: Float32Array; shut: Float32Array; nx: Float32Array; ny: Float32Array; nz: Float32Array; bent: Uint8Array; light: () => void }
+export type FormField = { has: Uint8Array; lam: Float32Array; away: Float32Array; cast: Float32Array; near: Float32Array; shut: Float32Array; nx: Float32Array; ny: Float32Array; nz: Float32Array; light: () => void }
 const loaded = new Map<string, Promise<Uint8Array>>()
 export const formField = async (url: string, w0: number, h0: number, map: Uint8Array, bg: number, w: number, h: number, light: Light, head: number): Promise<FormField> => {
   if (!loaded.has(url)) loaded.set(url, fetch(`${url}?${Date.now()}`).then(async (r) => new Uint8Array(await r.arrayBuffer())))
@@ -26,5 +26,5 @@ export const formField = async (url: string, w0: number, h0: number, map: Uint8A
   for (let i = 0; i < N; i++) nz[i] = Math.sqrt(Math.max(0, 1 - nx[i]! ** 2 - ny[i]! ** 2))
   const lit = (): void => { for (let i = 0; i < N; i++) if (has[i]) { const l = Math.hypot(nx[i]!, ny[i]!, nz[i]!) || 1, s = (nx[i]! * L.x + ny[i]! * L.y) / l; away[i] = s; lam[i] = -s * L.flat + (nz[i]! / l) * L.z } }
   lit()
-  return { has, lam, away, cast, near, shut, nx, ny, nz, bent: new Uint8Array(N), light: lit }
+  return { has, lam, away, cast, near, shut, nx, ny, nz, light: lit }
 }

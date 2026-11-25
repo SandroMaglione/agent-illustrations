@@ -10,14 +10,14 @@ const BAND = { dark: [0, 66], mid: [88, 158], light: [192, 256] } as const
 const { b, p } = await open()
 await p.goto(`${base}favicon.ico`)
 const r = await p.evaluate(async ([name, stages]) => {
-  const { artOf } = await import(/* @vite-ignore */ "/src/splash/index.ts" as string), R = await import(/* @vite-ignore */ "/src/bold/render.ts" as string), E = await import(/* @vite-ignore */ "/src/splash/engine.ts" as string), art = await artOf(name), f = await E.fixedOf(art), out: Array<{ stage: string; g: Record<string, Array<number>>; all: Array<number>; part: Record<string, number> }> = []
+  const { artOf } = await import(/* @vite-ignore */ "/src/splash/index.ts" as string), R = await import(/* @vite-ignore */ "/src/bold/render.ts" as string), E = await import(/* @vite-ignore */ "/src/splash/engine.ts" as string), art = await artOf(name), f = await E.fixedOf(art), out: Array<{ stage: string; g: Record<string, Array<number>>; all: Array<number>; part: Record<string, number>; stats: Record<string, number> }> = []
   for (const [u, stage] of stages as ReadonlyArray<readonly [number, string]>) {
-    const c = (await R.render(art, 2, u)).canvas as HTMLCanvasElement, d = c.getContext("2d")!.getImageData(0, 0, f.w, f.h).data, by = new Map<string, Array<number>>(), all: Array<number> = []
+    const res = await R.render(art, 2, u), c = res.canvas as HTMLCanvasElement, d = c.getContext("2d")!.getImageData(0, 0, f.w, f.h).data, by = new Map<string, Array<number>>(), all: Array<number> = []
     for (let i = 0; i < f.map.length; i += 3) { const n = f.names[f.map[i]!]; if (!n || n === "bg" || f.ink[i]! > 0.25) continue; const v = d[i * 4]! * 0.3 + d[i * 4 + 1]! * 0.59 + d[i * 4 + 2]! * 0.11; all.push(v); const l = by.get(n); if (l) l.push(v); else by.set(n, [v]) }
     const q = (a: Array<number>, t: number): number => { const s = [...a].sort((m, n) => m - n); return Math.round(s[Math.floor(t * (s.length - 1))] ?? 0) }, g: Record<string, Array<number>> = {}, part: Record<string, number> = {}
     for (const [k, parts] of Object.entries(art.values ?? {})) { const l = (parts as Array<string>).flatMap((n) => by.get(n) ?? []); g[k] = [q(l, 0.1), q(l, 0.5), q(l, 0.85), Math.round((100 * l.length) / all.length)] }
     for (const [n, l] of by) part[n] = q(l, 0.8)
-    out.push({ stage, g, all: [q(all, 0.05), Math.round((100 * all.filter((v) => v < 60).length) / all.length), Math.round((100 * all.filter((v) => v < 85).length) / all.length), Math.round((100 * all.filter((v) => v > 190).length) / all.length)], part })
+    out.push({ stage, stats: res.stats as Record<string, number>, g, all: [q(all, 0.05), Math.round((100 * all.filter((v) => v < 60).length) / all.length), Math.round((100 * all.filter((v) => v < 85).length) / all.length), Math.round((100 * all.filter((v) => v > 190).length) / all.length)], part })
   }
   return { out, values: (art.values ?? {}) as Record<string, Array<string>> }
 }, [name, STAGES] as const)
@@ -31,4 +31,9 @@ say(last.all[2]! >= 20, `at least 20% under 85: ${last.all[2]}%`)
 say(last.all[0]! <= 42, `darkest twentieth at most 42: ${last.all[0]}`)
 say(last.all[2]! >= deep.all[2]! - 2, `bounce and air keep the darks: ${deep.all[2]}% after deep shade, ${last.all[2]}% at the end`)
 for (const [k, v] of Object.entries(last.g)) if (k !== "dark") say(v[2]! - v[0]! >= 60, `${k}: light to shade at least 60 apart: ${v[2]! - v[0]!}`)
+// the second light: shaded edges that face away with open air behind them, and how much of each has a plane of it
+const far = Object.entries(last.stats).filter(([n]) => n.startsWith("far:")).map(([n, a]) => [n.slice(4), a, last.stats[`lit:${n.slice(4)}`] ?? 0] as const), A = far.reduce((t, f) => t + f[1], 0), L = far.reduce((t, f) => t + f[2], 0)
+say(A > 0 && L / A >= 0.45, `second light on at least 45% of the far edges: ${Math.round((100 * L) / (A || 1))}%`)
+const none = far.filter(([, a, l]) => a > 60 && l / a < 0.2)
+console.log(`  ${none.length ? "LOOK" : "ok  "} parts whose far edge has almost none: ${none.map(([n, a, l]) => `${n} ${Math.round((100 * l) / a)}% of ${a} px`).join(", ") || "none"}`)
 process.exit(bad ? 1 : 0)
