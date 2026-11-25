@@ -1,5 +1,7 @@
 # Layers, PSD and CLIP STUDIO PAINT
 
+**Status: works.** A `.clip` written by this repository opens in CLIP STUDIO PAINT 5.0.1 with the right modes, folders and names ([details](#the-clip)). Try it: [`examples/layers/maren/maren.clip`](../examples/layers/maren/maren.clip).
+
 The renderer paints one picture in about forty steps. With `layers=1` every step also comes out as a layer of a drawing program, so the result can be opened, picked apart and refined instead of being a flat image. The stack is written as a layered **PSD** and as a **.clip** for CLIP STUDIO PAINT (CSP), either as a new canvas or added to a canvas someone is working on.
 
 ```sh
@@ -72,7 +74,7 @@ The bell, whose face is drawn with `lighten` and `darken`, takes the fallback fo
 
 ## The .clip
 
-There is no public spec and no CSP in this container, so the format comes from three places, kept apart here.
+There is no public spec. The format was put together from two places and then confirmed in CSP; the three are kept apart here.
 
 **Checked by this repository on 22 files saved by CSP** (the samples of `al3ks1s/clip-tools`, `dobrokot/clip_to_psd`, `wamsoft/clipparse`, `nodamushi/clip_layer_rename`; fetch them to re-run `node scripts/clipcheck.ts *.clip`):
 - The container: `CSFCHUNK`, then `CHNKHead` (whose second u64 is the position of `CHNKSQLi`), one `CHNKExta` per pixel store (40-byte id `extrnlid` + 32 hex digits), `CHNKSQLi` (a whole SQLite database), empty `CHNKFoot`; all big-endian. `ExternalChunk(ExternalID, Offset)` gives every store's position. 0 problems on all 22 files.
@@ -87,13 +89,15 @@ There is no public spec and no CSP in this container, so the format comes from t
 - `ExternalID` as BLOB or `BlockData` as TEXT: layers open transparent. A wrong non-zero checksum: "layer image or mask is damaged". `MipmapCount` not equal to the chain: CSP crashes while loading. An empty folder without a mipmap: crash. A stale `CanvasPreview`: the old picture shows until the first redraw. Thumbnails: CSP redraws them when the store is missing and `Thumbnail*NeedRefresh` is 50.
 - CSP opens a layered PSD with names, folders, blend modes, opacity and visibility.
 
-**Not checked: whether CSP opens these exact files.** That needs CSP. `src/layers/clip.ts` keeps every rule above, `clipcheck.ts` checks them on the result. What to look at when opening `rig.clip`:
-1. It opens; the layer panel shows the folders as in the table above, closed; the canvas is 2172x2896.
+**Opened in CSP by the owner of this repository:** Maren's file, as `layers.ts` wrote it ([`examples/layers/maren/maren.clip`](../examples/layers/maren/maren.clip), 2048x3072, 90 layers and folders), in CLIP STUDIO PAINT 5.0.1 on macOS, 26 November 2026. It opens as expected: layer modes, folders and names are right. So the writer's rules hold in the program itself, not only in our checker. Not reported separately: painting on a layer and saving it again, a canvas injected with `--template`, other CSP versions, Windows and iPad.
+
+When a drawing or the writer changes, look at four things:
+1. It opens; the layer panel shows the folders as in the table above, closed; the canvas has the render's size.
 2. The picture equals `render.png` (apart from the contour's edge) right after opening, at 100% and zoomed out.
 3. `Shading/Shade` is multiply, `Finish/Grain` linear light, `Finish/Warm shaded skin` overlay, the folders pass-through.
 4. Hide `Flats/hairF`: the hair goes white under its shading, nothing else moves. Paint on a layer, save, open again.
 
-If the .clip fails, the PSD is the safe way: open `rig.psd` in CSP and save it as .clip. If the PSD opens and the .clip does not, the message CSP gives and which of the four points failed say what to fix.
+If a .clip fails, open the PSD in CSP and save it as .clip from there. The message CSP gives and which of the four points failed say what to fix.
 
 ## Into a canvas you work on
 

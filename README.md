@@ -22,6 +22,7 @@ Illustrations coloured entirely by code (TypeScript and Canvas 2D). No image gen
 8. **The rest by rule.** Scattering, deep shade, materials, line colour, air, grain as measured on the references.
 9. **Review piece by piece.** Line art, colour, shadow design and grey of one piece at a time.
 10. **Last look, always.** Greyscale and three values beside the references. A script fails when big neighbours are too close; someone still has to look.
+11. **Out as layers.** Every paint step becomes a layer, in a `.clip` that opens in CLIP STUDIO PAINT and in a PSD, so a person can go on from there.
 
 ![Detail](gallery/visor-detail.jpg)
 
@@ -31,15 +32,26 @@ Full rules: [`docs/process.md`](docs/process.md). The form stage: [`docs/form-gu
 
 ## Layers, PSD and CLIP STUDIO PAINT
 
-Every step of the paint also comes out as a layer, so the result can be refined in a drawing program: flats one layer per part, shading as multiply layers, lights, second light, finish, line art on top, all in pass-through folders. Written as a layered PSD and as a `.clip` for CLIP STUDIO PAINT, either as a new canvas or added on top of a canvas you are working on. The render itself does not change, and the stack composited gives it back (0.5% of pixels differ by more than 8 levels, all on the outer edge of the contour, where the line art now lies on top of the background).
+**It works in the real program:** Maren's [`.clip`](examples/layers/maren/maren.clip) was opened in CLIP STUDIO PAINT 5.0.1, with layer modes, folders and names as expected.
+
+Every step of the paint comes out as a layer, so the result can be refined in a drawing program: flats one layer per part, shading as multiply layers, lights, second light, finish, line art on top, all in pass-through folders. Written as a layered PSD and as a `.clip` for CLIP STUDIO PAINT, either as a new canvas or added on top of a canvas you are working on. The render itself does not change, and the stack composited gives it back (0.5% of pixels differ by more than 8 levels, all on the outer edge of the contour, where the line art now lies on top of the background).
 
 ```sh
-node scripts/layers.ts rig output/layers/rig --clip
+node scripts/layers.ts rig output/layers/rig --clip      # any drawing: PSD, .clip, layer PNGs, check
+node scripts/layerview.ts output/layers/rig              # a page to look through them, and a sheet
 ```
 
 ![Maren's layers: the stack growing folder by folder, then every step alone](gallery/layers-maren.jpg)
 
-The `.clip` keeps every rule others found by opening files in CSP, and reads back clean with this repository's checker, which was tested on 22 files CSP saved. It has not been opened in CSP here, as there is none in this environment: the PSD is the safe way in. What was checked, what was learned from others, what to look at in CSP: [`docs/layers.md`](docs/layers.md).
+The format has no public spec: what was measured on 22 files CSP saved, what others learned, and what was confirmed in CSP are kept apart in [`docs/layers.md`](docs/layers.md). Layers are pixels, so edits made in CSP are not read back into the code.
+
+## A second drawing
+
+The same process on other line art, the headphones drawing, from zero:
+
+<img src="gallery/maren.jpg" width="420" alt="Maren">
+
+What it needed and what it changed in the process: [`docs/lessons.md`](docs/lessons.md).
 
 ## What was learned
 
@@ -57,7 +69,7 @@ Rounds three, five and ten of the same drawing. Between the last two: blockout, 
 
 Numbers, what failed, what is open: [`docs/findings.md`](docs/findings.md).
 
-**Open:** proven on one drawing; hands, shoes and crate fittings are not designed shape by shape; the shadow shapes are typed points; steps between planes are stronger than in the references; a few parts have no second light.
+**Open:** run on two drawings so far; hands, shoes and crate fittings are not designed shape by shape; the shadow shapes are typed points; steps between planes are stronger than in the references; a few parts have no second light.
 
 This drawing's line art and data are not in the repository, so it cannot be re-rendered from here; its renderer, tools and process are.
 
@@ -95,7 +107,7 @@ node scripts/clipcheck.ts file.clip --tree                          # read a .cl
 
 | Query | Shows |
 |---|---|
-| `v=<drawing>` | any drawing in `src/splash`: `rig`, `tape`, `bell`, `twin` |
+| `v=<drawing>` | any drawing in `src/splash`: `maren`, `rig`, `tape`, `bell`, `twin`. `maren` reads a form field (11 MB, not in Git): make it once with `node scripts/form.ts maren output/form/m 4 --field` |
 | `&upto=0..10` | stop after a pass |
 | `&view=value`, `grey`, `masks`, `regions` | three values, greyscale, shadow design, regions |
 | `&k=2` or `3` | scale, an integer. At 1 a few regions can leak |
@@ -156,6 +168,8 @@ The steps before, oldest first. Code and results are kept; each has its story an
 | 14 | A new target and renderer | value, hard planes and line weight do more than colour | `src/bold/` |
 | 15 | Form first: blockout, guide, shadow design | the form says where, the drawn line says how | `src/form/` |
 | 16 | Face, grain, a mandatory last look | what is at the top of this page | `scripts/finish.ts` |
+| 17 | The process again on the headphones drawing | it carries over; never edit the plan to pass | `src/splash/maren.ts` |
+| 18 | The render as layers | a `.clip` written by code opens in CLIP STUDIO PAINT | `src/layers/` |
 
 ![Earlier characters, sketch engine](gallery/journey/1d-styles.jpg)
 ![Figure drawn in code](gallery/journey/2b-courier.jpg)

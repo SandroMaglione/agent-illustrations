@@ -2,6 +2,12 @@
 
 Newest first. Full story: [`journey.md`](journey.md). Measurements and disagreements: [`history.md`](history.md). Notes one by one: [`lessons.md`](lessons.md).
 
+## 26 November 2026: a second drawing, and layers that open in CLIP STUDIO PAINT
+- **The process carried over** to the headphones line art (`maren`): right form on 96.2%, limbs 391/370 and 379/393, second light on 49% of far edges, step between planes 24 (visor 35, references 19 to 23). What fell short were tools and one colour rule.
+- **The render opens as a layered `.clip`.** Maren: 84 layers in six folders, opened by the client in CSP 5.0.1 with modes, folders and names as expected. Inside the figure the layers add up to the render within 4 levels. [`layers.md`](layers.md).
+- **What made it work:** one job per paint step, so each has a name and a blend mode; a reader and checker tested on files CSP saved, before the writer.
+- **Open:** faint layers (`Washes`, `Rims`, `Focus falloff`, `Depth haze`); warmth and air split into multiply and add; one `Shade` layer for all parts; edits in CSP do not come back into the code.
+
 ## Checkpoint of 25 November 2026: form as a guide, value as a gate
 One drawing (`visor`), ten rounds with the client. The client: "This works." One drawing proves little: everything here is trial until it helps another.
 
