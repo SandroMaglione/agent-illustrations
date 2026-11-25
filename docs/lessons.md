@@ -182,3 +182,17 @@ Built: tone `B` in the shadow design, with an automatic darker inner step; undes
 Learned: the guide's teal had shown the place all along. A step that is nobody's job gets lost.
 Cost: darkest twentieth 33 to 38 (limit 42), because strips that were deep are now lit.
 Open: the share says present or not, not whether the shapes are good. Tassel, belt, hips, crate edges, shoe straps and tongue, right ankle band have none.
+
+## Tenth round, `visor`: grain, face, greyscale at the end (trial)
+| Client's note | Kind | Answer |
+|---|---|---|
+| the references carry a subtle noise, more in hair and darks | see | measured (`scripts/noise.ts`) and rebuilt: fine, coloured, by tone and material, specks towards the far side |
+| eyes low in detail, brows off, lips off | do | iris in steps, solid brows, teeth and a touch of red |
+| do not redraw the shape of eyes or lips (said mid-round) | rule | I had drawn new lashes, lids and a mouth over the artist's. Wrong: their lines stay, paint goes between. In the process now |
+| hair by the ear off, a lock blends into the skin | see | an open line had given that strand to the face; forced to hair, shaded with the fringe |
+| check the greyscale at the end, always; probably off again | forgot | it was: in three values the hair vanished into the page and oranges merged with leaves. `scripts/finish.ts` is the mandatory last step |
+
+Measured: grain, luma noise in darks 3.1 (references 2.7, 3.2, 3.1), mids 2.9 (2.7, 2.2, 3.5), coarseness 0.28 to 0.47 (0.0 to 0.5). Hair 176 to 156, face 242: 86 apart. Head area dark 29, mid 36, light 36 (e 16 27 57, f 48 31 20, g 39 35 26).
+Learned: the gate had passed while the head was missing, because it checked bands per group and nothing checked neighbours. And I had put hair in the light group: a plan can be wrong, so the sheet must be looked at, not only passed. Smaller steps inside a form lighten the whole, so base colours had to go down with them. Moving hair down in value pulls it to orange; take the hue back separately.
+Cost: dark fills 22 to 20% (limit 20), jacket against hair 70 (limit 70), jacket against trousers 19 (limit 18): no room left there.
+Open: steps between planes 34 (references 19 to 23); highlights cross lock lines in places; the hollow beside the far eye is messy; hands, shoes, crate fittings as before.

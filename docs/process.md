@@ -39,10 +39,11 @@ Lengths are line-art px; sizes that matter are shares of head height.
 5. **Casts.** Near ones from the list (`casts`), far ones drawn. A cast must reach past the shade of anything closer.
 6. **Second light.** Tone `B` on every far edge of the design. The gate lists the parts that have none. **Gate.**
 7. **What the design does not cover:** facets and tones for small pieces, hair by lock, bevels, children that inherit.
-8. **Face and eyes.** The most time, the strongest contrast, protected ink, brows under the hair.
+8. **Face and eyes.** The most time. **The artist's eye, nose and mouth lines stay: never redraw their shape.** Paint only between them: white with the lid's shadow, an iris in clear steps (dark top, spokes, two bright crescents, one large and a few tiny lights), teeth. Lips: a touch of red below and one highlight, no shape. Brows: one solid tapered shape, the hair's dark, faint where hair covers it. Crease and pencil marks inside an iris may be cleared.
 9. **Materials and lights.** Automatic by `kind`. Orange peel has no round glint; metal darkest beside brightest.
 10. **Piece by piece.** `scripts/review.ts name dir piece:box …`: line art, colour, shadow design and grey of one piece. Does every plane follow a line? Does it turn? Does it read in grey? Fix the worst, repeat, until every piece was looked at alone.
-11. **End.** Gate, `scripts/value.ts`, lineup, `pnpm check`, crops at 200% of head, hands, accessories.
+11. **End, mandatory, every time a picture is shown to anyone.** `node scripts/finish.ts name render.png scale head cx,cy`, then **look at** `output/bold/finish-<name>.png`: colour, greyscale and three values beside the references. Is the head a mass of its own, framing a light face? Does the figure hold in three values without lines? Do big neighbours stand apart (`apart`, the script fails otherwise)? Then `gate.ts`. Show the greyscale together with the result. A change of any colour or shade means doing this step again.
+12. `pnpm check`, crops at 200% of head, hands, accessories.
 
 ## What the renderer does
 | # | Pass | Rule |
@@ -55,7 +56,7 @@ Lengths are line-art px; sizes that matter are shares of head height.
 | 7 | Materials, second light | by `kind`; reflected light as planes with a darker inner step, capped below the light |
 | 8 | Face | drawn eyes, blush, brows |
 | 9 | Line | black at silhouettes and between front and back; inside one form a darker step of its own colour |
-| 10 | Air | tints by multiplying, never lifts a dark; depth softens what lies behind; orange overlay on shaded skin; grain |
+| 10 | Air | tints by multiplying, never lifts a dark; depth softens what lies behind; orange overlay on shaded skin; grain as measured on the references: fine, coloured, strongest in darks and mid tones and towards the far side of hair and dark cloth, nearly none on lit skin and white, loose specks in the turned parts |
 
 Shade is a colour multiplied on the base: warm colours go through rose, cool ones through blue.
 

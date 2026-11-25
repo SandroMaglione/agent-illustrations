@@ -58,6 +58,8 @@ export type Art = {
   meshCasts?: ReadonlyArray<string>
   /** Value plan: which parts are dark, mid and light in grey. Held by scripts/gate.ts. */
   values?: Readonly<Record<"dark" | "mid" | "light", ReadonlyArray<string>>>
+  /** Big neighbours that must stand apart in grey: parts, parts, least difference of their medians. Held by scripts/finish.ts. */
+  apart?: ReadonlyArray<readonly [string, string, number]>
   /** Round parts whose own shade always starts with a scattering band, also where a seam cuts it. */
   scatter?: ReadonlyArray<string>
   /** Brows, under the line and shining faintly through the hair. */
@@ -103,7 +105,10 @@ const vote = (wall: Float32Array, w: number, h: number) => (seed: Uint8Array): v
 /** Pass 1's input: which part every pixel belongs to. */
 export const regionsOf = async (art: Art, k: number, by: "marks" | "clicks" = art.clicks ? "clicks" : "marks"): Promise<{ ink: Float32Array; w: number; h: number; names: Array<string>; map: Uint8Array; seg?: Int32Array }> => {
   const { ink, w, h } = await loadInk(art.src, k)
-  if (by === "clicks" && art.clicks) { const P = paper(ink, w, h, art.clicks.walls, k), f = fill(P, w, h, art.clicks.at, k); return { ink, w, h, names: f.names, map: f.map, seg: P.P.seg } }
+  if (by === "clicks" && art.clicks) { const P = paper(ink, w, h, art.clicks.walls, k), f = fill(P, w, h, art.clicks.at, k)
+    // what the artist's lines leave open: a patch that belongs to another part
+    if (art.force.length) { const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d", { willReadFrequently: true })!; for (const q of art.force) { const n = f.names.indexOf(q.label), ok = q.over?.map((o) => f.names.indexOf(o)); if (n < 0) continue; g.clearRect(0, 0, w, h); g.beginPath(); loop(q.d).forEach(([x, y], i) => (i ? g.lineTo(x * k, y * k) : g.moveTo(x * k, y * k))); g.closePath(); g.fill(); const d = g.getImageData(0, 0, w, h).data; for (let i = 0; i < w * h; i++) if (d[i * 4 + 3]! > 127 && (!ok || ok.includes(f.map[i]!))) f.map[i] = n } }
+    return { ink, w, h, names: f.names, map: f.map, seg: P.P.seg } }
   const N = w * h
   const t = document.createElement("canvas")
   t.width = w; t.height = h

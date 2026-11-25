@@ -60,6 +60,11 @@ How shapes are placed and checked. Code in `src/form`, `src/bold`, `src/tools` a
 | Blockout | `loft`, `tube`, `ball`, `strip`, `drape`, `box`, `solve` (`src/form/mesh.ts`) | the figure in 3D in the drawing's view, settled onto the drawn outlines (`settle.ts`), with a fit table, turntable and a viewer (`scripts/form.ts`) |
 | Form guide | `node scripts/guide.ts name dir zoom step piece:x,y,w,h` | what the blockout says, in colours under the line art |
 | Shadow design | `sleeveL \| S \| x,y x,y~ …` | S turns away, X cast, H half, D deep, L lit, R lighter inside a shade, B second light, C cut back; `~` soft point, `+` adds (`bold/shadows.ts`) |
+| Finish | `node scripts/finish.ts name render.png scale head cx,cy` | the mandatory last check: colour, greyscale, three values beside the references; fails when `apart` pairs are too close |
+| Apart | `apart: [["hairF", "face", 65]]` | big neighbours and how far their medians must differ in grey |
+| Noise | `node scripts/noise.ts file:x,y,w,h:scale …` | grain per brightness: strength, coarseness, colour, specks |
+| Force | `force: [{ label, d, over }]` | a patch the open lines gave to the wrong part, also in bucket mode |
+| Highlight | tone `W` in the shadow design | hair highlight, one block per lock |
 | Seal | nothing | lit slivers under 4 px between shadow and line are closed and counted (`seal.ts`) |
 | Lint | `pnpm check tape` | slivers, edges beside lines, worst places with coordinates (`lint.ts`) |
 

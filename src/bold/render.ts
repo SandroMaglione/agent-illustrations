@@ -159,7 +159,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     for (let i = 0; i < N; i++) if (!formShade[i]) { softOnly[i] = 0; refl[i] = 0; m2[i] = 0 } else mh[i] = 0
   }
   /* the shadow design: shapes drawn over the form */
-  const drawnB = new Uint8Array(N), designed = set((art.shadows ?? []).filter((q) => !q.add).flatMap((q) => q.on))
+  const drawnB = new Uint8Array(N), gloss = new Float32Array(N), designed = set((art.shadows ?? []).filter((q) => !q.add).flatMap((q) => q.on))
   if (art.shadows && upto >= 4) {
     for (let i = 0; i < N; i++) if (designed[map[i]!]) { formShade[i] = 0; softOnly[i] = 0; refl[i] = 0; m2[i] = 0; mh[i] = 0; ml[i] = 0; if (P) P.turned[i] = 0; if (FF) FF.cast[i] = 0; if (kinds[map[i]!] === "hair") m1[i] = 0 }
     for (const q of art.shadows) {
@@ -174,6 +174,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
         else if (q.tone === "D") { formShade[i] = 1; refl[i] = 0; mh[i] = 0; if (upto >= 6) m2[i] = 1 }
         else if (q.tone === "L") { if (!formShade[i]) { ml[i] = 1; mh[i] = 0 } }
         else if (q.tone === "B") { sky[i] = 1; drawnB[i] = 1; formShade[i] = 1; m2[i] = 0; mh[i] = 0; ml[i] = 0; refl[i] = 0 }
+        else if (q.tone === "W") gloss[i] = 1
         else if (q.tone === "R") { if (formShade[i] && !m2[i]) refl[i] = 1 }
         else { formShade[i] = 0; softOnly[i] = 0; mh[i] = 0; m2[i] = 0; refl[i] = 0; sky[i] = 0 }
       }
@@ -227,6 +228,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     for (let i = 0; i < N; i++) if (lift[i]! > 0.5) m1[i] = 0
     // every shade is cut like a hand would: straight runs, inside its own part
     cutAll([m1, m2, mh, ml, refl], map, kinds, names.length, boxes, w, h, Math.max(1, art.head * (FF ? 0.0075 : 0.0055) * k), undefined, designed.map((v, q) => (v && kinds[q] !== "skin" ? 1 : 0)))
+    { const on = Float32Array.from(map, (m) => (kinds[m] === "hair" ? 1 : 0)), r = Math.max(1, 0.8 * k), bo = blur(on, w, h, r, 2); for (const m of [m1, m2, mh, ml]) { const b = blur(m.map((v, i) => v * on[i]!), w, h, r, 2); for (let i = 0; i < N; i++) if (on[i]) m[i] = b[i]! / bo[i]! > 0.5 ? 1 : 0 } }
     // crumbs: an island of shade too small to be a decision
     for (const m of [m1, m2]) { const seen = new Uint8Array(N), least = (art.head * 0.016 * k) ** 2; for (let q = 0; q < N; q++) if (m[q]! > 0.5 && !seen[q]) { const c = [q]; seen[q] = 1; for (let t = 0; t < c.length; t++) { const j = c[t]!, x = j % w; for (const g of [x > 0 ? j - 1 : -1, x < w - 1 ? j + 1 : -1, j - w, j + w]) if (g >= 0 && g < N && !seen[g] && m[g]! > 0.5) { seen[g] = 1; c.push(g) } } if (c.length < least) for (const j of c) m[j] = 0 } }
     for (let i = 0; i < N; i++) if (m2[i]! > 0.5) m1[i] = 1
@@ -272,7 +274,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   /* 7: materials and light */
   if (upto >= 7 && view !== "regions") {
     const lt = mask(["lt"]), ring = crisp(mask(["ring"]), 0.5), hi = crisp(mask(["hi"]), 0.35), L = crisp(Float32Array.from(lt, (v) => (v > 0.02 ? 1 : 0)), 0.5), rm = crisp(Float32Array.from(rims, (v) => (v > 0.02 ? 1 : 0)), 0.35)
-    const share = P ? calmShare(P, w, h, 1.5 * k) : null
+    const gw = crisp(gloss, 0.5), share = P ? calmShare(P, w, h, 1.5 * k) : null
     const pores = P ? stipple(P, map, kinds, w, h, H) : zero
     for (let i = 0; i < N; i++) {
       const n = map[i]!, t = tones[n], kd = kinds[n]
@@ -302,6 +304,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
         if (L[i]! > 0.01) to(i, t.lt, L[i]! * Math.max(0.5, lt[i]!) * lit)
         if (rm[i]! > 0.01) to(i, kd === "skin" ? t.lt : mix(t.base, SUN, 0.7), rm[i]! * lit * 0.85)
         if (hairs && hairs.any[i]) { if (hairs.light[i]! > 0.01) to(i, t.lt, hairs.light[i]! * lit * 0.5); if (hairs.ring[i]! > 0.01) to(i, mix(t.base, [255, 254, 252], 0.72), hairs.ring[i]! * 0.8 * (1 - e1[i]! * 0.85)) }
+        if (gw[i]! > 0.01) to(i, mix(t.base, [255, 253, 246], 0.66), gw[i]! * 0.72 * (1 - e1[i]! * 0.8))
         if (ring[i]! > 0.01) to(i, mix(t.base, [255, 253, 248], 0.62), ring[i]! * (1 - e1[i]! * 0.85))
       }
       // a rough skin has no glint
@@ -322,6 +325,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       for (let t = 1; t < most * 1.7; t++) { const X = Math.round(x + sun.x * t), Y = Math.round(y + sun.y * t); if (X < 0 || Y < 0 || X >= w || Y >= h) break; const j = Y * w + X; if (map[j] !== n) { m = map[j]!; break } if (ink[j]! < 0.3) paper++ }
       if (m === n) continue
       if (FF?.has[i] && kd === "hair") continue
+      if (kd === "hair" && art.focus && Math.hypot((x / k - art.focus.x) / art.focus.rx, (y / k - art.focus.y) / art.focus.ry) < 0.95) continue
       if (n === names.indexOf("face") || n === names.indexOf("ear") || (kd === "hair" && designed[n])) continue // a face answers with a soft turn, not with a strip
       if (air(m, n) && paper <= H * 0.02 && ink[i]! <= 0.3 && kd !== "peel" && kd !== "leaf" && kd !== "hair") far.push(i)
       if (designed[n] && air(m, n)) continue
@@ -357,7 +361,6 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     }
   }
   if (upto >= 8 && view !== "regions") wash(true)
-  if (upto >= 8 && view !== "regions") for (const q of art.brows ?? []) { tmp.g.clearRect(0, 0, w, h); trace(tmp.g, q.d); tmp.g.fill(); const d = alphaOf(), c = hexRgb(q.color), f = names.indexOf("face"); for (let i = 0; i < N; i++) if (d[i * 4 + 3]) to(i, c, (d[i * 4 + 3]! / 255) * (map[i] === f ? 1 : kinds[map[i]!] === "hair" ? 0.38 : 0)) }
   const stats: Record<string, number> = { ...bounce }
   for (const e of eyes) console.error(`eye: ${e.note}`)
   { const area: Record<string, number> = {}; for (let i = 0; i < N; i++) { const n = names[map[i]!]!; area[n] = (area[n] ?? 0) + 1; if (e1[i]! > 0.5) stats[n] = (stats[n] ?? 0) + 1 } for (const n of Object.keys(stats)) if (area[n]) stats[n] = Math.round((100 * stats[n]!) / area[n]!) }
@@ -383,14 +386,32 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     for (let i = 0; i < N; i++) {
       const kd = kinds[map[i]!]
       if (kd !== "skin" && kd !== "hair") continue
-      const a = kd === "skin" ? Math.max(e1[i]! * 0.3, eh[i]! * 0.18) + (1 - e1[i]!) * smooth(0.02, 0.5, deepen[i]!) * 0.16 : e1[i]! * (tones[map[i]!]!.base[0] > tones[map[i]!]!.base[2] * 1.2 ? 0.13 : 0)
+      const a = kd === "skin" ? Math.max(e1[i]! * 0.3, eh[i]! * 0.18) + (1 - e1[i]!) * smooth(0.02, 0.5, deepen[i]!) * 0.16 : e1[i]! * (tones[map[i]!]!.base[0] > tones[map[i]!]!.base[2] * 1.2 ? 0.05 : 0)
       if (a > 0.005) to(i, [lay(R[i]!, OVER[0]), lay(G[i]!, OVER[1]), lay(B[i]!, OVER[2])], a)
     }
   }
-  const r = rng("grain"), gf = new Float32Array(N)
-  for (let i = 0; i < N; i++) gf[i] = r() - 0.5
-  const grain = blur(gf, w, h, 1, 1), img = new ImageData(w, h)
-  for (let i = 0; i < N; i++) { const gr = upto >= 10 && view === "normal" && map[i] !== bg ? grain[i]! * (kinds[map[i]!] === "skin" ? 4 : 13) : 0; img.data[i * 4] = R[i]! + gr; img.data[i * 4 + 1] = G[i]! + gr; img.data[i * 4 + 2] = B[i]! + gr; img.data[i * 4 + 3] = 255 }
+  if (upto >= 8 && view !== "regions") for (const q of art.brows ?? []) { tmp.g.clearRect(0, 0, w, h); trace(tmp.g, q.d); tmp.g.fill(); const d = alphaOf(), c = hexRgb(q.color), f = names.indexOf("face"); for (let i = 0; i < N; i++) if (d[i * 4 + 3]) to(i, c, (d[i * 4 + 3]! / 255) * (map[i] === f ? 1 : kinds[map[i]!] === "hair" ? 0.38 : 0)) }
+  const img = new ImageData(w, h)
+  if (upto >= 10 && view === "normal") {
+    const r = rng("grain"), cell = (art.head * k * 0.72) / 290, gw = Math.ceil(w / cell) + 2, gh = Math.ceil(h / cell) + 2, bell = (): number => (r() + r() + r() + r() - 2) * 1.73, ch = [0, 1, 2, 3].map(() => Float32Array.from({ length: gw * gh }, bell)), speck = Float32Array.from({ length: gw * gh }, () => r())
+    const far = P ? calmShare(P, w, h, H * 0.03) : null
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x
+      let a = 0, sp = 0
+      const n = map[i]!, kd = kinds[n]
+      if (n !== bg && kd) {
+        const l = luma([R[i]!, G[i]!, B[i]!]), s = far && P!.id[i] ? far[i]! : 0.5
+        a = kd === "skin" ? (e1[i]! > 0.5 ? 2 : 0.9) : l < 45 ? 2.9 : l < 140 ? 4 : l < 190 ? 3.6 : l < 228 ? 2.3 : 1.2
+        if (kd === "hair") a *= 1.15 + 0.5 * s
+        else if (l < 150 && kd !== "skin") a *= 0.9 + 0.55 * s
+        // loose specks gather towards the far side of hair and dark cloth
+        if (kd !== "skin" && l < 200) sp = (kd === "hair" ? 0.05 : 0.07) * Math.max(0, s - 0.35)
+      }
+      const X = x / cell, Y = y / cell, x0 = Math.floor(X), y0 = Math.floor(Y), u = Math.min(1, Math.max(0, (X - x0 - 0.5) * 2 + 0.5)), v = Math.min(1, Math.max(0, (Y - y0 - 0.5) * 2 + 0.5)), q = y0 * gw + x0, at = (f: Float32Array): number => (f[q]! * (1 - u) + f[q + 1]! * u) * (1 - v) + (f[q + gw]! * (1 - u) + f[q + gw + 1]! * u) * v
+      const m = at(ch[0]!) * a, k1 = a * 1.5, p = sp && speck[q]! < sp ? 11 : 0
+      img.data[i * 4] = R[i]! + m + at(ch[1]!) * k1 + p; img.data[i * 4 + 1] = G[i]! + m + at(ch[2]!) * k1 * 0.55 + p; img.data[i * 4 + 2] = B[i]! + m + at(ch[3]!) * k1 + p * 0.5; img.data[i * 4 + 3] = 255
+    }
+  } else for (let i = 0; i < N; i++) { img.data[i * 4] = R[i]!; img.data[i * 4 + 1] = G[i]!; img.data[i * 4 + 2] = B[i]!; img.data[i * 4 + 3] = 255 }
   const col = mk()
   col.g.putImageData(img, 0, 0)
   const drawn = view !== "masks" && view !== "regions"
