@@ -251,12 +251,12 @@ export const clip = (template: Buffer, s: Stack, flat: Uint8Array, into = "Agent
     d.resize(s.w, s.h)
   }
   const full = (L: Stack["layers"][number]): Uint8Array => { const o = new Uint8Array(s.w * s.h * 4); for (let y = 0; y < L.h; y++) { const Y = y + L.y; if (Y < 0 || Y >= s.h) continue; for (let x = 0; x < L.w; x++) { const X = x + L.x; if (X >= 0 && X < s.w) o.set(L.rgba.subarray((y * L.w + x) * 4, (y * L.w + x) * 4 + 4), (Y * s.w + X) * 4) } } return o }
-  const folder = (parent: number, name: string, sealed = false): number => d.add(Number(model.MainId), parent, name, { ...AT_ORIGIN, LayerType: 0, LayerFolder: FOLDER | CLOSED, LayerComposite: sealed ? COMPOSITE.normal : COMPOSITE.passThrough, ...FOLDER_ROW }, null, s.w, s.h)
+  const folder = (parent: number, name: string, sealed = false, isClipped = false): number => d.add(Number(model.MainId), parent, name, { ...AT_ORIGIN, LayerType: 0, LayerFolder: FOLDER | CLOSED, LayerComposite: sealed ? COMPOSITE.normal : COMPOSITE.passThrough, LayerClip: isClipped ? 1 : 0, ...FOLDER_ROW }, null, s.w, s.h)
   const base = same ? folder(root, into) : root
   let last = 0
   const walk = (nodes: Array<Node>, parent: number): void => {
     for (const n of nodes) {
-      if ("folder" in n) { walk(n.kids, folder(parent, n.folder, n.sealed)); continue }
+      if ("folder" in n) { walk(n.kids, folder(parent, n.folder, n.sealed, n.clip)); continue }
       const L = n.layer
       if (L.name === "Paper" && !L.group) continue
       last = d.add(Number(model.MainId), parent, L.name, { ...AT_ORIGIN, LayerComposite: COMPOSITE[L.mode], LayerClip: L.clip ? 1 : 0, LayerOpacity: Math.round(L.opacity * 256), LayerVisibility: L.visible ? 1 : 0 }, full(L), s.w, s.h)
