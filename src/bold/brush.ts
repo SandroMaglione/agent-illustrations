@@ -18,7 +18,7 @@ const smooth = (q: ReadonlyArray<P>): Array<P> => {
 }
 export const brushes = (text: string): Array<Shadow> => text.trim().split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#")).map((l) => {
   const [on, tone, wd, d] = l.replace(/^\+/, "").split("|").map((q) => q.trim()) as [string, Shadow["tone"], string, string], w = Number(wd.replace(/[<>]/, "")), e = wd.endsWith("<") ? 1.7 : wd.endsWith(">") ? 0.6 : 1
-  const p = smooth(d.split(/\s+/).map((t) => t.split(",").map(Number) as unknown as P)), n = p.length, L: Array<string> = [], R: Array<string> = []
+  const p = smooth(d.split(/\s+/).map((t) => t.replace(/[~!]/g, "").split(",").map(Number) as unknown as P)), n = p.length, L: Array<string> = [], R: Array<string> = []
   for (let i = 0; i < n; i += i + 3 < n ? 3 : Math.max(1, n - 1 - i)) {
     const a = p[Math.max(0, i - 2)]!, b = p[Math.min(n - 1, i + 2)]!, len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, t = Math.sin(Math.PI * (i / (n - 1)) ** e) ** 0.75 * (w / 2), x = -((b[1] - a[1]) / len) * t, y = ((b[0] - a[0]) / len) * t
     L.push(`${(p[i]![0] + x).toFixed(1)},${(p[i]![1] + y).toFixed(1)}`); R.push(`${(p[i]![0] - x).toFixed(1)},${(p[i]![1] - y).toFixed(1)}`)

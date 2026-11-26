@@ -298,3 +298,17 @@ Client on the second pass: "Decent considering the complexity." Forgot the eyes 
 | small metal without casts or sparks | forgot | a cast for every accessory onto what it lies on; glints on metal |
 
 The blind critic stayed at 5 through these: at its viewing size it judges the large cloth and the gold, not the eyes. Both judges are needed.
+
+## `reel`, reviewed by measurement (trial)
+Image-generated line art, pale grey ink. Three rounds with GPT 6.2 Astra as art director, every claim a number on the render beside the same number on a reference (Robin and Kafka, Honkai: Star Rail; Roxy, Zenless Zone Zero): 5, 6.5, 7 of 10.
+
+| What fell short | Kind | Answer |
+|---|---|---|
+| a lock moved over the cheek started 69 px before its ink | see | region fixes traced along the drawn lines, then measured |
+| hair highlights never showed | do | brush points with `~` read as NaN: fixed in `bold/brush.ts` |
+| hair shaded by the form put the whole crown in shade and hid its highlight | rule | hair is shaded by the design only |
+| pale line art | do | `inkGain`: lines drawn darker, regions unchanged |
+| the near eye's white stopped at the iris | see | the opening traced to the corner of the lids |
+| highlight band 11%, then 28% of the crown; target 18% | see | measured coverage, trimmed by a third |
+
+Learned: a critic that must measure the same box on the render and a reference cannot be generic, and its numbers converge. Its biggest gap left: the head sits darker than the body (median 64 against 118), the references put the head level or lighter.

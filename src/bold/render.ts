@@ -519,7 +519,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     }
   }
 
-  const line = lineLayer({ ink, map, w, h, k, head: art.head, bg, kinds, z: zs, tones, face: names.indexOf("face"), dark: e1, strokes: refs.strokes, fall: [sun.x, sun.y], print: set(art.print ?? []), softWedges: art.softWedges ?? false, eyes: eyes.map((e) => e.at), back: upto >= 10 ? back : back.map(() => 0) }), li = line.image
+  const line = lineLayer({ ink, map, w, h, k, head: art.head, bg, kinds, z: zs, tones, face: names.indexOf("face"), dark: e1, strokes: refs.strokes, fall: [sun.x, sun.y], print: set(art.print ?? []), softWedges: art.softWedges ?? false, inkGain: art.inkGain ?? 1, eyes: eyes.map((e) => e.at), back: upto >= 10 ? back : back.map(() => 0) }), li = line.image
   if (upto < 9) for (let i = 0; i < N; i++) { li.data[i * 4] = BLACK[0]; li.data[i * 4 + 1] = BLACK[1]; li.data[i * 4 + 2] = BLACK[2]; li.data[i * 4 + 3] = smooth(0.2, 0.64, ink[i]!) * 255 }
   if (upto >= 8) {
     tmp.g.clearRect(0, 0, w, h); tmp.g.fillStyle = "#000"
