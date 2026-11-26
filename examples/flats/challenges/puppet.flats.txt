@@ -1,0 +1,78 @@
+# Challenge 3 (Puppeteer & Fox Marionette) — 1086 x 1448
+coreCut 0.36
+ridgeCut 0.14
+maxNeckRadius 5.5
+autoAbsorbMaxArea 28
+sealNecks 1.5
+
+# Explicit smooth walls for stylistic open anime lines & foreground-string halo gaps
+wall 608,1060 612,1064
+wall 574,299 580,308
+wall 692,882 698,891
+wall 804,350 811,356
+wall 775,469 782,476
+wall 611,532 618,539
+wall 693,95 697,100
+wall 466,1428 478,1439
+wall 437,265 442,269
+wall 529,361 535,365
+wall 340,1338 345,1343
+wall 79,831 83,836
+wall 405,371 409,375
+
+# Background & enclosed white spaces
+# Exterior (1), finger gaps above cross-bar (7, 8, 10, 11, 22), spaces around strings & sleeves & fox tail
+# Note: 484 is Hair curl behind earring; 476 is air between curl & string; 27, 37, 38, 48, 53, 62 are Cross Bar!
+bg: 1 7 8 10 11 22 71 76 137 140 144 165 166 174 476 557 578 597 467 515 520 946 954 990 1001 864 865 880 882 907 1017 1104
+
+# Hair (crown, waves, curls around face, earring curl 484!, & left shoulder)
+color Hair #e8c488: box:185,130,665,675
+color Hair #e8c488: 484 649 651 652 654 677 685 693 703 704 709 718 729 622 610 626 640 601 612 613 627 598
+
+# Hair Fan (pleated crimson fan hairpiece & ribbon tails)
+color Hair Fan #8c2d42: 56 63 72 73 84 122 142 143 158 196 208 261 293 330 354 369 378 387 391 445 463 483 488 494 527
+
+# Skin (face, neck 556, raised right hand holding cross-bar, lower left hand pinching string)
+color Skin #fce3d4: 340 556 213 249 279 327 338 301 303 334 326 227 250 263 286
+color Skin #fce3d4: 2 99 12 938 934 810 871 919
+
+# Eyes & Lips & ALL 6 Painted Nails (including 4th nail 49!)
+color Eye White #f6f7fa: 234 240 241 309 331
+color Eye Iris #8c4a7d: 252 320
+color Lips #c95568: 401 6 26 49 50 887 845
+
+# Jewelry, Gold Trim, Earrings, Brooches, Rings, Braided Shoulder Cords, Cuff Buttons, Corset Clasps, ALL Fox Rivets
+color Jewelry #d9b15c: 3 13 157 404 426 437 459 475 508 510 523 529 531 535 536 537 550 572 576 586 587 608
+color Jewelry #d9b15c: 498 506 542 554 589 599 603 653 657 582 583 592 595 602 607 616 624 635 642 646 647 663 687 720 723 733
+color Jewelry #d9b15c: box:30,745,255,950:<=220
+color Jewelry #d9b15c: 751 777
+color Jewelry #d9b15c: 408 482 547
+color Jewelry #d9b15c: 1054 1073 1090 1095 1096 1098 1119 1124
+color Jewelry #d9b15c: 1066 1067 1068 1074 1128 1136 1137 1141 1143 1144 1168 1170 1173 1174 1175 984 949 1026 1088 1115 1133
+
+# Gemstones (teal cabochon centers on hairpiece, earrings, cravat brooch)
+color Gemstones #3c999c: 470 528 606
+
+# Wooden Cross Bar (including segments behind fingers: 27, 37, 38, 48, 53, 62!)
+color Cross Bar #7d543c: 9 18 21 25 27 30 37 38 39 48 53 54 62 65 66 69 70 90 95 96 106 117 119 121
+
+# Marionette Strings (all 4 taut double-lined control strings)
+color Strings #d6c28b: 36 130 131 68 77 82 97 134 153 175 216 345 920 931 941 1007 1043 894 817 791
+
+# Shirt & Ruffled Cravat & Sleeve Ruffles & Waistcoat Front
+color Shirt & Cravat #f4efe6: 569 571 585 591 628 630 631 659 671 672 678 688 698 731 732 741 742 750 755 758 769 770 780 787 788 790 811 812 834 835 836 844 846 881 756 771 744 689 667 673 637 716 735
+color Shirt & Cravat #f4efe6: 141 176 177 203 204 206 210 217 254 255 258 259 292 312 313 314 355 412 442 443
+color Shirt & Cravat #f4efe6: 779 784 842 843 855 861 878 892 902 905 923 928 939 952 970 978 991 1009 1028 1029 1041 1083 1097 1101 1102 1103 1118 1130 1134 1148 1151 1161 1162 1166 1167 1172 1176 1179 1180 1182 1186 1192 1190 1191 1193 1194 1195 1020 1021 1030 1048 1150 1140 1147 1157 1121
+
+# Coat (tailored navy jacket, lapels, sleeves, cuff base stripes including around the 3 round buttons!)
+color Coat #2d3348: 218 277 285 388 444 480 481 413 315 410 485 524 546 573 717 746 670 621 639 638 669 674 675 690 745 757 759 760 772 789 794 872 883 908 917 926 930 955 994 1000 1025 1152
+color Coat #2d3348: 656 697 726 727 728 734 736 737 738 739 740 747 749 754 765 776 778 825 829 841 859 860 862 870 898 899 901 918 927 937 944 947 950 951 968 969 976 977 981 985 986 996 1002 1003 1008 1015 1027 1034 1039 1040 1056 1063 1065 1082 1100 1111 1112 1113 1116 1120 1123 1132 1142 1149 1153 1154 1155 1159 1160 1165 1181 1183 1184 1187 1188 1189
+
+# Coat Stripes (burgundy cuff stripes & lining accents)
+color Coat Stripes #5d2940: 346 377 558
+
+# Articulated Fox Puppet — Warm Orange Wood (including shoulders 998, 999, 1032!)
+color Fox Wood #d97845: 813 814 816 837 847 848 879 893 895 896 903 906 921 922 924 925 929 932 933 936 942 943 945 948 953 957 958 960 962 964 966 967 998 999 1004 1012 1024 1032 1045 1047 1051 1052 1057 1059 1060 1061 1062 1069 1070 1071 1072 1075 1085 1086 1087 1105 1108 1117 1125 1126 1129 1131 1138 1139 1164
+
+# Articulated Fox Puppet — Pale Cream Wood (bow, paws, tail tip)
+color Fox Cream #f5e6cc: 961 963 965 979 980 982 983 987 988 989 993 1005 1006 1010 1013 1016 1022 1031 1044 1127 1158 1156 1163 1171 1177

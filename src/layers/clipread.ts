@@ -163,9 +163,12 @@ export const compositeClip = (c: Clip, unknown: Set<string> = new Set()): Float3
       if (over.length) {
         src = src.slice()
         for (const T of over) {
-          if (!T.visible || !T.rgba) continue
+          if (!T.visible) continue
+          let tSrc = T.rgba
+          if (T.folder) { tSrc = new Float32Array(N * 4); draw(tSrc, T.kids) }
+          if (!tSrc) continue
           const ft = B[T.composite] ?? (unknown.add(`blend ${T.composite} (${T.name})`), B[0]!), ot = Math.floor(T.opacity * 256) / 256
-          for (let i = 0; i < N; i++) { const a = (T.rgba[i * 4 + 3]! / 255) * ot; if (a > 0 && src[i * 4 + 3]!) for (let k = 0; k < 3; k++) { const b = src[i * 4 + k]! / 255; src[i * 4 + k] = (b + (ft(b, T.rgba[i * 4 + k]! / 255) - b) * a) * 255 } }
+          for (let i = 0; i < N; i++) { const a = (tSrc[i * 4 + 3]! / 255) * ot; if (a > 0 && src[i * 4 + 3]!) for (let k = 0; k < 3; k++) { const b = src[i * 4 + k]! / 255; src[i * 4 + k] = (b + (ft(b, tSrc[i * 4 + k]! / 255) - b) * a) * 255 } }
         }
       }
       const f = B[L.composite] ?? (unknown.add(`blend ${L.composite} (${L.name})`), B[0]!), op = Math.floor(L.opacity * 256) / 256

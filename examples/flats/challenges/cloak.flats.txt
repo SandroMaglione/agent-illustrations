@@ -1,0 +1,44 @@
+# Challenge 2 (Cloak & Gauge) — 1199 x 1312
+coreCut 0.36
+ridgeCut 0.14
+maxNeckRadius 5.5
+autoAbsorbMaxArea 28
+
+# Background & enclosed white spaces (exterior + gauge top ring hole + finger gaps under gauge)
+bg: 1 114 162 163 165 166 169
+
+# Hair & eyebrow
+color Hair #4a5263: box:380,25,670,295:<=16000
+color Hair #4a5263: 42
+
+# Skin (face, ear, neck, hand, wrist, nails)
+color Skin #f7dac8: 84 49 59 60 65 68 69 73 74 76 77 92
+color Skin #f7dac8: 145 151 154 156 158 159 160 164 167 168 178
+
+# Eyes
+color Eye White #f6f7fa: 55 75
+color Eye Iris #c97e38: 62 67
+
+# Cloak outer fabric
+color Cloak #344257: 95 96 98 102 104 106 107 108 111 134 173 174 175 176 179 180 182 184 185
+
+# Cloak inner lining (inside high collar, inside wide sleeve, inside back hem)
+color Cloak Lining #7c3543: 90 93 94 181 183
+
+# Undercoat (garment beneath cloak at bottom)
+color Undercoat #252b36: 186
+
+# Cloak shoulder strap
+color Strap #5c4033: 103 105 109
+
+# Cloak buckle
+color Buckle #d1a658: 112 115
+
+# Pocket gauge metal body, ring, stem, knobs, scale bar
+color Gauge Metal #b8914d: 110 113 116 117 118 121 122 123 124 125 127 129 130 132 133 139 153 155 157 161
+
+# Pocket gauge glass (upper air chamber)
+color Gauge Glass #dce8f0: 126 128 131
+
+# Pocket gauge liquid (lower fluid chamber)
+color Gauge Liquid #4b9bb5: 137 138 144 152

@@ -53,7 +53,26 @@ node scripts/layerview.ts output/layers/maren               # look through the l
 
 ![Maren's file: the picture growing, the folder of each part, what some folders hold](gallery/layers-maren.jpg)
 
-Open one: [`maren.clip`](examples/layers/maren/maren.clip). How it is structured: [`docs/layers.md`](docs/layers.md). The `.clip` format, which has no public spec, and what was measured: [`docs/layers-internals.md`](docs/layers-internals.md). Edits made in the drawing program are not read back into the code.
+Open one: [`maren.clip`](examples/layers/maren/maren.clip). How it is structured: [`docs/layers.md`](docs/layers.md). The `.clip` format, which has no public spec, and what was measured: [`docs/layers-internals.md`](docs/layers-internals.md). Edits made in the drawing program are not read back into the code (except in the standalone flat-colours pipeline below, which includes `scripts/flats.ts diff`).
+
+## Flat colours (standalone, 1:1 native resolution)
+
+For taking any finished black-and-white line art directly to ready-to-shade flat colours in pure Node.js (no browser, no scaling):
+
+- **`Base 50% Grey`** (`#808080` exact figure silhouette, excluding background and enclosed white spaces), **`↳ [Flats]`** (Normal folder clipped directly to the grey base, one single layer per flat colour, zero overlap, zero halos, zero bleed), and **`Line art`** (`multiply`, or `--no-lineart` with `--template` to inject into an existing `.clip`).
+- **8-metric Quality Gate + 5 automatic 3× review contact sheets** (`review-leaks`, `review-bg-holes`, `review-silhouette-pockets`, `review-suspect-holes`, `review-same-color-loops`) plus exact CSP-edit diffing (`scripts/flats.ts diff`).
+
+```sh
+node scripts/flats.ts analyze public/reel.png output/flats/reel/analyze
+node scripts/flats.ts build public/reel.png examples/flats/reel/reel.flats.txt output/flats/reel --name reel
+node scripts/flats.ts diff before.clip after.clip output/flats/diff --lineart public/reel.png --spec examples/flats/reel/reel.flats.txt
+```
+
+| Reel | Wheel Mechanic | Cloak & Gauge | Puppeteer & Fox |
+|---|---|---|---|
+| ![Reel flats](gallery/flats/reel.jpg) | ![Wheel flats](gallery/flats/wheel.jpg) | ![Cloak flats](gallery/flats/cloak.jpg) | ![Puppet flats](gallery/flats/puppet.jpg) |
+
+Open the `.clip` files: [`examples/flats/`](examples/flats/README.md). Full process, algorithms, and Quality Gate: [`docs/flats.md`](docs/flats.md).
 
 ## A second drawing
 
@@ -127,6 +146,9 @@ node scripts/finish.ts <name> render.png 2 410 1070,410              # the last 
 node scripts/layers.ts <name> output/layers/<name> --clip           # the render as layers: PSD and .clip, with a check that they give it back
 node scripts/layerview.ts output/layers/<name>                      # look through the layers: view.html and sheet.png
 node scripts/clipcheck.ts file.clip --tree                          # read a .clip: rules, layer tree, composite against its preview
+node scripts/flats.ts analyze lineart.png output/flats/a            # standalone 1:1 flat colours: numbered facets & gap proposals
+node scripts/flats.ts build lineart.png spec.flats.txt output/flats # build Base 50% Grey + clipped [Flats] .clip/.psd + 5 review sheets
+node scripts/flats.ts diff before.clip after.clip output/flats/diff # exact layer-by-layer pixel & facet diff from a CSP-edited .clip
 ```
 
 | Query | Shows |
@@ -163,6 +185,7 @@ Then follow [`docs/process.md`](docs/process.md) and, for the blockout and shado
 - [`docs/drawing/`](docs/drawing/README.md): open drawing, what was tried and why it fails, tests for the next agent
 - [`docs/lessons.md`](docs/lessons.md): every note on a result, sorted by cause
 - [`docs/tools.md`](docs/tools.md): how shapes are said, placed and checked
+- [`docs/flats.md`](docs/flats.md): standalone pixel-exact flat-colours pipeline, Quality Gate, auto-review sheets, and `.clip` diffing
 - [`docs/layers.md`](docs/layers.md): the layered file, how it is structured
 - [`docs/layers-internals.md`](docs/layers-internals.md): how it is made, the `.clip` format, measurements
 - [`docs/findings.md`](docs/findings.md): what works, what does not, numbers

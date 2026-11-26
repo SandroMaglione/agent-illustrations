@@ -48,6 +48,7 @@ export type LineIn = {
   /** Parts with printed marks. */
   /** Inside one form a short thick spot takes the line's colour: only a real filled black stays black. */
   softWedges?: boolean
+  inkGain?: number
   print: Uint8Array
   /** How far back each part lies. */
   back: ReadonlyArray<number>
@@ -117,7 +118,7 @@ export const lineLayer = (q: LineIn): { image: ImageData; half: number } => {
   for (let i = 0; i < N; i++) {
     const n = map[i]!, v = ink[i]!, t0 = T[i * 4 + 3]! / 255
     if (v < 0.06 && t0 < 0.01) continue
-    const raw = fine ? smooth(0.1, 0.8, v) : smooth(0.22, 0.6, v), near = q.eyes.some((e) => ((i % w) / k - e.x) ** 2 + (((i / w) | 0) / k - e.y) ** 2 < e.r * e.r), mine = fine || near || n === q.face, keep = mine || !F[i * 4 + 3] ? 1 : solid[i]!, a = mine ? raw : Math.max(t0, raw * keep)
+    const raw = fine ? smooth(0.1, 0.8, Math.min(1, v * (q.inkGain ?? 1))) : smooth(0.22, 0.6, v), near = q.eyes.some((e) => ((i % w) / k - e.x) ** 2 + (((i / w) | 0) / k - e.y) ** 2 < e.r * e.r), mine = fine || near || n === q.face, keep = mine || !F[i * 4 + 3] ? 1 : solid[i]!, a = mine ? raw : Math.max(t0, raw * keep)
     if (a < 0.01) continue
     const x = i % w, y = (i / w) | 0, r = Math.max(2, Math.round(wide[i]! + 2))
     let page = n === bg, lo = z[n] ?? 0, hi = lo, skin = kinds[n] === "skin", other = -1

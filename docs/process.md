@@ -7,7 +7,7 @@ Colour clean line art so that the result could stand beside the target reference
 ## The steps at a glance
 | | Step | Done when |
 |---|---|---|
-| 1 | Regions | every patch has a name, no leak |
+| 1 | Regions / Flats | every patch has a name, no leak; standalone pixel-exact flatting (Base 50% Grey + clipped `Flats` folder) documented in [`flats.md`](flats.md) |
 | 2 | Light and value plan, `values`, `apart` | three values read at stamp size; **gate** on flats |
 | 3 | Blockout | right form on 95% of the figure, limbs equal, solid from all sides |
 | 4 | Form guide, shadow design | `view=masks` reads as a drawing; **gate** |

@@ -298,3 +298,4 @@ Client on the second pass: "Decent considering the complexity." Forgot the eyes 
 | small metal without casts or sparks | forgot | a cast for every accessory onto what it lies on; glints on metal |
 
 The blind critic stayed at 5 through these: at its viewing size it judges the large cloth and the gold, not the eyes. Both judges are needed.
+

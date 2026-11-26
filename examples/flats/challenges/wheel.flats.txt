@@ -1,0 +1,68 @@
+# Challenge 1 (Wheel Mechanic) — 1254 x 1254
+coreCut 0.36
+ridgeCut 0.14
+maxNeckRadius 5.5
+autoAbsorbMaxArea 28
+sealNecks 1.5
+
+# Explicit smooth walls for open anime lines (eyebrow/bang gap, shoulder strap, buckle seams)
+wall 385,356 391,362
+wall 138,818 142,822
+wall 200,590 218,592
+wall 250,702 260,702
+wall 298,701 308,701
+wall 152,808 156,812
+
+# Background & enclosed white spaces
+# Exterior (1), 3 hollow wheel openings (497, 502, 798; 849 is Plastic Glass!), hollow center hub (671),
+# hair-braid & loose hair-strand loops, hoop earring hole (460), chin/bang-wheel gaps,
+# braid-neck-strap gap (561), braid-elbow-belt gap (1013), AND air under right elbow inside wheel (934, 954)!
+bg: 1 497 502 798 671 404 561 514 934 954 1013
+bg: 11 166 237 346 347 383 392 413 428 432 460 478 486 495 513 518 535 587 992 1051 1055
+
+# Hair (crown, bangs, long left braid down to bottom edge, bang tip 301 over eyebrow)
+color Hair #c95b48: box:10,45,540,565
+color Hair #c95b48: box:10,550,210,1254
+color Hair #c95b48: 301 316 496 528 562 660 1052 1061 1004 1063 1086 1087 1088
+
+# Hair Undercut (shaved temple stripes behind ear)
+color Hair Undercut #52383c: box:155,268,262,385:<=500
+color Hair Undercut #52383c: 206 207 212 221 234 235 236 248 262 264 274 277 280
+
+# Skin (face, forehead 239/249, earlobe 426, neck 529/540, upper chest, arms & hands)
+color Skin #fae0cf: 449 511 354 369 387 409 343 437 438 239 243 249 287 311 344 379 250 328 359 397 265 289 290 426 529 540
+color Skin #fae0cf: 594 605 608 609 612 640 641 662 693 749 889 950 534 778 893 891
+color Skin #fae0cf: 595 596 626 639 668 669 673 689 690 716 745 755
+
+# Eyes & Mouth
+color Eye White #f6f7fa: 373 365 303 314
+color Eye Iris #3e997e: 352 364 313
+color Mouth #cc6e78: 481
+
+# Goggles (on forehead/crown)
+color Goggles Frame #474f5e: 40 42 46 49 51 52 56 64 65 66 67 70 78 80 83 88 89 98 113 115 118 138 142 24 28 29 34 36 60 73
+color Goggles Lens #6cb8d4: 35 79
+color Goggles Strap #694b3b: 102 122 130 131 132 136 144 145 146 149 153 160 172 176 193
+
+# Leather Straps (choker, braid cuff 918..948, arm band, wristbands, suspender straps, waist belt & loops)
+color Leather Straps #5c3d30: 530 541 542 546 547 548 556 557 568 570 571 572 573 580 581
+color Leather Straps #5c3d30: 593 600 607 611 659 663 664 691 692 721 742 758 759 765 766 776 777 780
+color Leather Straps #5c3d30: 796 818 825 831 832 847 848 915 918 922 923 924 927 928 929 932 933 936 939 940 948
+color Leather Straps #5c3d30: 1015 1030 1031 1032 1033 1034 1035 1036 1040 1043 1044 1045 1047 1048 1049 1053 1054 1057 1058 1064 1068 1069 1072 1080 1089 1090
+
+# Metal Buckles, Rivets, Goggles Clips (84/90/154), Choker Prongs (563/564/569), Ear Piercings (408/427/429/436/479), D-ring
+color Metal Buckles #d4a85c: 84 90 154 408 427 429 436 479 563 564 569 679 680 697 698 718 804 816 817 823 829 851 842 862 881 885 886 919 931 1022 1046 1074 1077
+color Metal Buckles #d4a85c: box:135,795,180,848:<=30
+
+# Overalls (bib, pocket, bodice, skirt, hanging straps)
+color Overalls #3b5370: 750 751 760 761 770 771 781 790 791 802 805 809 810 820 821 822 824 826 843 844 852 863 871 876 882 883 890 903 908 913 914 916 930 937 938 942 951 953 957 990 996 999 1001 1002 1003 1007 1018 1021 1039 1070 1073 1076 1078 1092 1093 1094 1095 1096 1097 1098 1099 1100
+
+# Wheel (brushed steel outer rim, inner bevels, 4 spokes, & slivers behind fingers/bangs 267, 515, 584)
+color Wheel #8b96a6: 152 204 231 232 267 440 515 536 558 559 574 575 584 585 613 625 642 654 655 672 676 684 686 699 714 722 741 785 786 811 874 955 964 965 966 970 994 1009
+
+# Wheel Hub (central bolted collar & 4 hub bolts)
+color Wheel Hub #57606e: box:745,590,900,745:<=2500
+color Wheel Hub #57606e: 620 621 622 623 633 635 647 653 661 665 666 670 700 713 723 734 735 737
+
+# Plastic Glass (translucent lower-right wheel pane hiding the forearm behind it)
+color Plastic Glass #9fd5df: 849

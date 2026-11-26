@@ -50,6 +50,10 @@ export type Art = {
   print?: ReadonlyArray<string>
   /** Heavy line art: thick spots inside one form take the line's colour instead of staying black. */
   softWedges?: boolean
+  /** Parts whose shade is one flat cel: no darker band behind the edge, no lift towards the far side. */
+  flatShade?: ReadonlyArray<string>
+  /** Pale line art: how much darker its lines are drawn, 1 as drawn. Only the drawing of the lines changes, not the regions. */
+  inkGain?: number
   /** The base of all shading: tubes and balls (bold/solids.ts). */
   solids?: ReadonlyArray<Solid>
   /** The blockout's field (scripts/form.ts --field): the base of all shading, in place of `solids`. */

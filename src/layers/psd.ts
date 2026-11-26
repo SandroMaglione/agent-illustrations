@@ -52,8 +52,8 @@ type Rec = { top: number; left: number; w: number; h: number; mode: string; opac
 export const psd = (s: Stack, flat: Uint8ClampedArray): Buffer => {
   const recs: Array<Rec> = []
   const leaf = (L: Layer): Rec => { const n = L.w * L.h; return { top: L.y, left: L.x, w: L.w, h: L.h, mode: KEY[L.mode], opacity: Math.round(L.opacity * 255), hidden: !L.visible, clip: L.clip ?? false, name: L.name, extra: [], planes: [3, 0, 1, 2].map((c) => planeOf(L.rgba, n, c)) } }
-  const marker = (name: string, type: number, mode = "pass"): Rec => ({ top: 0, left: 0, w: 0, h: 0, mode: type === 3 ? "norm" : mode, opacity: 255, hidden: false, clip: false, name, extra: [block("lsct", type === 3 ? new Out().u32(3).done() : new Out().u32(type).str("8BIM").str(mode).done())], planes: null })
-  const walk = (nodes: Array<Node>): void => { for (const n of nodes) { if ("layer" in n) { recs.push(leaf(n.layer)); continue } recs.push(marker("</Layer group>", 3)); walk(n.kids); recs.push(marker(n.folder, 2, n.sealed ? "norm" : "pass")) } }
+  const marker = (name: string, type: number, mode = "pass", clip = false): Rec => ({ top: 0, left: 0, w: 0, h: 0, mode: type === 3 ? "norm" : mode, opacity: 255, hidden: false, clip, name, extra: [block("lsct", type === 3 ? new Out().u32(3).done() : new Out().u32(type).str("8BIM").str(mode).done())], planes: null })
+  const walk = (nodes: Array<Node>): void => { for (const n of nodes) { if ("layer" in n) { recs.push(leaf(n.layer)); continue } recs.push(marker("</Layer group>", 3)); walk(n.kids); recs.push(marker(n.folder, 1, n.sealed ? "norm" : "pass", n.clip)) } }
   walk(tree(s))
   const info = new Out().i16(recs.length), pixels = new Out()
   for (const r of recs) {

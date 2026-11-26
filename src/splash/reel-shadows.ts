@@ -1,0 +1,35 @@
+/** The shadow design. parts | tone | points. Light from the upper left. Cel shading: one clean shape per plane, reaching the contour. */
+import { read } from "../bold/shadows.ts"
+
+export const SHADOWS = [...read(`
+# raised arm: the forearm's right side turns away; the elbow's underside; the sleeve hem casts on the upper arm
+armL | S | 186,300 180,330 174,360 162,400 154,440 148,480 144,520 144,560 146,600 150,640 152,700 156,760 150,800 126,780 110,720~ 106,650~ 104,570~ 110,490~ 124,420~ 144,350~ 170,320~
+armL | S | 60,818 110,838 180,846 250,836 270,840 268,866 160,868 90,862 50,850
+# near arm: the forearm's upper side and the upper arm's outer side turn away; the cuff casts
+armR | S | 742,930 800,1004 850,1066 890,1112 918,1160 932,1214 928,1256 880,1262 846,1220~ 806,1150~ 776,1080~ 748,1000~ 722,950~
+armR | S | 848,1060 962,1058 958,1110 945,1180 930,1240 915,1272 900,1270 930,1214 916,1164 886,1114 848,1072
+
+# face: kept flat. Only the fringe's cast, and the side plane beyond the cheek lock turning away
+face | X | 478,262 492,266 490,300 486,322 470,360 455,380 450,350 462,300
+face | X | 520,244 552,224 590,214 620,208 660,209 676,216 678,228 640,224~ 600,228~ 560,238~ 528,254
+face | S | 698,246 740,262 770,290 762,330 768,355 788,376 760,398 735,424 700,447 672,460 652,437 668,425~ 684,400~ 694,360~ 698,300~
+neck | S | 560,458 700,440 800,396 806,540 700,562 616,540
+# hands: the side away from the light and the undersides of the fingers
+handL | S | 176,330 230,300 300,268 345,236 405,214 412,224 360,264 300,298 236,332 190,348
+handR | S | 558,840 600,860 640,880 640,896 590,882 554,862
+
+# hair: the back of the bob and the locks under the fringe turn away; one highlight band across the crown
+hairB | S | 760,250 820,230~ 870,270 905,340 912,440 880,480 820,486 770,470 752,400
+hairF | W | 482,146 500,134 520,128 522,136 514,144 508,140 502,150 494,144 488,154
+hairF | W | 534,122 560,118 588,116 590,124 582,132 576,126 568,136 560,128 550,138 542,128 536,132
+hairF | W | 602,118 630,118 658,124 660,132 652,140 644,132 636,142 626,132 616,140 608,128 602,128
+hairF | W | 674,132 700,140 720,150 714,158 704,154 698,164 690,154 682,158 676,144
+hairB | W | 744,162 768,172 790,186 784,194 774,190 770,202 760,192 750,196 746,178
+
+# coat: one turn on the far side of the body and under the bust; the sleeves' undersides
+coat | S | 820,860 880,900 900,1000 880,1100 830,1160 780,1168 800,1080 810,960
+sleeveL | S | 300,820 380,820 460,860 478,892 300,892
+sleeveR | S | 900,860 980,840 1060,860 1086,900 1086,940 920,950
+lapel | S | 840,720 900,740 960,760 940,800 880,800 850,780
+lapel | S | 560,900 620,960 640,1010 600,990 560,940
+`)]
