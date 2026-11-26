@@ -61,6 +61,12 @@ The same process on other line art, the headphones drawing, from zero:
 
 What it needed and what it changed in the process: [`docs/lessons.md`](docs/lessons.md).
 
+## A third drawing
+
+Seated, old, mostly cloth: the hardest line art so far. About two hours, four rounds, a blind critic between them. Eyes, braid, hair strands and accessory casts came from the client's notes; large cloth is the open part.
+
+<img src="gallery/meridian.jpg" width="420" alt="Meridian">
+
 ## What was learned
 
 1. **Understand the form before shading it.** Answering notes spot by spot only moved the problem. A blockout ended that.
@@ -123,7 +129,7 @@ node scripts/clipcheck.ts file.clip --tree                          # read a .cl
 
 | Query | Shows |
 |---|---|
-| `v=<drawing>` | any drawing in `src/splash`: `visor`, `maren`, `rig`, `tape`, `bell`. `visor` and `maren` read a form field (11 MB, not in Git): make it once with `node scripts/form.ts maren output/form/m 4 --field` |
+| `v=<drawing>` | any drawing in `src/splash`: `visor`, `maren`, `meridian`, `rig`, `tape`, `bell`. `visor` and `maren` read a form field (11 MB, not in Git): make it once with `node scripts/form.ts maren output/form/m 4 --field` |
 | `&upto=0..10` | stop after a pass |
 | `&view=value`, `grey`, `masks`, `regions` | three values, greyscale, shadow design, regions |
 | `&k=2` or `3` | scale, an integer. At 1 a few regions can leak |
