@@ -22,9 +22,13 @@ Value—how light or dark a colour is—does the heavy work. Colour sets mood, b
 
 Every colour you pick is three choices: where on the hue ring, how strong, how light. Shading well means moving all three at once. A shadow that only gets darker, with hue and strength untouched, looks grey and dirty. The square and the triangle in drawing programs hold the same colours; what matters is which way you move.
 
+![Colour picks: a teal jacket](../../gallery/guides/maren/c-jacket.jpg)
+
+The jacket's picks, one by one on the picker. Shadow is not the lit colour pulled straight down: it turns round the ring, away from the colour of the light, and gets stronger as it gets darker. Light turns the other way and gets paler.
+
 ![Mixing a colour over another](../../gallery/guides/maren/c-blend.jpg)
 
-Painting one colour over another can replace it, darken it, lighten it or tint it. Darkening keeps both colours in the mix, which is why a shadow painted that way stays related to what is under it. A grey painted that way only dulls the colour.
+Painting one colour over another can replace it, darken it, lighten it or tint it, and the result depends on how light both colours are. Darkening never lightens and keeps both colours in the mix, which is why a shadow painted that way stays related to what is under it; a grey painted that way only dulls it. Lightening never darkens. The modes in between flip at 50% grey: below it they darken, above it they lighten, so they add contrast and colour without a new shape.
 
 ![Form as simple solids](../../gallery/guides/maren/a-form.jpg)
 
@@ -68,9 +72,9 @@ This is the most important step. Big, simple shadows on every side turned away f
 
 Common mistake: hugging every outline with thin shadows instead of grouping planes into big shapes.
 
-![Colour picks: a teal jacket](../../gallery/guides/maren/c-jacket.jpg)
+![Colour on the jacket](../../gallery/guides/maren/p-jacket.jpg)
 
-Each arrow is one move on the picker. Light is warm here, so the shadow slides the other way round the ring, toward blue, and gets stronger as it gets darker. That small turn of hue is what keeps a shadow looking like colour instead of dirt.
+The same picks, where they sit on the jacket. That small turn of hue toward blue is what keeps a shadow looking like colour instead of dirt.
 
 ### 4 · Cast shadows
 
@@ -112,7 +116,7 @@ Open shadows still catch stray light. Only tight pockets where no light gets in�
 - Keep these shapes small and dark.
 - Use them sparingly; never outline every main shadow.
 
-![Colour picks: khaki trousers](../../gallery/guides/maren/c-trousers.jpg)
+![Colour on khaki](../../gallery/guides/maren/p-trousers.jpg)
 
 A dull colour has the most room to move. Khaki in light becomes rose in shadow and violet where no light gets in: the deeper the shadow, the further it travels from the lit colour.
 
@@ -134,7 +138,7 @@ Bright shapes on planes facing the light add clarity and pull attention upward. 
 - Paint one highlight block per hair lock.
 - Skip white shiny spots on skin and matte cloth.
 
-![Colour picks: green hair](../../gallery/guides/maren/c-hair.jpg)
+![Colour in the hair](../../gallery/guides/maren/p-hair.jpg)
 
 Light moves the opposite way to shadow: toward the colour of the light, here yellow, and paler. Lights and shadows pulling in two directions is what makes a surface feel lit by something.
 
@@ -148,7 +152,7 @@ Light bounces from the surroundings onto far shadowed edges with air behind them
 - Colour it with what surrounds the figure.
 - Keep it always darker than the lit side, or the light reverses.
 
-![Colour picks: a black top](../../gallery/guides/maren/c-top.jpg)
+![Colour on a black top](../../gallery/guides/maren/p-top.jpg)
 
 On a near-black colour there is little room to go darker, so the shadow gains strength instead, and the reflected light is a clear step up in a colour from the surroundings. That is how black cloth still shows its form.
 
@@ -171,7 +175,7 @@ Cool shadows suit clothing, but skin looks lifeless if its shade leans grey. War
 - Keep skin shade warm, never grey.
 - Add a soft touch of blush where skin feels thin, like cheeks.
 
-![Colour picks: skin](../../gallery/guides/maren/c-skin.jpg)
+![Colour on the skin](../../gallery/guides/maren/p-skin.jpg)
 
 Skin breaks the cool-shadow habit. Light passes into it and comes back red, so its shade turns toward red and rose and gets clearly stronger, most of all right at the edge of the shadow.
 
