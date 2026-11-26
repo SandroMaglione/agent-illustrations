@@ -33,7 +33,7 @@ Illustrations coloured entirely by code (TypeScript and Canvas 2D). The line art
 
 **Where the form is not followed:** the face is never modelled, hair is one simple shape per lock, shadows that tell a distance always stay, shaded skin is warm. The style decides, the form argues.
 
-**Learn the steps:** [`docs/guide.md`](docs/guide.md), a rendering guide for people, with how the agent does each step and where it still falls short.
+**Learn to render:** [`docs/guide.md`](docs/guide.md), a short visual guide for illustrators, step by step on Maren.
 
 Full rules: [`docs/process.md`](docs/process.md). The form stage: [`docs/form-guide.md`](docs/form-guide.md). Every tool: [`docs/tools.md`](docs/tools.md).
 
@@ -157,7 +157,7 @@ Then follow [`docs/process.md`](docs/process.md) and, for the blockout and shado
 
 ## Documents
 
-- [`docs/guide.md`](docs/guide.md): the rendering guide, step by step, for people and for the agent
+- [`docs/guide.md`](docs/guide.md): a visual rendering guide for illustrators
 - [`docs/process.md`](docs/process.md): the current rules, in order
 - [`docs/form-guide.md`](docs/form-guide.md): from line art to shadow shapes, with the 3D blockout
 - [`docs/drawing/`](docs/drawing/README.md): open drawing, what was tried and why it fails, tests for the next agent
