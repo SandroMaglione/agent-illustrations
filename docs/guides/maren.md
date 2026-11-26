@@ -54,7 +54,7 @@ Flat colours lock in your value groups and separate every part before light ente
 
 **Colour:** choose by grey first, hue second.
 - Three groups: about a sixth of the figure dark, half mid, a quarter light. The face sits in the light group, the darkest large shape next to it.
-- Most large areas stay muted (saturation under about 30); strong colour goes to small accents like straps, tabs and ear cups.
+- The biggest areas stay muted (saturation under about 30) or middling (around 50); the strongest colour (over 60) goes to small accents like straps, tabs and ear cups.
 - Pick one main hue family and one opposite accent (here teal and green against orange). Nothing pure black or pure white: the darkest top and the lightest skin both carry a little hue.
 
 ### 2 · Colour shifts
@@ -79,7 +79,7 @@ This is the most important step. Big, simple shadows on every side turned away f
 - Give each shape one clean side and one pointed end; place edges on a drawn line or clearly across the form, never just beside a line.
 - Few large shapes beat many small ones, and simple beats strictly correct.
 
-**Colour:** from the lit colour, turn the hue 15 to 25 degrees away from the colour of the light (toward blue for most things, toward red for skin), raise saturation by 10 to 20, and lower the grey value by 10 to 25 points. A dull colour can turn much further.
+**Colour:** from the lit colour, turn the hue 15 to 25 degrees away from the colour of the light (toward blue for most things, toward red for skin), raise saturation by 5 to 20, and lower the grey value by 10 to 25 points. A dull colour can turn much further.
 
 Common mistake: hugging every outline with thin shadows instead of grouping planes into big shapes.
 
