@@ -15,7 +15,7 @@ import { compositeClip, readClip } from "../src/layers/clipread.ts"
 import { analyzeInk } from "../src/flatting/ink.ts"
 import { detectGaps } from "../src/flatting/gaps.ts"
 import { assignAndGrow, segmentFacets } from "../src/flatting/segment.ts"
-import { buildFlatStack, buildWallMask, parseSpec, resolveFacetLabels } from "../src/flatting/spec.ts"
+import { buildFlatStack, buildWallMask, parseSpec, resolveFacetLabels, sealBottlenecks } from "../src/flatting/spec.ts"
 import { auditFlats, renderAuditOverlay, renderNeonNoLines, renderSilhouetteCheck } from "../src/flatting/audit.ts"
 import { renderFacetSheet, renderGapSheet, zoomCropRgba } from "../src/flatting/sheet.ts"
 import type { CropBox } from "../src/flatting/sheet.ts"
@@ -141,6 +141,7 @@ const hasWalls = wallMask.some((v) => v !== 0)
 const baseFm = segmentFacets(inkField, undefined, { maxNeckRadius: spec.maxNeckRadius })
 const fm = hasWalls ? segmentFacets(inkField, wallMask, { maxNeckRadius: spec.maxNeckRadius }) : baseFm
 const { facetLabel, warnings } = resolveFacetLabels(spec, fm, baseFm)
+if (spec.sealNecks && spec.sealNecks > 0) sealBottlenecks(fm, facetLabel, wallMask, spec.sealNecks)
 const grown = assignAndGrow(fm, inkField, facetLabel, spec.autoAbsorbMaxArea ?? 28)
 
 const { stack, baseGreyRgba, colorLayers } = buildFlatStack(grown.labels, inkField, spec.colors, {

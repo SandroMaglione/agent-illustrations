@@ -43,6 +43,8 @@ export type FlatSpec = {
   autoAbsorbMaxArea?: number
   cleanGreyFills?: boolean
   autoCloseMaxPx?: number
+  /** Automatically mark trapped-ball bottleneck saddles (neck <= N px) between distinct labels as sealed closures. */
+  sealNecks?: number
   closeGaps: Array<number>
   walls: Array<string>
   bgTokens: Array<string>
@@ -67,6 +69,7 @@ export const parseSpec = (text: string): FlatSpec => {
     if (line.startsWith("autoAbsorbMaxArea ")) { spec.autoAbsorbMaxArea = Number(line.slice(18).trim()); continue }
     if (line.startsWith("cleanGreyFills ")) { spec.cleanGreyFills = line.slice(15).trim() === "true"; continue }
     if (line.startsWith("autoClose ")) { spec.autoCloseMaxPx = Number(line.slice(10).trim()); continue }
+    if (line.startsWith("sealNecks ")) { spec.sealNecks = Number(line.slice(10).trim()); continue }
     if (line.startsWith("close ")) {
       for (const tok of line.slice(6).trim().split(/[\s,]+/).filter(Boolean)) {
         const id = Number(tok.replace(/^g/i, ""))
@@ -96,6 +99,57 @@ export const parseSpec = (text: string): FlatSpec => {
     throw new Error(`Unknown directive in flat spec: ${line}`)
   }
   return spec
+}
+
+/**
+ * Record narrow trapped-ball bottleneck saddles (neck <= maxNeck px) between two DIFFERENT assigned
+ * labels into `wallMask` so intentional micro-gap separations (hair tips, broken anime lids, foreground
+ * string gaps) are explicitly sealed and shown on audit-overlay.png while wide leaks still FAIL.
+ */
+export const sealBottlenecks = (
+  fm: FacetMap,
+  facetLabel: Uint16Array,
+  wallMask: Uint8Array,
+  maxNeck: number,
+): number => {
+  if (maxNeck <= 0) return 0
+  const { w, h, seg, dist, facets } = fm
+  // Build lookup of allowed narrow neighbor pairs (different labels, neck <= maxNeck)
+  const allowed = new Set<number>()
+  const STRIDE = fm.n + 2
+  for (let id = 1; id <= fm.n; id++) {
+    const la = facetLabel[id]!
+    if (!la) continue
+    for (const nb of facets[id]!.paperNeighbors) {
+      if (nb.neck > maxNeck) continue
+      const lb = facetLabel[nb.id]!
+      if (lb && lb !== la) {
+        const a = Math.min(id, nb.id), b = Math.max(id, nb.id)
+        allowed.add(a * STRIDE + b)
+      }
+    }
+  }
+  if (!allowed.size) return 0
+  let sealedPx = 0
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x
+      const fa = seg[i]!
+      if (!fa) continue
+      for (const j of [x + 1 < w ? i + 1 : -1, y + 1 < h ? i + w : -1]) {
+        if (j < 0) continue
+        const fb = seg[j]!
+        if (!fb || fa === fb) continue
+        const a = Math.min(fa, fb), b = Math.max(fa, fb)
+        if (allowed.has(a * STRIDE + b) && Math.min(dist[i]!, dist[j]!) <= maxNeck + 0.5) {
+          wallMask[i] = 1
+          wallMask[j] = 1
+          sealedPx++
+        }
+      }
+    }
+  }
+  return sealedPx
 }
 
 /** Rasterize accepted gap closures + explicit walls into one binary mask. */

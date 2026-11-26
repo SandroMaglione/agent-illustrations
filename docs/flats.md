@@ -69,7 +69,8 @@ ridgeCut 0.14
 maxNeckRadius 5.5
 autoAbsorbMaxArea 28
 
-# Accept detected gaps or draw explicit virtual walls (never renumbers existing facet IDs!)
+# Accept detected gaps, seal trapped-ball micro-bottlenecks, or draw explicit virtual walls (never renumbers existing facet IDs!)
+sealNecks 4.5
 close g79 g80
 wall 624,282 645,274
 
