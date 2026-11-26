@@ -50,13 +50,11 @@ Flat colours lock in your value groups and separate every part before light ente
 - Keep the head and face easy to spot against what surrounds them.
 - Fill every shape cleanly up to the lines.
 
-
-![How much: 02-flats](../../gallery/guides/maren/h-02-flats.jpg)
-
-**Colour:** decide how light each part is before which colour it is. Keep a few large areas quiet, not too saturated, and let small things carry the strong colour. Pick one main family and one opposite accent. Avoid pure black and pure white: even the darkest and lightest parts keep a little colour.
-
 ![Choosing flat colours](../../gallery/guides/maren/f-palette.jpg)
 
+![How much: flats](../../gallery/guides/maren/h-02-flats.jpg)
+
+**Colour:** decide how light each part is before which colour it is. Keep a few large areas quiet, not too saturated, and let small things carry the strong colour. Pick one main family and one opposite accent. Avoid pure black and pure white: even the darkest and lightest parts keep a little colour.
 
 ### 2 · Colour shifts
 
@@ -68,10 +66,9 @@ Large flat shapes can feel stiff, like stickers. A gentle colour shift across a 
 - Keep lightness almost unchanged so big shapes stay clear.
 - Keep it subtle; if you spot the shift first, pull it back.
 
-![How much: 03-colour](../../gallery/guides/maren/h-03-colour.jpg)
+![How much: colour](../../gallery/guides/maren/h-03-colour.jpg)
 
 **Colour:** a gentle slide of hue across the shape, warmer toward the light and cooler away from it, without making it lighter or darker.
-
 
 ### 3 · Main shadow
 
@@ -83,10 +80,9 @@ This is the most important step. Big, simple shadows on every side turned away f
 - Give each shape one clean side and one pointed end; place edges on a drawn line or clearly across the form, never just beside a line.
 - Few large shapes beat many small ones, and simple beats strictly correct.
 
-![How much: 04-shadow](../../gallery/guides/maren/h-04-shadow.jpg)
+![How much: shadow](../../gallery/guides/maren/h-04-shadow.jpg)
 
 **Colour:** darker, usually a little more saturated (never less), and turned away from the colour of the light: toward blue for most things, toward red for skin. Grey shadows kill the colour; very dark ones turn the picture heavy.
-
 
 Common mistake: hugging every outline with thin shadows instead of grouping planes into big shapes.
 
@@ -105,7 +101,6 @@ Cast shadows tell distance. Anything standing in front of a surface throws its o
 
 **Colour:** the same colour as the main shadow on that surface; a cast is a shadow with a different shape, not a darker one.
 
-
 Common mistake: softening cast shadows until overlaps lose depth.
 
 ### 5 · Half tone
@@ -117,10 +112,9 @@ Lit and shadowed shapes alone make curved forms look like cut paper. A third, li
 - Keep the band narrow so it does not eat the lit side.
 - Use it on curving forms and skip sharp corners.
 
-![How much: 06-halftone](../../gallery/guides/maren/h-06-halftone.jpg)
+![How much: halftone](../../gallery/guides/maren/h-06-halftone.jpg)
 
 **Colour:** in between the lit colour and the shadow, closer to the lit side. If it reads as its own shape, it is too strong.
-
 
 ### 6 · Shadow edge
 
@@ -131,10 +125,9 @@ On skin, light passes slightly through the surface at the turn and leaves a thin
 - Keep the band thin along the exact light-to-shadow border.
 - Make it warmer and richer than the shadow beside it.
 
-![How much: 07-edge](../../gallery/guides/maren/h-07-edge.jpg)
+![How much: edge](../../gallery/guides/maren/h-07-edge.jpg)
 
 **Colour:** the most saturated colour on the skin, about as dark as the shadow, and redder. Keep it thin.
-
 
 Common mistake: spreading it too wide so skin looks sunburnt.
 
@@ -147,10 +140,9 @@ Open shadows still catch stray light. Only tight pockets where no light gets in�
 - Keep these shapes small and dark.
 - Use them sparingly; never outline every main shadow.
 
-![How much: 08-deep](../../gallery/guides/maren/h-08-deep.jpg)
+![How much: deep](../../gallery/guides/maren/h-08-deep.jpg)
 
 **Colour:** continue the shadow's move: darker again, more saturated again, turned a little further. Small and few.
-
 
 ![Colour on khaki](../../gallery/guides/maren/p-trousers.jpg)
 
@@ -165,10 +157,9 @@ Big shadows, especially on dark cloth, can turn into dead holes. Lightening and 
 - Lift gently far from the light so dark cloth stays dark.
 - Shift it cooler so it stays behind the lit side.
 
-![How much: 09-lift](../../gallery/guides/maren/h-09-lift.jpg)
+![How much: lift](../../gallery/guides/maren/h-09-lift.jpg)
 
 **Colour:** only slightly lighter and cooler than the shadow it sits in. If the black starts to look grey or blue, it is too much.
-
 
 ### 9 · Light
 
@@ -179,10 +170,9 @@ Bright shapes on planes facing the light add clarity and pull attention upward. 
 - Paint one highlight block per hair lock.
 - Skip white shiny spots on skin and matte cloth.
 
-![How much: 10-light](../../gallery/guides/maren/h-10-light.jpg)
+![How much: light](../../gallery/guides/maren/h-10-light.jpg)
 
 **Colour:** lighter and less saturated, turned toward the colour of the light; on dark cloth, a soft pale sheen. Keep it a pale tint on skin, not a white spot: bright white spots read as oil.
-
 
 ![Colour in the hair](../../gallery/guides/maren/p-hair.jpg)
 
@@ -198,10 +188,9 @@ Light bounces from the surroundings onto far shadowed edges with air behind them
 - Colour it with what surrounds the figure.
 - Keep it always darker than the light, or the light reverses.
 
-![How much: 11-bounce](../../gallery/guides/maren/h-11-bounce.jpg)
+![How much: bounce](../../gallery/guides/maren/h-11-bounce.jpg)
 
 **Colour:** take the colour of what is around, usually cooler. Lighter than the shadow it sits in, clearly darker than the light. If it catches the eye before the light does, it is too bright.
-
 
 ![Colour on a black top](../../gallery/guides/maren/p-top.jpg)
 
@@ -219,7 +208,6 @@ Shading every surface the same turns metal, plastic, and cloth into clay. Distin
 
 **Colour:** metal uses almost the whole range from near black to near white in a small space; its own colour stays in the darks, the colour of the light goes in the glint.
 
-
 ### 12 · Warm skin
 
 ![12 · Warm skin](../../gallery/guides/maren/13-skin.jpg)
@@ -229,10 +217,9 @@ Cool shadows suit clothing, but skin looks lifeless if its shade leans grey. War
 - Keep skin shade warm, never grey.
 - Add a soft touch of blush where skin feels thin, like cheeks.
 
-![How much: 13-skin](../../gallery/guides/maren/h-13-skin.jpg)
+![How much: skin](../../gallery/guides/maren/h-13-skin.jpg)
 
 **Colour:** skin shade goes redder and more saturated, never grey. Blush is soft and well below the shadow edge in strength.
-
 
 ![Colour on the skin](../../gallery/guides/maren/p-skin.jpg)
 
@@ -259,10 +246,9 @@ Dark lines everywhere look harsh against bright skin or hair. Tinting inner line
 - Colour inner lines with a darker version of the colour they sit on.
 - Keep the outline and lines between overlapping parts dark.
 
-![How much: 15-linecolour](../../gallery/guides/maren/h-15-linecolour.jpg)
+![How much: linecolour](../../gallery/guides/maren/h-15-linecolour.jpg)
 
 **Colour:** about as dark as the deepest shadow of the surface, in its own colour family.
-
 
 Common mistake: lightening every line equally, which washes out the drawing.
 
@@ -276,10 +262,9 @@ Parts painted one by one can feel slightly separate. A light final pass pulls ev
 - Make parts further back slightly paler and bluer.
 - Add fine grain to tie the surface together.
 
-![How much: 16-finish](../../gallery/guides/maren/h-16-finish.jpg)
+![How much: finish](../../gallery/guides/maren/h-16-finish.jpg)
 
 **Colour:** a faint warm tint toward the light and a faint cool one away from it. The picture should look the same, only more together.
-
 
 Common mistake: letting effects stand out; if you notice them first, pull back.
 
