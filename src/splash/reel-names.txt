@@ -1,7 +1,8 @@
 # one line per part: the patch numbers it owns, from ?v=sheet&show=pools. Then: node scripts/name.ts reel
-wall 630,442 660,425 700,395 735,372 762,352
+wall 546,225 563,218
+wall 670,463 696,451
+wall 722,436 736,418
 bg: 1 2 3 26 64 120 184
-@face 690,330 700,360
 hairF: 9 10 11 12 5 7 20 23 24 30 28 44 59 60 62 67 68 75 69 18 25 34 35 36 31
 hairB: 4 42 51 61 66 56 70 71 73 74 40 78
 face: 27 65 39 32 33 41 38 48 49 50 53 54 57 58 46 55

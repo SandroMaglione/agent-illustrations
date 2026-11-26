@@ -302,6 +302,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
     }
     const calm = P ? calmShare(P, w, h, H * 0.03) : null
     const bk = upto >= 5 ? crisp(back, 0.5) : zero
+    const flatShade = set(art.flatShade ?? [])
     await stage(["scatter", "half", "shade", "inner", "lift", "warm", "reflected", "bounce", "deep", "black"], () => { for (let i = 0; i < N; i++) {
       const n = map[i]!, t = tones[n]
       if (!t || n === bg || metal[n]) continue
@@ -316,7 +317,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
       on("shade"); times(i, t.s1, e)
       // inside a shade: darkest just behind its edge, then lighter and cooler again, where the surroundings answer. Never as light as the light
       on("inner")
-      if (upto >= 5 && e > 0.5 && kd !== "dark" && kd !== "hair") { const d = depthIn[i]!; times(i, [0.95, 0.91, 0.96], 1 - smooth(0.5, 0.86, d)); if (calm && P?.id[i]) { const C = P.far[i]! + P.near[i]!; on("lift"); if (C > H * 0.12) times(i, kd === "skin" || kd === "pale" ? [1.07, 1.1, 1.15] : [1.0, 1.03, 1.1], smooth(0.8, 1, d) * smooth(0.6, 0.95, calm[i]!)) } }
+      if (upto >= 5 && e > 0.5 && kd !== "dark" && kd !== "hair" && !flatShade[n]) { const d = depthIn[i]!; times(i, [0.95, 0.91, 0.96], 1 - smooth(0.5, 0.86, d)); if (calm && P?.id[i]) { const C = P.far[i]! + P.near[i]!; on("lift"); if (C > H * 0.12) times(i, kd === "skin" || kd === "pale" ? [1.07, 1.1, 1.15] : [1.0, 1.03, 1.1], smooth(0.8, 1, d) * smooth(0.6, 0.95, calm[i]!)) } }
       else if (upto >= 5 && e < 0.5 && calm && P?.id[i] && P.far[i]! + P.near[i]! > H * 0.08) { on("warm"); times(i, [1.03, 1.0, 0.95], (1 - calm[i]!) * 0.6) }
       on("reflected"); if (er[i]! > 0.01) times(i, kd === "pale" ? [1.07, 1.1, 1.16] : kd === "dark" || kd === "leather" ? [1.12, 1.13, 1.22] : [1.06, 1.07, 1.12], er[i]!)
       on("bounce"); if (bk[i]! > 0.01) to(i, t.bounce, bk[i]! * (kd === "skin" ? 0.5 : 0.62))

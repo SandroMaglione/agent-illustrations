@@ -17,4 +17,4 @@ const NEAR: Eye = { open: "588,268 595,263~ 605,262~ 616,262 628,262~ 638,264 64
 const FAR: Eye = { open: "504,312 512,309~ 522,309~ 530,311 526,320 518,330 510,337 506,330 504,320", x: 515, y: 323, rx: 8.5, ry: 12.5, turn: 0, shade: "500,316 512,311~ 522,311~ 534,313 534,300 500,300" }
 export const DETAILS: ReadonlyArray<Detail> = [...eyeDetails("Eyes", NEAR, LOOK), ...eyeDetails("Eyes", FAR, LOOK), ...eyeLights("Highlights", NEAR, LOOK), ...eyeLights("Highlights", FAR, LOOK)]
 /** Brows: thin, under the fringe; only a touch shows. */
-export const BROWS = [{ d: "566,251! 580,246! 598,243! 616,243! 600,247! 582,250!", color: "#2a2f4a" }]
+export const BROWS = [{ d: "560,251! 575,239! 600,229! 630,222! 646,222! 630,227! 603,234! 579,245!", color: "#6a6384" }]

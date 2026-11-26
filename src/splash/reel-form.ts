@@ -3,7 +3,7 @@ import { ball, join, loft, tube } from "../form/mesh.ts"
 import type { Mesh, Part, Section, V3 } from "../form/mesh.ts"
 
 export const light = { fall: [0.8, 0.6], up: 0.5 } as const // the same as in the drawing
-export const head = 241
+export const head = 330
 export const pivot: V3 = [543, 724, 0]
 export const parts: Array<Part> = []
 const put = (group: string, name: string, ...m: ReadonlyArray<Mesh>): Mesh => { const mesh = join(...m); parts.push({ group, name, mesh }); return mesh }

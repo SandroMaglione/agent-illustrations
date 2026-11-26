@@ -9,7 +9,7 @@ Illustrations coloured entirely by code (TypeScript and Canvas 2D). The line art
 | **Rendering: works** | Finished line art in, splash illustration and layered `.clip` out. Everything on this page is about this |
 | **Open drawing: does not** | Deciding pose, shapes, hands, hair and costume, or finishing a sketch. Eleven attempts by two agents, none approved: [`docs/drawing/`](docs/drawing/README.md) |
 
-<img src="gallery/visor.jpg" width="32%" alt="Visor"> <img src="gallery/reel.jpg" width="32%" alt="Reel"> <img src="gallery/maren.jpg" width="32%" alt="Maren">
+![Visor](gallery/visor.jpg)
 
 ## How it works
 
@@ -131,7 +131,7 @@ node scripts/clipcheck.ts file.clip --tree                          # read a .cl
 
 | Query | Shows |
 |---|---|
-| `v=<drawing>` | any drawing in `src/splash`: `visor`, `maren`, `meridian`, `reel`, `rig`, `tape`, `bell`. `visor` and `maren` read a form field (11 MB, not in Git): make it once with `node scripts/form.ts maren output/form/m 4 --field` |
+| `v=<drawing>` | any drawing in `src/splash`: `visor`, `maren`, `meridian`, `rig`, `tape`, `bell`. `visor` and `maren` read a form field (11 MB, not in Git): make it once with `node scripts/form.ts maren output/form/m 4 --field` |
 | `&upto=0..10` | stop after a pass |
 | `&view=value`, `grey`, `masks`, `regions` | three values, greyscale, shadow design, regions |
 | `&k=2` or `3` | scale, an integer. At 1 a few regions can leak |
