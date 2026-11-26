@@ -1,4 +1,6 @@
 import type { Art } from "./engine.ts"
+import { painted } from "../bold/eye.ts"
+import { BROWS, DETAILS } from "./meridian-face.ts"
 
 const c = (a: string, b: string, d: number, deep?: number): readonly [ReadonlyArray<string>, ReadonlyArray<string>, number, number?] => (deep ? [a.split(" "), b.split(" "), d, deep] : [a.split(" "), b.split(" "), d])
 import { CLICKS, WALLS } from "./meridian-clicks.ts"
@@ -11,8 +13,9 @@ export const ART: Art = {
   head: 225, src: "/meridian.png", w: 1024, h: 1536, seeds: [], lines: LINES, clicks: { at: CLICKS, walls: WALLS, move: [{ label: "pleat", d: "334,1212! 358,1218! 374,1268! 350,1268!", over: ["train"] }] }, walls: [], force: [],
   defs: {
     bg: { color: "#ffffff", kind: "flat", z: 0 },
-    hairF: { color: "#9a98ad", kind: "hair", z: 14 },
-    hairB: { color: "#75738c", kind: "hair", z: 2 },
+    hairF: { color: "#9c97bc", kind: "hair", z: 14 },
+    braid: { color: "#a9a5c8", kind: "hair", z: 15, deep: 1.25 },
+    hairB: { color: "#6e6898", kind: "hair", z: 2 },
     face: { color: "#fde8dc", kind: "skin", z: 9 },
     ear: { color: "#fde8dc", kind: "skin", z: 10 },
     neck: { color: "#fde8dc", kind: "skin", z: 4 },
@@ -99,10 +102,10 @@ export const ART: Art = {
   // values: { dark: [], mid: [], light: [] }, apart: [["hairF", "face", 65]],          the value plan: gate.ts and finish.ts
   field: "/wip/meridian-field.bin", formed: "tabD scrollE knob orb globe".split(" "), meshCasts: "scroll scrollE knob".split(" "),
   shadows: SHADOWS,
-  grads: [{ on: ["hairF"], a: [560, 40], b: [380, 420], to: [132, 128, 156], k: 0.5 }, { on: ["cape"], a: [600, 330], b: [820, 560], to: [30, 34, 72], k: 0.5 }, { on: ["panelC", "skirt", "panelL", "skirtR", "panelR", "lap"], a: [320, 800], b: [420, 1440], to: [38, 92, 104], k: 0.6 }, { on: ["train"], a: [300, 1250], b: [740, 1470], to: [44, 30, 60], k: 0.5 }],
+  grads: [{ on: ["hairF"], a: [560, 40], b: [380, 420], to: [118, 110, 160], k: 0.55 }, { on: ["cape"], a: [600, 330], b: [820, 560], to: [30, 34, 72], k: 0.5 }, { on: ["panelC", "skirt", "panelL", "skirtR", "panelR", "lap"], a: [320, 800], b: [420, 1440], to: [38, 92, 104], k: 0.6 }, { on: ["train"], a: [300, 1250], b: [740, 1470], to: [44, 30, 60], k: 0.5 }],
   hair: [{ on: ["hairF"], root: [500, 50], tip: -6, shade: 0, streaks: false, ring: { at: [540, 170], r: 128, thick: 9, from: 200, to: 300 } }, { on: ["hairB"], root: [470, 120], tip: -8, shade: 1.5 }],
   forms: [
-    { on: ["neck", "ear"], by: "part", turn: 0.4 }, { on: ["handT", "handU"], by: "patch", turn: 0.36 },
+    { on: ["braid"], by: "patch", turn: 0.42 }, { on: ["neck", "ear"], by: "part", turn: 0.4 }, { on: ["handT", "handU"], by: "patch", turn: 0.36 },
     { on: ["vest", "plack", "dress", "under", "cuff", "collar", "jabot", "pleat", "lap", "skirt", "panelL", "panelC", "skirtR", "panelR", "sleeveL", "mantle", "sleeveR", "robeF", "backR", "backD", "cape", "capeC", "capeHem", "ribbon", "ribB", "lining", "train", "trainB", "hip", "tabard", "leafT", "tassel", "leg"], by: "part", turn: 0.36 },
     { on: ["hemM", "hemL", "hemC", "hemR", "hemB", "hemT", "bandR", "trimC", "jabotT", "trimS", "pipe", "belt", "tabB", "strap", "scroll", "roll", "scrollE", "shoe", "sole", "stool"], by: "patch", turn: 0.3 },
     { on: ["spec", "pin", "earr", "brooch", "gem", "node", "btn", "chain", "ring", "globe", "clasp", "gemR", "buck", "medal", "star8", "orb", "knob", "bow", "starP", "nodeP"], by: "patch" },
@@ -117,16 +120,12 @@ export const ART: Art = {
     c("belt clasp", "dress vest", 4, 0.5), c("vest", "dress", 12, 0.5), c("robeF", "vest dress", 8, 0.5), c("sleeveL mantle", "dress under lap", 16, 0.5), c("under", "dress lap skirtR", 10, 0.5), c("cuff", "handT", 4), c("handT", "handU under lap panelC", 10, 0.5), c("handU", "lap panelC skirtR", 8, 0.5), c("btn", "under", 2),
     c("lap", "skirt panelC", 8), c("panelC hemC", "skirt pleat train skirtR", 14, 0.5), c("skirt hemM", "pleat panelL train trainB", 12, 0.5), c("panelL hemL", "train", 10, 0.5), c("pleat", "leg trainB", 14, 0.5), c("leg shoe", "trainB", 8), c("skirtR bandR", "panelR", 10, 0.5), c("panelR hemR", "train stool", 10, 0.5),
     c("scroll roll scrollE strap buck", "tabard hip panelR", 14, 0.5), c("orb tassel", "tabard tabB", 8, 0.5), c("tabard tabB", "stool panelR", 10, 0.5), c("ribbon", "ribB", 6), c("sleeveR mantle", "hip skirtR", 12, 0.5),
+    c("pin", "hairF braid", 10, 0.5), c("braid", "hairF", 6, 0.5), c("earr", "neck hairB hairF face collar", 10, 0.5), c("spec", "face", 5, 0.4), c("ring globe", "cape vest jabot capeC", 10, 0.5), c("chain", "vest cape plack", 6, 0.5), c("brooch gem", "jabot collar trimC", 8, 0.5), c("btn", "vest plack under", 4, 0.5), c("clasp", "belt dress", 5, 0.5), c("node", "cape", 4), c("gemR", "handT handU", 3),
+    c("scroll roll scrollE", "hip tabard panelR skirtR", 18, 0.5), c("strap buck medal star8", "scroll hip tabard", 8, 0.5), c("orb tassel knob", "tabard tabB hip panelR", 12, 0.5), c("bow", "shoe", 4), c("starP nodeP", "panelC panelL", 2),
   ],
   bevels: [{ on: ["ring", "brooch", "pin", "buck", "orb", "clasp", "btn", "earr", "medal", "star8", "bow", "node", "knob", "gemR", "spec"], w: 1.6, lit: 0.95 }, { on: ["hemM", "hemL", "hemC", "hemR", "hemB", "bandR", "capeHem"], w: 2, lit: 0.6 }, { on: ["belt", "strap", "tabB", "pipe", "jabotT", "trimC"], w: 1.8, lit: 0.5 }, { on: ["scrollE", "roll"], w: 2, lit: 0.6 }],
   shapes: SHAPES, soft: [], washes: [{ on: ["face"], x: 486, y: 222, rx: 22, ry: 12, color: [250, 176, 166], a: 0.32, late: true }, { on: ["face"], x: 568, y: 202, rx: 22, ry: 12, color: [250, 176, 166], a: 0.3, late: true }, { on: ["handT"], x: 360, y: 770, rx: 24, ry: 14, color: [250, 176, 160], a: 0.3 }], noink: [],
   // ...painted([...eyeDetails("Eyes", EYE, LOOK), ...eyeLights("Highlights", EYE, LOOK)]),   instead of face and over: the eye kit, each piece a layer (bold/eye.ts)
   // folders: [["Hair back", "hairB", "fine"], ["Face", "face", "fine"]], lineGroups: [],            the layered file (docs/layers.md)
-  face: (g) => {
-    const dot = (x: number, y: number, rx: number, ry: number, c: string): void => { g.fillStyle = c; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fill() }
-    // the eyes are narrow and smiling: a small violet-grey iris under the artist's ring, darker at the top under the lid
-    dot(545.6, 162, 5.2, 4.6, "#7d7aa6"); dot(545.6, 159.6, 5, 2.4, "#4f4b78"); dot(545.6, 162, 2.2, 2.2, "#2f2c4a")
-    dot(479.2, 189, 4.8, 4.4, "#7d7aa6"); dot(479.2, 186.8, 4.6, 2.2, "#4f4b78"); dot(479.2, 189, 2, 2, "#2f2c4a")
-  },
-  over: (g) => { g.fillStyle = "#ffffff"; g.beginPath(); g.ellipse(543.8, 160.4, 1.4, 1.2, 0, 0, 7); g.ellipse(477.6, 187.6, 1.3, 1.1, 0, 0, 7); g.fill() }, back: () => undefined, front: () => undefined,
+  ...painted(DETAILS), brows: BROWS, back: () => undefined, front: () => undefined,
 }

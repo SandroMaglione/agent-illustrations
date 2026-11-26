@@ -1,7 +1,8 @@
 /** The shadow design, drawn over the form guide (scripts/guide.ts). parts | tone | points. Tones and rules: docs/form-guide.md */
+import { brushes } from "../bold/brush.ts"
 import { read } from "../bold/shadows.ts"
 
-export const SHADOWS = read(`
+export const SHADOWS = [...read(`
 # hair: light from the upper left. Each lock turns away on its lower right; one clean highlight per lock
 hairF | S | 470,92 478,110 466,150 455,190 448,215 452,240 470,262 450,262 432,230 430,190 440,150 455,110
 hairF | S | 380,240 400,262~ 430,280~ 455,300 452,318 425,300~ 395,282~ 375,262
@@ -43,4 +44,28 @@ vest | D | 360,548 400,560~ 440,566 480,566 520,556 540,560 500,572 440,574 380,
 vest | H | 336,470 350,510~ 360,548 340,540 326,500
 dress | S | 470,600 500,610 512,660 500,700 470,712 480,660
 dress | D | 380,604 420,600 470,604 440,612 400,614
-`)
+`), ...brushes(`
+# hair, strand by strand: deep lines between strands, light along the top of each lock and the lobes of the braid
+hairF | D | 3 | 456,70 447,100 440,130 436,160 434,190
+hairF | D | 3< | 404,206 396,232 392,258 396,284
+hairF | D | 3 | 372,280 364,310 366,340 380,366
+hairF | D | 3 | 340,392 326,416 320,444 330,468
+hairF | D | 3 | 528,78 556,82 584,96 606,116
+hairF | W | 11< | 432,70 420,98 412,126 406,150
+hairF | W | 5 | 448,76 440,100 434,122
+hairF | W | 4 | 396,214 388,236 384,256
+hairF | W | 10 | 520,72 546,66 574,72 598,86
+hairF | W | 4 | 560,92 584,98 604,110
+hairF | W | 9 | 386,258 376,280 371,302
+hairF | W | 8 | 357,340 347,362 343,382
+hairF | W | 7 | 323,402 311,424 306,442
+hairF | W | 4 | 296,446 290,462
+braid | W | 6 | 482,56 491,49 502,47 510,49
+braid | W | 6 | 522,44 533,38 545,39 552,42
+braid | W | 6 | 561,44 573,39 585,42 591,46
+braid | W | 6 | 598,54 609,50 620,54 625,59
+braid | W | 6 | 628,68 639,65 649,70 654,76
+braid | W | 6 | 653,82 663,82 670,89 673,96
+braid | W | 4 | 690,104 700,112 706,126
+braid | W | 3 | 676,94 684,96
+`)]

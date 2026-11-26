@@ -287,3 +287,14 @@ Image-generated line art, seated, old, mostly cloth, 698 patches in 84 parts. Ab
 | cloth shades too weak for the robe's mid value | do | `deep` per part: shades stronger than the kind's own |
 
 Blind critic, same four anchors: first pass 4, second 5; the approved drawings 5 to 6.5, a rejected one 3 to 3.5. Rendering was named the main cause both times; the drawing only once, secondly.
+
+Client on the second pass: "Decent considering the complexity." Forgot the eyes and brows; braid flat; hair low in detail; accessories pasted, without casts.
+
+| What fell short | Kind | Answer |
+|---|---|---|
+| eyes left as two dots, brows not drawn | forgot | step 8 of the process skipped: the eye kit and brows, every time |
+| braid one part with the loose hair: no lobe turned | see | the braid its own part, shaded patch by patch, a highlight per lobe |
+| hair without strands or bands | do | `bold/brush.ts`: tapered strokes along the strands, highlight bands as strokes |
+| small metal without casts or sparks | forgot | a cast for every accessory onto what it lies on; glints on metal |
+
+The blind critic stayed at 5 through these: at its viewing size it judges the large cloth and the gold, not the eyes. Both judges are needed.
