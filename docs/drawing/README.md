@@ -39,7 +39,17 @@ An earlier version of our conclusion said "decision only". The log does not supp
 | Copying and deciding fail for different reasons | guess, see test 1 |
 
 ## The lead
-The line art of both approved drawings is image-generated, made and picked by the owner. Directed by an agent (attempt 7), the same kind of tool was rejected every round. So the gap may not be drawing at all, but **asking and picking**: taste, again. Not recorded yet: model, prompts, references given, how many tries, why these two were kept. First thing to find out.
+The line art of `maren`, `bell`, `rig` and `visor` came from the same image model as attempt 7, through the same kind of agent, with hardly any rounds. Attempt 7 had five rounds of direction and was rejected in all of them.
+
+| | Kept | Attempt 7 |
+|---|---|---|
+| Ask | loose: a new character, clean line art | a set type: a hunter with a bow |
+| Who invents | the agent that writes the prompt: one odd job, one prop, one action (a radio engineer lifting one headphone, a hotel clerk serving a bell, a market porter with three huge fruit) | the brief, then design sheets |
+| Prompt | one, about 200 words: attitude, gesture, big shapes, three line weights | long lists of what must be right: grip, string, quiver, buckles |
+| Rounds | first image kept (`maren`, `bell`, `rig`); `visor` is one redraw with three style references, to get finer lines | five, each fixing faults |
+| Judged by | the owner, on sight | an agent with checklists |
+
+Which of these matters is a guess: they differ together. One more hint: when the owner asked for three different eye designs of one figure, two rounds of three "all look the same". This tool is good at a first idea and poor at being steered.
 
 ## What the client asked for
 Not the fault list, the direction, in their words:

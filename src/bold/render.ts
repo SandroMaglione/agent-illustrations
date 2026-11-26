@@ -77,7 +77,7 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
   const mk = (): { c: HTMLCanvasElement; g: CanvasRenderingContext2D } => { const c = document.createElement("canvas"); c.width = w; c.height = h; return { c, g: c.getContext("2d", { willReadFrequently: true })! } }
   const tmp = mk(), trace = (g: CanvasRenderingContext2D, d: string): void => { g.beginPath(); loop(d).forEach(([x, y], i) => (i ? g.lineTo(x * k, y * k) : g.moveTo(x * k, y * k))); g.closePath() }
   const alphaOf = (): Uint8ClampedArray => tmp.g.getImageData(0, 0, w, h).data
-  const defs = names.map((n) => art.defs[n] ?? null), kinds = defs.map((d) => d?.kind as Kind | undefined), tones = defs.map((d) => (d ? tone(d.color, d.kind as Kind) : null)), zs = defs.map((d) => d?.z ?? 0), bg = names.indexOf("bg")
+  const defs = names.map((n) => art.defs[n] ?? null), kinds = defs.map((d) => d?.kind as Kind | undefined), tones = defs.map((d) => (d ? tone(d.color, d.kind as Kind, d.deep) : null)), zs = defs.map((d) => d?.z ?? 0), bg = names.indexOf("bg")
   const set = (gs: ReadonlyArray<string>): Uint8Array => { const t = new Uint8Array(names.length); for (const g of gs) { const i = names.indexOf(g); if (i > 0) t[i] = 1 } return t }
   const of = (kind: ReadonlyArray<Kind>): Uint8Array => Uint8Array.from(kinds, (d) => (d && kind.includes(d) ? 1 : 0))
 
@@ -420,9 +420,9 @@ export const render = async (art: Art, k: number, upto: number, view: View = "no
         if (give > 0) { const g = bl[i]! * give * (kd === "dark" || kd === "leather" ? 0.5 : 0.62), c: RGB = [now[0] * (1 + (g * u.base[0]) / 255) + g * u.base[0] * 0.05, now[1] * (1 + (g * u.base[1]) / 255) + g * u.base[1] * 0.05, now[2] * (1 + (g * u.base[2]) / 255) + g * u.base[2] * 0.05], l = luma(c); to(i, l > cap ? [(c[0] * cap) / l, (c[1] * cap) / l, (c[2] * cap) / l] : c, 1); if (rec && gate === tag) cover![i] = g }
       }
       tag = "skyIn"
-      if (s2[i]! > 0.01) to(i, mix([R[i]!, G[i]!, B[i]!], mix(t.neon, [112, 84, 190], 0.35), 0.42), s2[i]!); if (rec && gate === tag) cover![i] = s2[i]! * 0.42
+      if (s2[i]! > 0.01) to(i, mix([R[i]!, G[i]!, B[i]!], mix(t.neon, [112, 84, 190], 0.35), 0.42), s2[i]! * (defs[n]?.rim ?? 1)); if (rec && gate === tag) cover![i] = s2[i]! * 0.42
       tag = "sky"
-      if (s1[i]! > 0.01) to(i, t.neon, s1[i]! * 0.92)
+      if (s1[i]! > 0.01) to(i, t.neon, s1[i]! * 0.92 * (defs[n]?.rim ?? 1))
     } })
   }
   if (upto >= 8 && view !== "regions") await stage(["blush"], () => wash(true))

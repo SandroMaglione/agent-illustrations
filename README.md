@@ -61,6 +61,12 @@ The same process on other line art, the headphones drawing, from zero:
 
 What it needed and what it changed in the process: [`docs/lessons.md`](docs/lessons.md).
 
+## A third drawing
+
+Seated, old, mostly cloth: the hardest line art so far. About two hours, four rounds, a blind critic between them. Eyes, braid, hair strands and accessory casts came from the client's notes; large cloth is the open part.
+
+<img src="gallery/meridian.jpg" width="420" alt="Meridian">
+
 ## What was learned
 
 1. **Understand the form before shading it.** Answering notes spot by spot only moved the problem. A blockout ended that.
@@ -123,7 +129,7 @@ node scripts/clipcheck.ts file.clip --tree                          # read a .cl
 
 | Query | Shows |
 |---|---|
-| `v=<drawing>` | any drawing in `src/splash`: `visor`, `maren`, `rig`, `tape`, `bell`. `visor` and `maren` read a form field (11 MB, not in Git): make it once with `node scripts/form.ts maren output/form/m 4 --field` |
+| `v=<drawing>` | any drawing in `src/splash`: `visor`, `maren`, `meridian`, `rig`, `tape`, `bell`. `visor` and `maren` read a form field (11 MB, not in Git): make it once with `node scripts/form.ts maren output/form/m 4 --field` |
 | `&upto=0..10` | stop after a pass |
 | `&view=value`, `grey`, `masks`, `regions` | three values, greyscale, shadow design, regions |
 | `&k=2` or `3` | scale, an integer. At 1 a few regions can leak |
@@ -204,4 +210,4 @@ Also here: [a reel of the sketch engine](gallery/reel.mp4) and [its studio in on
 
 Style reference screenshots and every comparison image that contains them are other people's art, so they stay local, as do full-size renders, which the code regenerates. Numbers that mention references cannot be re-run without them.
 
-Line art in progress stays out too (`public/wip`). Line art in `public/` was supplied by the owner; `visor.png` and `tape.png` (Maren) are image-generated. The twin-tails drawing of step 6, by another artist, and every image made from it were removed on 26 November 2026; numbers and reviews that mention it stay.
+Line art in progress stays out too (`public/wip`). Line art in `public/` was supplied by the owner; `visor.png`, `tape.png` (Maren), `rig.png` and `bell.png` are image-generated. The twin-tails drawing of step 6, by another artist, and every image made from it were removed on 26 November 2026; numbers and reviews that mention it stay.

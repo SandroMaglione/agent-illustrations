@@ -35,7 +35,7 @@ export type Art = {
   /** Bucket mode: one click per patch and the lines the artist left open. Replaces seeds, walls and force. */
   clicks?: { at: Clicks; walls: ReadonlyArray<string>; /** What open lines gave to the wrong part: an outline that takes pixels from `over` for `label`. */ move?: ReadonlyArray<{ label: string; d: string; over?: ReadonlyArray<string> }> }
   force: ReadonlyArray<{ label: string; d: string; over?: ReadonlyArray<string> }>
-  defs: Readonly<Record<string, { color: string; kind: Kind; z: number; rim?: number; grain?: number }>>
+  defs: Readonly<Record<string, { color: string; kind: Kind; z: number; /** How strong its second light is: 1 as usual, 0 none. */ rim?: number; grain?: number; /** Shades stronger than the kind's own: 1 as usual. */ deep?: number }>>
   grads: ReadonlyArray<{ on: ReadonlyArray<string>; a: readonly [number, number]; b: readonly [number, number]; to: RGB; k: number }>
   /** Caster, receiver, how far it falls, and the share of that which is deep: things that stand off the surface. */
   casts: ReadonlyArray<readonly [ReadonlyArray<string>, ReadonlyArray<string>, number, number?]>
