@@ -18,17 +18,17 @@ Test several colour ideas while the drawing is still simple. Viewing options sma
 
 Value—how light or dark a colour is—does the heavy work. Colour sets mood, but value separates shapes and guides the eye. Checking in grey strips away colour so weak contrast stands out immediately.
 
-![Three numbers for every colour](../../gallery/guides/maren/c-basics.jpg)
+![Three things in every colour](../../gallery/guides/maren/c-basics.jpg)
 
 Every colour you pick is three choices: where on the hue ring, how strong, how light. Shading well means moving all three at once. A shadow that only gets darker, with hue and strength untouched, looks grey and dirty. The square and the triangle in drawing programs hold the same colours; what matters is which way you move.
 
-![Picking the shades of one colour](../../gallery/guides/maren/c-ramp.jpg)
+![On your colour wheel](../../gallery/guides/maren/c-wheels.jpg)
 
-One colour, every step picked by hand. Shadow is not the lit colour pulled straight down: each step turns a little further round the ring, gets a little stronger and a little darker. Light and bounce move the other way. The numbers are a guide, not a rule; the direction is what matters.
+Every shade is a new pick, and each pick is three moves at once: around the ring, across the square, up or down. Shadow is never the lit colour pulled straight down. Some moves are small and some clear; the captions say which, and the steps below show what each looks like on the picture.
 
 ![Mixing a colour over another](../../gallery/guides/maren/c-blend.jpg)
 
-Painting one colour over another can replace it, darken it, lighten it or tint it, and the result depends on how light both colours are. Multiplying only darkens and keeps both colours in the mix, which is why a shadow painted that way stays related to what is under it; a grey multiplied only dulls it. Screening only lightens. Overlay and soft light turn at 50% grey: overlay looks at the colour below, soft light at the colour on top; under 50% they darken, over it they lighten, and 50% grey changes nothing. Adding light burns to white fast, so it suits small sparks, or a dark paint for a soft glow.
+Painting one colour over another can replace it, darken it, lighten it or tint it, and the result depends on how light both colours are. Multiplying only darkens and keeps both colours in the mix, which is why a shadow painted that way stays related to what is under it; a grey multiplied only dulls it. Screening only lightens. Overlay and soft light turn at middle grey: overlay looks at the colour below, soft light at the colour on top; darker than middle grey they darken, lighter than it they lighten, and middle grey itself changes nothing. Adding light burns to white fast, so it suits small sparks, or a dark paint for a soft glow.
 
 ![Form as simple solids](../../gallery/guides/maren/a-form.jpg)
 
@@ -50,12 +50,13 @@ Flat colours lock in your value groups and separate every part before light ente
 - Keep the head and face easy to spot against what surrounds them.
 - Fill every shape cleanly up to the lines.
 
+
+![How much: 02-flats](../../gallery/guides/maren/h-02-flats.jpg)
+
+**Colour:** decide how light each part is before which colour it is. Keep a few large areas quiet, not too saturated, and let small things carry the strong colour. Pick one main family and one opposite accent. Avoid pure black and pure white: even the darkest and lightest parts keep a little colour.
+
 ![Choosing flat colours](../../gallery/guides/maren/f-palette.jpg)
 
-**Colour:** choose by grey first, hue second.
-- Three groups: about a sixth of the figure dark, half mid, a quarter light. The face sits in the light group, the darkest large shape next to it.
-- The biggest areas stay muted (saturation under about 30) or middling (around 50); the strongest colour (over 60) goes to small accents like straps, tabs and ear cups.
-- Pick one main hue family and one opposite accent (here teal and green against orange). Nothing pure black or pure white: the darkest top and the lightest skin both carry a little hue.
 
 ### 2 · Colour shifts
 
@@ -67,7 +68,10 @@ Large flat shapes can feel stiff, like stickers. A gentle colour shift across a 
 - Keep lightness almost unchanged so big shapes stay clear.
 - Keep it subtle; if you spot the shift first, pull it back.
 
-**Colour:** turn the hue about 10 to 20 degrees across the shape and keep the grey value almost the same. Toward the light, drift warm; away from it, drift cool.
+![How much: 03-colour](../../gallery/guides/maren/h-03-colour.jpg)
+
+**Colour:** a gentle slide of hue across the shape, warmer toward the light and cooler away from it, without making it lighter or darker.
+
 
 ### 3 · Main shadow
 
@@ -79,7 +83,10 @@ This is the most important step. Big, simple shadows on every side turned away f
 - Give each shape one clean side and one pointed end; place edges on a drawn line or clearly across the form, never just beside a line.
 - Few large shapes beat many small ones, and simple beats strictly correct.
 
-**Colour:** from the lit colour, turn the hue 15 to 25 degrees away from the colour of the light (toward blue for most things, toward red for skin), raise saturation by 5 to 20, and lower the grey value by 10 to 25 points. A dull colour can turn much further.
+![How much: 04-shadow](../../gallery/guides/maren/h-04-shadow.jpg)
+
+**Colour:** darker, usually a little more saturated (never less), and turned away from the colour of the light: toward blue for most things, toward red for skin. Grey shadows kill the colour; very dark ones turn the picture heavy.
+
 
 Common mistake: hugging every outline with thin shadows instead of grouping planes into big shapes.
 
@@ -96,7 +103,8 @@ Cast shadows tell distance. Anything standing in front of a surface throws its o
 - Echo the blocking shape, shifted away from the light.
 - Keep edges sharp and bold, even if a shadow looks like a blot.
 
-**Colour:** the same colour as the main shadow on that surface. A cast is not a darker kind of shadow, just a shadow with a different shape.
+**Colour:** the same colour as the main shadow on that surface; a cast is a shadow with a different shape, not a darker one.
+
 
 Common mistake: softening cast shadows until overlaps lose depth.
 
@@ -109,7 +117,10 @@ Lit and shadowed shapes alone make curved forms look like cut paper. A third, li
 - Keep the band narrow so it does not eat the lit side.
 - Use it on curving forms and skip sharp corners.
 
-**Colour:** about a third of the way from the lit colour to the shadow: a few degrees of hue, a little more saturation, a few points darker.
+![How much: 06-halftone](../../gallery/guides/maren/h-06-halftone.jpg)
+
+**Colour:** in between the lit colour and the shadow, closer to the lit side. If it reads as its own shape, it is too strong.
+
 
 ### 6 · Shadow edge
 
@@ -120,7 +131,10 @@ On skin, light passes slightly through the surface at the turn and leaves a thin
 - Keep the band thin along the exact light-to-shadow border.
 - Make it warmer and richer than the shadow beside it.
 
-**Colour:** the most saturated colour on the skin, as dark as the shadow or slightly lighter, turned toward red.
+![How much: 07-edge](../../gallery/guides/maren/h-07-edge.jpg)
+
+**Colour:** the most saturated colour on the skin, about as dark as the shadow, and redder. Keep it thin.
+
 
 Common mistake: spreading it too wide so skin looks sunburnt.
 
@@ -133,7 +147,10 @@ Open shadows still catch stray light. Only tight pockets where no light gets in�
 - Keep these shapes small and dark.
 - Use them sparingly; never outline every main shadow.
 
-**Colour:** keep going the way the shadow went: hue about 30 degrees from the lit colour, saturation up another 10 to 20, grey value down by 20 to 40 points in total.
+![How much: 08-deep](../../gallery/guides/maren/h-08-deep.jpg)
+
+**Colour:** continue the shadow's move: darker again, more saturated again, turned a little further. Small and few.
+
 
 ![Colour on khaki](../../gallery/guides/maren/p-trousers.jpg)
 
@@ -148,7 +165,10 @@ Big shadows, especially on dark cloth, can turn into dead holes. Lightening and 
 - Lift gently far from the light so dark cloth stays dark.
 - Shift it cooler so it stays behind the lit side.
 
-**Colour:** a little lighter and cooler than the shadow it sits in, never greyer.
+![How much: 09-lift](../../gallery/guides/maren/h-09-lift.jpg)
+
+**Colour:** only slightly lighter and cooler than the shadow it sits in. If the black starts to look grey or blue, it is too much.
+
 
 ### 9 · Light
 
@@ -159,7 +179,10 @@ Bright shapes on planes facing the light add clarity and pull attention upward. 
 - Paint one highlight block per hair lock.
 - Skip white shiny spots on skin and matte cloth.
 
-**Colour:** turn the hue toward the colour of the light (warm light: toward yellow) by 15 to 25 degrees, lower saturation by 10 to 30, and raise the grey value by 10 to 20 points.
+![How much: 10-light](../../gallery/guides/maren/h-10-light.jpg)
+
+**Colour:** lighter and less saturated, turned toward the colour of the light; on dark cloth, a soft pale sheen. Keep it a pale tint on skin, not a white spot: bright white spots read as oil.
+
 
 ![Colour in the hair](../../gallery/guides/maren/p-hair.jpg)
 
@@ -175,7 +198,10 @@ Light bounces from the surroundings onto far shadowed edges with air behind them
 - Colour it with what surrounds the figure.
 - Keep it always darker than the light, or the light reverses.
 
-**Colour:** take the hue from the surroundings, often 20 to 30 degrees cooler than the lit colour; keep the saturation up; put the grey value between the shadow and the light.
+![How much: 11-bounce](../../gallery/guides/maren/h-11-bounce.jpg)
+
+**Colour:** take the colour of what is around, usually cooler. Lighter than the shadow it sits in, clearly darker than the light. If it catches the eye before the light does, it is too bright.
+
 
 ![Colour on a black top](../../gallery/guides/maren/p-top.jpg)
 
@@ -191,7 +217,8 @@ Shading every surface the same turns metal, plastic, and cloth into clay. Distin
 - Plastic takes a broad, soft shine.
 - Cloth stays matte with no sharp shine.
 
-**Colour:** metal spans almost the whole grey range in a small space, from near black to near white, with the hue of the metal kept in the darks and the colour of the light in the glint.
+**Colour:** metal uses almost the whole range from near black to near white in a small space; its own colour stays in the darks, the colour of the light goes in the glint.
+
 
 ### 12 · Warm skin
 
@@ -202,7 +229,10 @@ Cool shadows suit clothing, but skin looks lifeless if its shade leans grey. War
 - Keep skin shade warm, never grey.
 - Add a soft touch of blush where skin feels thin, like cheeks.
 
-**Colour:** skin shade turns 15 to 30 degrees toward red and rose, and its saturation roughly doubles. Blush is a soft, warm pink well below the strength of the shadow edge.
+![How much: 13-skin](../../gallery/guides/maren/h-13-skin.jpg)
+
+**Colour:** skin shade goes redder and more saturated, never grey. Blush is soft and well below the shadow edge in strength.
+
 
 ![Colour on the skin](../../gallery/guides/maren/p-skin.jpg)
 
@@ -218,6 +248,8 @@ Viewers look at the eyes first. Heavy shading across the face breaks a clean ani
 - Paint between the eye and mouth lines, never over them.
 - Shade the iris dark at the top and brighter at the bottom with lights; paint each brow as one solid shape.
 
+**Colour:** the iris is the strongest colour on the face, darker at the top and lighter below. Eye whites a touch darker than the lit skin, never pure white. Brows a darker version of the hair colour.
+
 ### 14 · Line colour
 
 ![14 · Line colour](../../gallery/guides/maren/15-linecolour.jpg)
@@ -227,7 +259,10 @@ Dark lines everywhere look harsh against bright skin or hair. Tinting inner line
 - Colour inner lines with a darker version of the colour they sit on.
 - Keep the outline and lines between overlapping parts dark.
 
-**Colour:** about as dark as the deep shadow of the surface, in the same hue family.
+![How much: 15-linecolour](../../gallery/guides/maren/h-15-linecolour.jpg)
+
+**Colour:** about as dark as the deepest shadow of the surface, in its own colour family.
+
 
 Common mistake: lightening every line equally, which washes out the drawing.
 
@@ -241,7 +276,10 @@ Parts painted one by one can feel slightly separate. A light final pass pulls ev
 - Make parts further back slightly paler and bluer.
 - Add fine grain to tie the surface together.
 
-**Colour:** a faint orange tint toward the light and a faint blue one away from it, both low in strength; the grey value should barely move.
+![How much: 16-finish](../../gallery/guides/maren/h-16-finish.jpg)
+
+**Colour:** a faint warm tint toward the light and a faint cool one away from it. The picture should look the same, only more together.
+
 
 Common mistake: letting effects stand out; if you notice them first, pull back.
 
