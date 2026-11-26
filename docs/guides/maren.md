@@ -18,6 +18,14 @@ Test several colour ideas while the drawing is still simple. Viewing options sma
 
 Value—how light or dark a colour is—does the heavy work. Colour sets mood, but value separates shapes and guides the eye. Checking in grey strips away colour so weak contrast stands out immediately.
 
+![Three numbers for every colour](../../gallery/guides/maren/c-basics.jpg)
+
+Every colour you pick is three choices: where on the hue ring, how strong, how light. Shading well means moving all three at once. A shadow that only gets darker, with hue and strength untouched, looks grey and dirty. The square and the triangle in drawing programs hold the same colours; what matters is which way you move.
+
+![Mixing a colour over another](../../gallery/guides/maren/c-blend.jpg)
+
+Painting one colour over another can replace it, darken it, lighten it or tint it. Darkening keeps both colours in the mix, which is why a shadow painted that way stays related to what is under it. A grey painted that way only dulls the colour.
+
 ![Form as simple solids](../../gallery/guides/maren/a-form.jpg)
 
 Line art is flat, yet light strikes solid surfaces. Picture every part as simple solids: cylinders, boxes, and cloth draped over them. Once you see which way a surface faces, shading stops being guesswork.
@@ -60,6 +68,10 @@ This is the most important step. Big, simple shadows on every side turned away f
 
 Common mistake: hugging every outline with thin shadows instead of grouping planes into big shapes.
 
+![Colour picks: a teal jacket](../../gallery/guides/maren/c-jacket.jpg)
+
+Each arrow is one move on the picker. Light is warm here, so the shadow slides the other way round the ring, toward blue, and gets stronger as it gets darker. That small turn of hue is what keeps a shadow looking like colour instead of dirt.
+
 ### 4 · Cast shadows
 
 ![4 · Cast shadows](../../gallery/guides/maren/05-cast.jpg)
@@ -100,6 +112,10 @@ Open shadows still catch stray light. Only tight pockets where no light gets in�
 - Keep these shapes small and dark.
 - Use them sparingly; never outline every main shadow.
 
+![Colour picks: khaki trousers](../../gallery/guides/maren/c-trousers.jpg)
+
+A dull colour has the most room to move. Khaki in light becomes rose in shadow and violet where no light gets in: the deeper the shadow, the further it travels from the lit colour.
+
 ### 8 · Shadow lift
 
 ![8 · Shadow lift](../../gallery/guides/maren/09-lift.jpg)
@@ -118,6 +134,10 @@ Bright shapes on planes facing the light add clarity and pull attention upward. 
 - Paint one highlight block per hair lock.
 - Skip white shiny spots on skin and matte cloth.
 
+![Colour picks: green hair](../../gallery/guides/maren/c-hair.jpg)
+
+Light moves the opposite way to shadow: toward the colour of the light, here yellow, and paler. Lights and shadows pulling in two directions is what makes a surface feel lit by something.
+
 ### 10 · Reflected light
 
 ![10 · Reflected light](../../gallery/guides/maren/11-bounce.jpg)
@@ -127,6 +147,10 @@ Light bounces from the surroundings onto far shadowed edges with air behind them
 - Shape it as a crisp band pointed at both ends along far edges.
 - Colour it with what surrounds the figure.
 - Keep it always darker than the lit side, or the light reverses.
+
+![Colour picks: a black top](../../gallery/guides/maren/c-top.jpg)
+
+On a near-black colour there is little room to go darker, so the shadow gains strength instead, and the reflected light is a clear step up in a colour from the surroundings. That is how black cloth still shows its form.
 
 ### 11 · Materials
 
@@ -146,6 +170,10 @@ Cool shadows suit clothing, but skin looks lifeless if its shade leans grey. War
 
 - Keep skin shade warm, never grey.
 - Add a soft touch of blush where skin feels thin, like cheeks.
+
+![Colour picks: skin](../../gallery/guides/maren/c-skin.jpg)
+
+Skin breaks the cool-shadow habit. Light passes into it and comes back red, so its shade turns toward red and rose and gets clearly stronger, most of all right at the edge of the shadow.
 
 ### 13 · Eyes and face
 
