@@ -17,6 +17,7 @@ import { detectGaps } from "../src/flatting/gaps.ts"
 import { assignAndGrow, segmentFacets } from "../src/flatting/segment.ts"
 import { buildFlatStack, buildWallMask, parseSpec, resolveFacetLabels, sealBottlenecks } from "../src/flatting/spec.ts"
 import { auditFlats, renderAuditOverlay, renderNeonNoLines, renderSilhouetteCheck } from "../src/flatting/audit.ts"
+import { findReviewCandidates, renderReviewSheet } from "../src/flatting/review.ts"
 import { renderFacetSheet, renderGapSheet, zoomCropRgba } from "../src/flatting/sheet.ts"
 import type { CropBox } from "../src/flatting/sheet.ts"
 
@@ -163,10 +164,23 @@ for (let i = 0; i < img.w * img.h; i++) {
   flatRgba[i * 4 + 3] = 255
 }
 
+const silRgba = renderSilhouetteCheck(baseGreyRgba, inkField)
 writeFileSync(join(outDir, "preview.png"), encodePng(flatRgba, img.w, img.h))
-writeFileSync(join(outDir, "silhouette.png"), encodePng(renderSilhouetteCheck(baseGreyRgba, inkField), img.w, img.h))
+writeFileSync(join(outDir, "silhouette.png"), encodePng(silRgba, img.w, img.h))
 writeFileSync(join(outDir, "neon-check.png"), encodePng(renderNeonNoLines(grown.labels, img.w, img.h), img.w, img.h))
 writeFileSync(join(outDir, "audit-overlay.png"), encodePng(renderAuditOverlay(inkField, wallMask, audit), img.w, img.h))
+
+// Automatic high-risk review contact sheets (enclosed bg holes, multi-colour suspect air pockets,
+// uncoloured closed loops like rivets/buttons/nails, and any unwalled bare-paper leak spots!)
+const review = findReviewCandidates(fm, baseFm, grown.labels, facetLabel, audit)
+const writeSheet = (fname: string, list: Parameters<typeof renderReviewSheet>[0]): void => {
+  const sh = renderReviewSheet(list, inkField, flatRgba, silRgba, 30)
+  if (sh) writeFileSync(join(outDir, fname), encodePng(sh.rgba, sh.w, sh.h))
+}
+writeSheet("review-bg-holes.png", review.bgHoles)
+writeSheet("review-suspect-holes.png", review.suspectHoles)
+writeSheet("review-same-color-loops.png", review.sameColorLoops)
+writeSheet("review-leaks.png", review.leakSpots)
 
 // Export individual layer PNGs
 const safe = (s: string): string => s.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase()
@@ -225,6 +239,11 @@ for (const lk of audit.leaks.slice(0, 15)) console.log(`       leak at (${lk.x},
 console.log(`  7. Tiny colour islands (<12px): ${audit.tinyIslands.length}`)
 for (const is of audit.tinyIslands.slice(0, 10)) console.log(`       island label=${is.label} at (${is.x},${is.y}) area=${is.area}px`)
 console.log(`  8. .clip round-trip check:      ${readBack.problems.length} rule problems, max diff=${rtDiff.max}, mean=${rtDiff.mean.toFixed(4)}`)
+console.log(`  --- AUTO-REVIEW SHEETS ---`)
+console.log(`  - review-bg-holes.png:          ${review.bgHoles.length} enclosed white space(s)`)
+console.log(`  - review-suspect-holes.png:     ${review.suspectHoles.length} multi-border interior pocket(s) (check for missed air holes!)`)
+console.log(`  - review-same-color-loops.png:  ${review.sameColorLoops.length} closed compact loop(s) sharing parent colour (check for missed rivets/buttons/nails!)`)
+console.log(`  - review-leaks.png:             ${review.leakSpots.length} unwalled bare-paper boundary spot(s)`)
 for (const p of readBack.problems) console.log(`       CLIP PROBLEM: ${p}`)
 console.log(`  Wrote: ${join(outDir, `${outName}.clip`)}, ${join(outDir, `${outName}.psd`)}, preview.png, silhouette.png, neon-check.png, audit-overlay.png`)
 

@@ -113,15 +113,19 @@ export const sealBottlenecks = (
   maxNeck: number,
 ): number => {
   if (maxNeck <= 0) return 0
+  // Strictly cap automatic micro-bottleneck sealing at 1.5 px radius (<= 3 px opening).
+  // Wider gaps MUST be resolved via explicit `wall` or `close gN` so jagged watershed staircases
+  // across open hair/cloth/strap gaps can never slip past the Quality Gate!
+  const capped = Math.min(maxNeck, 1.5)
   const { w, h, seg, dist, facets } = fm
-  // Build lookup of allowed narrow neighbor pairs (different labels, neck <= maxNeck)
+  // Build lookup of allowed narrow neighbor pairs (different labels, neck <= capped)
   const allowed = new Set<number>()
   const STRIDE = fm.n + 2
   for (let id = 1; id <= fm.n; id++) {
     const la = facetLabel[id]!
     if (!la) continue
     for (const nb of facets[id]!.paperNeighbors) {
-      if (nb.neck > maxNeck) continue
+      if (nb.neck > capped) continue
       const lb = facetLabel[nb.id]!
       if (lb && lb !== la) {
         const a = Math.min(id, nb.id), b = Math.max(id, nb.id)
@@ -141,7 +145,7 @@ export const sealBottlenecks = (
         const fb = seg[j]!
         if (!fb || fa === fb) continue
         const a = Math.min(fa, fb), b = Math.max(fa, fb)
-        if (allowed.has(a * STRIDE + b) && Math.min(dist[i]!, dist[j]!) <= maxNeck + 0.5) {
+        if (allowed.has(a * STRIDE + b) && Math.min(dist[i]!, dist[j]!) <= capped + 0.5) {
           wallMask[i] = 1
           wallMask[j] = 1
           sealedPx++

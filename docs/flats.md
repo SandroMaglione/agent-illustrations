@@ -39,12 +39,16 @@ Every build runs `auditFlats()` (`src/flatting/audit.ts`) plus a full `.clip` re
 7. **Tiny colour islands (`< 12 px`)** — reported with coordinates to catch stray misassigned specks (intentional tiny elements such as hair tips peeking behind a prop are verified visually).
 8. **`.clip` round-trip validation** — `readClip` reports `0` CSP rule problems, exact layer tree (`Line art`, `↳ [Flats]`, `Base 50% Grey`, `Paper`), and `compositeClip` matches the reference composite (`max diff = 0`).
 
-Every build also generates four diagnostic PNGs for fast visual verification:
+Every build also generates four full-canvas diagnostic PNGs **plus four automatic 3× side-by-side review contact sheets** (no manual crop coordinates needed):
 
 - `preview.png` — final composite (`Paper` + `Base 50% Grey` + clipped `Flats` + `Line art` Multiply).
 - `silhouette.png` — `Base 50% Grey` over screaming magenta (`#ff00ff`) with 55% ink overlay (classic comic-flatter's check: any single missing pixel, halo, or bleed pops immediately).
 - `neon-check.png` — all colour layers in high-contrast neon on dark charcoal **with no line art** (exposes any pinhole, jagged seam, or misassigned facet).
 - `audit-overlay.png` — declared walls in cyan, any unwalled bare-paper edges circled in red, tiny islands in yellow.
+- `review-leaks.png` — 3× zoom of every unwalled bare-paper boundary (`sealNecks` is strictly capped at `<= 1.5 px` so wide trapped-ball watershed staircases across open lines can never slip through unreviewed).
+- `review-bg-holes.png` — 3× zoom of every enclosed non-exterior white space (`bg` facet), catching hair curls, props, or clothing accidentally excluded as background.
+- `review-suspect-holes.png` — 3× zoom of small/medium interior figure pockets bordering `>= 2` distinct materials (prioritized by neighbor count & size), catching trapped air pockets under elbows or between fingers that were accidentally coloured.
+- `review-same-color-loops.png` — 3× zoom of closed compact ink loops sharing their parent's colour (buttons, rivets, nails, bolts, gems), catching missed small details or inconsistent twin hardware.
 
 ---
 
@@ -69,8 +73,8 @@ ridgeCut 0.14
 maxNeckRadius 5.5
 autoAbsorbMaxArea 28
 
-# Accept detected gaps, seal trapped-ball micro-bottlenecks, or draw explicit virtual walls (never renumbers existing facet IDs!)
-sealNecks 4.5
+# Seal 1px micro-pinches (strictly capped at <= 1.5 px!), accept detected gaps, or draw explicit tangent walls
+sealNecks 1.5
 close g79 g80
 wall 624,282 645,274
 
