@@ -1,123 +1,280 @@
-# Rendering anime splash art
+# Rendering anime art from line art to finish
 
-Colouring and shading finished line art, on one character: Maren, lit from the upper left.
+Open your clean line art in any drawing program (CLIP STUDIO PAINT, Krita, Procreate, or Photoshop) and follow these steps in order.
 
 ![Maren](../gallery/guide/00-maren.jpg)
+*Finished render: upper-left light, bright face and shoulder, cool reflected light on the far right edges.*
 
-*Finished render: upper-left light, bright face and shoulder, cool reflected light on far right edges.*
+![Overview](../gallery/guide/01-overview.jpg)
+*From left to right: lines, flats, main shadow, casts, deep shadow, light, bounce light, eyes, and finish.*
 
-![Process](../gallery/guide/01-process.jpg)
+## Before you start
 
-*Six stages: flats; big shadow planes; deep shade; materials and reflected light; eyes and face; tinted lines, air, and grain.*
+**Layers.** Put your line art on top and lock it. Below it, make one folder per part with one flat layer at the bottom. Clip every shading layer to its flat so paint stays inside that shape.
 
-## 1. Flats and colour plans
+From bottom to top, each part uses the same stack:
 
-![Colour plans](../gallery/guide/02-color-plans.jpg)
+1. **Flat** (Normal)
+2. **Gradient** (Normal)
+3. **Half tone** (Multiply)
+4. **Shadow 1** (Multiply), plus **Cast shadow** (Multiply) above it
+5. **Shadow edge** (Multiply)
+6. **Shadow lift** (Color Dodge)
+7. **Shadow 2** (Multiply)
+8. **Light** (Normal)
+9. **Reflected light** (Normal)
 
-*Four plans with three-value and stamp-size views. Plan A wins: mid-green hair frames a bright face over a dark top. In C, pale hair merges into the face.*
+**One light source.** Pick one light direction first and keep it fixed. Here it comes from the upper left, so right and lower sides turn into shadow.
 
-![Values](../gallery/guide/03-values.jpg)
+## Plan
 
-*Flats in greyscale, three values, and finished greyscale. Big neighbours stay apart throughout.*
+Check your palette, values, simple forms, and shadow shapes before shading.
 
-- Start from closed line art. Put each part on a flat layer and pick its material: skin, hair, cloth, metal, plastic, or leather.
-- Pick one light and one focus. Squint at small plans: the head reads first, hair is one mass darker than the face, and big neighbours differ clearly in grey.
-- Try: toggle a black layer in Color mode on top after every step.
+![Plans](../gallery/guide/a-plans.jpg)
+*Four colour plans in three values and stamp size. Plan A wins: mid-green hair, lightest face, black top as anchor, dark teal jacket, pale trousers.*
 
-## 2. Form
+![Values](../gallery/guide/a-values.jpg)
+*Flats in grey, three values, and final in grey. Toggle a top black layer in **Color** mode after every step.*
 
-![Form](../gallery/guide/04-form.jpg)
+![Form](../gallery/guide/a-form.jpg)
+*Figure as simple solids from five angles. Think cylinders and boxes before shading.*
 
-*Simple solids from five angles: cylinders for limbs, a box for the torso, cloth over them. Use this to understand the form, never for the shading itself.*
+![Light map](../gallery/guide/a-light-map.jpg)
+*Left: light map (pale yellow lit, blue turned away, violet cast, teal far edge for reflected light). Right: shadow shapes alone in grey.*
 
-- The form says where the shadow goes; the drawn line says where its edge runs.
+## Step by step
 
-## 3. Shadow shapes, deep shade, and reflected light
+In Steps 2 to 14, left shows where this step sits on the figure, middle is a close-up before, and right is after.
 
-![Light map](../gallery/guide/05-light-map.jpg)
+### 1. Flats
+![Flats](../gallery/guide/02-flats.jpg)
+*Lines on the left, one flat colour per part on the right.*
 
-*Left: light map (yellow lit, blue turned away, violet cast, teal reflected). Middle: designed shadows in grey. Right: finish.*
+**Why:** Clean flats lock in your values and give every shading layer a shape to clip to.
 
-- Paint the biggest planes first on a Multiply layer clipped to each flat, using the lasso or a hard brush. Few large shapes beat many small ones; simple beats correct.
-- One clean side, the other ending in a point. Put edges on a drawn line or clearly away from it, never a few pixels beside it.
-- Deep shade sits where no light gets in (under the chin, inside folds, beside a caster); black only under parts standing well off. Add a bold band of reflected light on far edges with air behind, darker than the lit side and coloured by what is around.
+**How:**
+1. Make one `Flat` (**Normal**) layer per part under the line art.
+2. Pick values first: face lightest, hair mid, top darkest.
+3. Fill each part with the **fill bucket** (gap-closing on), or **lasso** and fill open shapes.
+4. Hide the white background and fix white specks along lines with a **hard brush**.
 
-## 4. Face and eyes
+**Done when:** Every part is solid, speck-free, and separates cleanly in greyscale.
 
-![Face](../gallery/guide/06-face.jpg)
+### 2. Colour gradients
+![Colour gradients](../gallery/guide/03-colour.jpg)
+*Subtle shifts across the flats; hair shifts from green to teal toward the tips.*
 
-*Close-ups below show flats, designed shadows in grey, and finish. The face stays almost flat (hair cast, tiny nose mark, jaw sliver); the neck carries the shade.*
+**Why:** Gentle colour shifts keep large flats alive without disturbing your values.
 
-- Never redraw eye or mouth lines; paint between them.
-- Eye: white with lid shadow on top, iris dark above and lighter below, pupil, one big and a few small lights.
-- Brows: one solid tapered shape in the hair's dark.
+**How:**
+1. Add a clipped `Gradient` (**Normal**) layer above each flat with a large **soft airbrush** at low opacity.
+2. Shift the hair from green to teal toward the tips.
+3. Darken the lower jacket and trousers slightly, and warm the skin at the hands.
+4. Keep it subtle — if you spot the gradient first, lower its opacity.
 
-## 5. Hair
+**Done when:** Big flats feel richer top to bottom while holding the same greyscale read.
 
-![Hair](../gallery/guide/07-hair.jpg)
+### 3. Main shadow (Shadow 1)
+![Main shadow](../gallery/guide/04-shadow.jpg)
+*Hard-edged main shadows on every right and lower plane turned away from upper-left light.*
 
-*One mid-green mass darker than the face, with lock shadows, deep undercuts, and crown highlight blocks.*
+**Why:** This is the most important step — big, clear shadow shapes make the figure look solid.
 
-- One mass first, then one shadow shape per lock from root to tip.
-- Deep shade where locks tuck under; one highlight block per lock.
+**How:**
+1. Add a clipped `Shadow 1` layer in **Multiply** mode (Multiply darkens and tints whatever sits underneath).
+2. Pick a light cool lavender-blue, never grey or black: skin `#d9aab5`, jacket `#ada5d0`, top `#a3b0de`, trousers `#b491ba`, hair `#a8b0db`.
+3. Use a hard-edged **lasso** fill on every right and lower side turned away from the light.
+4. Paint big simple shapes: one clean edge, the other ending in a point.
+5. Land edges on a drawn line or clearly across the form — never a few pixels beside a line.
 
-## 6. Skin
+**Done when:** Hiding the flats leaves simple shadow shapes that describe the whole pose.
 
-![Arm](../gallery/guide/08-arm.jpg)
+### 4. Cast shadows
+![Cast shadows](../gallery/guide/05-cast.jpg)
+*Hard shadows cast by hair onto face and neck, headphones onto hair, and fingers onto the headphone.*
 
-*The shoulder turns into warm peach shade, deepest in the arm crease, with no glossy highlight.*
+**Why:** Cast shadows tell distance so hair, straps, and hands sit solidly on what is behind them.
 
-- Keep skin warm in shade, never grey, with no shiny highlights.
+**How:**
+1. Add a clipped `Cast shadow` (**Multiply**) layer above `Shadow 1` with the same shadow colour.
+2. Find every overlapping piece: hair on face and neck, headphones on hair, hand on headphone and player, strap on top.
+3. Copy the caster's silhouette with the **lasso**, shift it down-right (away from light), and fill with a hard edge.
+4. Keep them bold even if they look like blots — softening them loses depth.
 
-## 7. Dark cloth and casts
+**Done when:** Every part standing off a surface casts a crisp shadow behind it.
 
-![Top](../gallery/guide/09-torso.jpg)
+### 5. Half tone
+![Half tone](../gallery/guide/06-halftone.jpg)
+*A narrow pale band along the lit side of each main shadow on the arm and sleeve.*
 
-*A cool sheen shapes the black top, the strap casts hard across it, and blue reflected light lifts the right edge.*
+**Why:** A narrow third value where forms start to turn makes them look round, not cut paper.
 
-- Dark cloth still shows planes with a cool sheen on the lit side.
-- Everything standing off a surface casts on it: hair on face, headphones on hair, strap on top, hand on player.
+**How:**
+1. Add a clipped `Half tone` (**Multiply**) layer **below** `Shadow 1`.
+2. Pick a very light cool tint (around `#d8dcef`).
+3. Use a **hard brush** or **lasso** to paint a narrow band along the lit edge of curved main shadows.
+4. Keep it narrow and skip sharp corners — wide bands eat the lit side.
 
-## 8. Cloth folds, lines, and metal
+**Done when:** Arms, sleeves, and folds step cleanly from light to half tone to shadow.
 
-![Sleeve](../gallery/guide/10-sleeve.jpg)
+### 6. Shadow edge
+![Shadow edge](../gallery/guide/07-edge.jpg)
+*A thin, warm band along the light-to-shadow boundary on the shoulder.*
 
-*Large shadow planes follow sleeve folds, the pocket flap casts on the yellow tab, and blue reflected light lifts the outer edge.*
+**Why:** Light passes slightly through skin at the shadow edge, leaving a narrow rim of richer, warmer colour.
 
-![Trousers](../gallery/guide/11-pants.jpg)
+**How:**
+1. Add a clipped `Shadow edge` (**Multiply**) layer right above `Shadow 1`.
+2. On skin especially, pick a richer, warmer peach-orange than your main shadow.
+3. With a small **soft airbrush**, trace a tight band right along the light-to-shadow boundary.
+4. Keep it narrow so it never muddies the lit side or turns skin sunburnt.
 
-*Tapered fold shadows end in points, inner lines turn warm brown, and the silver buckle puts near-black beside white.*
+**Done when:** Skin shadow edges look softly warm instead of chalky.
 
-- Keep cloth matte, with no shiny highlights.
-- Outer and separating lines stay dark; inner lines become a darker step of the colour they sit on.
-- Metal puts darkest right beside brightest, with a lit rim and one sharp glint.
+### 7. Deep shadow (Shadow 2)
+![Deep shadow](../gallery/guide/08-deep.jpg)
+*Small dark violet pockets tucked under the collar, inside sleeve folds, and in the arm crease.*
 
-## 9. Plastic and bold casts
+**Why:** Small pockets where no light reaches give weight to folds, creases, and deep overlaps.
 
-![Headphones](../gallery/guide/12-phones.jpg)
+**How:**
+1. Add a clipped `Shadow 2` (**Multiply**) layer above `Shadow edge`.
+2. Pick a darker, more violet shadow: skin `#b48eac`, jacket `#8a73ad`, top `#8389b6`.
+3. Use a **hard brush** or **lasso** only in small recesses: under the chin, armpit, inside folds, jacket lining against the body, and right beside casters.
+4. Use near-black only under parts standing far off; never outline every main shadow.
 
-*Smooth orange plastic with a broad soft highlight, crisp chrome and gold, and a deep headphone cast on the hair.*
+**Done when:** Deep creases feel grounded while main shadows still dominate.
 
-![Cassette player](../gallery/guide/13-device.jpg)
+### 8. Shadow lift
+![Shadow lift](../gallery/guide/09-lift.jpg)
+*Soft cool lift brushed into the far side of the black top's shadow under the strap.*
 
-*The hand casts a bold blot across the player and tape window; metal knobs and clip contrast dark against bright.*
+**Why:** Shadows on dark cloth turn into dead black holes unless they lighten and cool far from the light.
 
-- Plastic stays smooth with a broad soft highlight.
-- Keep cast shadows even when they look like blots — they tell distance.
+**How:**
+1. Add a clipped `Shadow lift` layer below `Shadow 2` in **Color Dodge** mode (brightens darks softly without turning them grey; Add/Glow also works).
+2. Pick a near-black blue (`#000717` or `#111721`).
+3. With a **soft airbrush**, brush inside big shadows on the side farthest from the light.
+4. Never use bright blue on Color Dodge — it blows out instantly.
 
-## 10. Layers and finish
+**Done when:** Dark cloth shadows stay dark yet shift softly cooler away from the light.
 
-![Layers](../gallery/guide/14-layers.jpg)
+### 9. Light
+![Light](../gallery/guide/10-light.jpg)
+*Green highlight blocks on the hair locks, lit planes on cloth, and a soft sheen on the dark top.*
 
-*Top: the picture built by layer type. Below: one folder per part, each with the same clipped stack.*
+**Why:** Controlled lit shapes show where the light strikes directly and give hair and cloth clear planes.
 
-- Use one folder per part with the same layers clipped to its flat.
-- Finish with a warm-light / cool-shade overlay, fine grain, and paler, bluer tones on parts further back.
-- Look in greyscale and three values, zoom to 200–400% piece by piece, then show a fresh pair of eyes beside work you know is good.
+**How:**
+1. Add a clipped `Light` (**Normal**) layer above `Shadow 2`.
+2. **Eyedrop** the flat colour, then nudge it lighter and slightly less saturated.
+3. Paint one highlight block per hair lock with a wavy lower edge (`#9ed1ad` on green hair), lit planes on cloth, and a soft cool sheen on the dark top.
+4. Skip white shiny spots on skin or matte cloth.
+
+**Done when:** Hair catches crisp highlights and dark cloth shows form without turning glossy.
+
+### 10. Reflected light
+![Reflected light](../gallery/guide/11-bounce.jpg)
+*Hard, pointed bands of cool blue reflected light along the back edges of the black top and sleeve.*
+
+**Why:** Bounce light from the surroundings rounds forms and separates dark back edges from the background.
+
+**How:**
+1. Add a clipped `Reflected light` (**Normal**) layer at the top of each part's stack.
+2. Pick the colour from the surroundings: cool blue on cloth (`#3d638e` jacket, `#3d5387` top) and peach on skin (`#f1b2a0`).
+3. Use a **hard brush** or **lasso** to paint a crisp band along far shadow edges with open air behind (right and lower edges), pointed at both ends.
+4. Keep it always darker than the lit side — brighter bounce light reverses the lighting.
+
+**Done when:** Right and lower shadow edges separate cleanly without fighting the upper-left light.
+
+### 11. Metal and plastic
+![Metal and plastic](../gallery/guide/12-metal.jpg)
+*Dark cores right beside bright rims and sharp glints turn the flat buckle and strap clip into metal.*
+
+**Why:** Contrasting sharp metal and smooth plastic against matte cloth makes every material believable.
+
+**How:**
+1. On metal (belt buckle, strap clip, snaps, earrings), paint on clipped **Normal** layers with a **hard brush** or **lasso**.
+2. Put the darkest core right next to a bright lit rim — skip soft grey gradients, which read as clay.
+3. Add one sharp white glint per metal piece on its lit corner.
+4. On plastic (headphones, player case), use a **soft airbrush** for a broad, smooth highlight.
+
+**Done when:** Metal, plastic, and matte cloth read differently even in greyscale.
+
+### 12. Skin warmth and blush
+![Skin warmth and blush](../gallery/guide/13-skin.jpg)
+*An orange Overlay warms the skin shadows, and soft pink blush brings life to the cheeks.*
+
+**Why:** Skin looks lifeless if shadows read cold or grey; warmth and blush restore natural colour.
+
+**How:**
+1. Inside the skin and face folders, add a clipped **Overlay** layer (boosts warmth and contrast without covering paint below).
+2. With a **soft airbrush**, brush soft orange over the skin shadows so none read grey.
+3. Add a clipped **Normal** layer and dab soft pink blush on cheeks, ears, and knuckles.
+4. Lower opacity if it looks sunburnt.
+
+**Done when:** Skin shadows read warm peach and the cheeks carry a subtle glow.
+
+### 13. Eyes and face
+![Eyes and face](../gallery/guide/14-face.jpg)
+*Shaded eyes with crisp lights, solid dark green brows, and an almost flat face.*
+
+**Why:** Eyes draw attention first, and keeping the rest of the face simple preserves a clean anime expression.
+
+**How:**
+1. Paint strictly between the eye and mouth lines below the line art — never redraw those lines.
+2. Fill the eye white with the upper lid's shadow across the top.
+3. Shade the iris dark above, lighter and more saturated below, add the pupil, then one big white light and a few small sparks.
+4. Paint brows as one solid tapered shape in the hair's dark colour.
+5. Keep the face almost flat: hair cast shadow, tiny nose mark, and a sliver under the jaw.
+
+**Done when:** The eyes sparkle clearly and the face stays clean at normal zoom.
+
+### 14. Line colour
+![Line colour](../gallery/guide/15-linecolour.jpg)
+*Inner skin crease lines turn warm brown while outer silhouette and overlap lines stay dark.*
+
+**Why:** Tinting inner lines softens harsh black ink on skin and hair while keeping the outline crisp.
+
+**How:**
+1. Add a **Normal** layer above the line art and clip it to the line art.
+2. **Eyedrop** the flat beside an inner line, shift a step darker, and paint inner lines: warm brown on skin, dark green in hair.
+3. Keep the outer silhouette and major overlaps dark.
+4. Avoid lightening every line equally, which washes out the drawing.
+
+**Done when:** Inner lines sit softly in skin and hair while the silhouette stays strong.
+
+### 15. Finish
+![Finish](../gallery/guide/16-finish.jpg)
+*Before on the left, after on the right: warm-to-cool wash, paler back hair, fine coloured grain, and a small glow.*
+
+**Why:** A subtle unifying pass pulls separate parts into one shared light and atmosphere.
+
+**How:**
+1. Above everything, add a low-opacity **Multiply** layer and airbrush warm light on the upper left and cool shade on the far side.
+2. Make parts further back slightly paler and bluer so the foreground pops.
+3. Add fine coloured grain on a **Linear Light** layer (adds crisp micro-texture) at low opacity, strongest in the darks.
+4. Add a small, subtle glow on the brightest edge — if you notice the effect before the character, lower its opacity.
+
+**Done when:** Toggling the finish layers adds subtle cohesion without shifting your colours or values.
+
+## Finished layers
+
+![Layers](../gallery/guide/z-layers.jpg)
+*Top: the picture built layer type by layer type. Below: one folder per part, each with the same clipped stack.*
+
+One folder per part with identical clipped layers lets you adjust any shadow or colour later without repainting neighbours.
+
+## Check
+
+- **Greyscale.** Toggle your top black `Color` layer — the face should read first and big shapes stay apart.
+- **Squint.** Zoom to stamp size or squint; main light and shadow shapes should still read.
+- **200–400% zoom.** Pan piece by piece for white specks, stray pixels, or sloppy edges.
+- **Fresh eyes.** Step away for an hour (or flip the canvas) and compare beside art you admire.
 
 ## Practice
 
-- **Four plans:** Flat your line art in four palettes, view in greyscale and at stamp size, and pick the one where the head reads first.
-- **Shadow-only pass:** Shade a jacket or trousers on one clipped Multiply layer using at most five shapes. Hide the flats; the shadows should read alone.
-- **Cast pass:** Paint one hard cast shadow under every overlapping part (hair, straps, hands, accessories).
-- **Three materials:** Render one cylinder three ways under upper-left light: matte cloth, smooth plastic, and metal.
+- **Four plans:** Flat one drawing in four palettes, view in greyscale and stamp size, and pick the one where the head reads first.
+- **Shadow-only pass:** Shade a jacket or trousers on one clipped Multiply layer using at most five shapes; hide the flat to verify the shadows read alone.
+- **Cast pass:** Paint hard cast shadows under every overlapping part (hair, straps, hands, gear) from one light direction.
+- **Three materials:** Render three identical cylinders under upper-left light as matte cloth, smooth plastic, and shiny metal.
