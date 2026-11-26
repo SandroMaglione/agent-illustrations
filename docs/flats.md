@@ -114,23 +114,18 @@ Your existing layers stay untouched bit-for-bit, and `Base 50% Grey` + clipped `
 
 ---
 
-## Reference illustration results (`1086 × 1448`)
+## Results & openable examples
 
-Applied to the reference character holding a 35mm film strip (`output/flats-ref/reference.flats.txt` -> `output/flats-ref/final/`):
+| Piece | Canvas | Silhouette (`Base 50% Grey`) | Clipped `[Flats]` layers | Gate & `.clip` check | Files |
+|---|---|---|---|---|---|
+| **Reel** (film strip) | `1086 × 1448` | `55.7%` (excl. arm/finger gaps & 52 sprocket holes) | 16 layers | **PASS** (`0` problems, `max diff = 0`) | [`reel.clip`](../examples/flats/reel/reel.clip) · [`reel.flats.txt`](../examples/flats/reel/reel.flats.txt) |
+| **Wheel Mechanic** | `1254 × 1254` | `51.7%` (incl. `Plastic Glass`, excl. hair loops & hoop hole) | 15 layers | **PASS** (`0` problems, `0` tiny islands, `max diff = 0`) | [`wheel.clip`](../examples/flats/challenges/wheel.clip) · [`wheel.flats.txt`](../examples/flats/challenges/wheel.flats.txt) |
+| **Cloak & Gauge** | `1199 × 1312` | `48.2%` (excl. finger/gauge & cloak air gaps) | 12 layers | **PASS** (`0` problems, `max diff = 0`) | [`cloak.clip`](../examples/flats/challenges/cloak.clip) · [`cloak.flats.txt`](../examples/flats/challenges/cloak.flats.txt) |
+| **Puppeteer & Fox** | `1086 × 1448` | `62.2%` (taut control strings, cross-bar behind fingers, rivets) | 15 layers | **PASS** (`0` problems, `max diff = 0`) | [`puppet.clip`](../examples/flats/challenges/puppet.clip) · [`puppet.flats.txt`](../examples/flats/challenges/puppet.flats.txt) |
 
-| Metric | Result |
-|---|---|
-| Canvas | `1086 × 1448` (native 1:1, `1,572,528 px`) |
-| Figure silhouette (`Base 50% Grey`) | `876,117 px` (`55.71%` of canvas), excluding exterior background, 3 torso/arm gaps, 3 finger gaps, and all 52 floating film sprocket holes |
-| Clipped colour layers (`↳ [Flats]`) | 16 exact layers (`Hair`, `Skin`, `Eye White`, `Eye Iris`, `Mouth`, `Film Border`, `Film Frames`, `Shirt`, `Scarf`, `Jacket`, `Jacket Trim`, `Buttons`, `Waist Sash`, `Skirt`, `Strap`, `Metal Clip`) |
-| Unnamed pixels | **0** |
-| Inner white-halo pixels | **0** |
-| Outer colour-bleed pixels | **0** |
-| Base coverage mismatch | **uncovered = 0, outside = 0** (100.000% exact) |
-| Colour layer overlaps | **0** |
-| Unwalled bare-paper boundaries | **0** (0 spots) |
-| `.clip` round-trip check (`clipcheck.ts`) | **0 problems**, composite vs `CanvasPreview` **max diff = 0** |
-| Total build runtime | ~6 s (pure Node.js) |
+| Reel | Wheel Mechanic | Cloak & Gauge | Puppeteer & Fox |
+|---|---|---|---|
+| ![Reel flats](../gallery/flats/reel.jpg) | ![Wheel flats](../gallery/flats/wheel.jpg) | ![Cloak flats](../gallery/flats/cloak.jpg) | ![Puppet flats](../gallery/flats/puppet.jpg) |
 
 ---
 
@@ -141,8 +136,10 @@ Applied to the reference character holding a 35mm film strip (`output/flats-ref/
 | `src/flatting/ink.ts` | Paper-white normalization, 1D ink-ridge hysteresis barrier, optional grey-fill cleaner, alpha-ink extractor |
 | `src/flatting/gaps.ts` | Zhang-Suen skeletonization, endpoint tangents, pair & ray-extend gap candidates, Bresenham wall rasterizer |
 | `src/flatting/segment.ts` | Bottleneck-capped persistence watershed facets, poles of inaccessibility, ink-weighted geodesic centerline growth, 1px pinhole sweep |
-| `src/flatting/spec.ts` | `.flats.txt` parser, wall-invariant ID resolver, `Base 50% Grey` + clipped `Flats` stack builder |
+| `src/flatting/spec.ts` | `.flats.txt` parser, wall-invariant ID resolver, `box:` auto-absorb floor & `assignedByBox` tracking, strict `sealNecks <= 1.5`, clipped `Flats` stack builder |
 | `src/flatting/audit.ts` | 8-metric Quality Gate + `silhouette.png`, `neon-check.png`, `audit-overlay.png` generators |
+| `src/flatting/review.ts` | 5 automatic 3× side-by-side review contact sheets (`review-leaks`, `review-bg-holes`, `review-silhouette-pockets`, `review-suspect-holes`, `review-same-color-loops`) |
+| `src/flatting/diff.ts` | Exact layer-by-layer `.clip` diff against CSP-edited files, mapping changed regions back to base facet IDs and side-by-side contact sheets |
 | `src/flatting/sheet.ts` | Pure-Node bitmap font labeler, numbered facet sheets, gap sheets, integer zoom crops |
 | `src/layers/stack.ts`, `clip.ts`, `psd.ts`, `clipread.ts` | Clipped folder (`Stack.clipped`) export and round-trip composite verification |
-| `scripts/flats.ts` | Standalone `analyze` and `build` CLI |
+| `scripts/flats.ts` | Standalone `analyze`, `build`, and `diff` CLI |
