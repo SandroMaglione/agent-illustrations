@@ -1,15 +1,20 @@
 /**
  * Automatic high-risk review contact sheets (pure Node.js, zero manual crop coordinates needed!).
  *
- * Generates 3 tiled 3x-zoomed diagnostic contact sheets after every build:
- * 1. `review-bg-holes.png`         — Every enclosed white space (bg facet not touching canvas border):
- *                                    catches hair curls, cross-bars, or clothing mistakenly marked as bg.
- * 2. `review-suspect-holes.png`    — Every interior figure facet bordering >= 2 distinct other colours
- *                                    (e.g. air pocket between elbow & wheel, or gap between fingers & prop)
- *                                    plus every unwalled bare-paper leak spot: catches air mistakenly coloured!
- * 3. `review-same-color-loops.png` — Every closed compact ink loop (rivets, buttons, nails, gems, eyes)
- *                                    that was assigned the SAME colour as its surrounding parent region:
- *                                    catches missed buttons, rivets, nails, and small details!
+ * Generates 5 tiled 3x-zoomed diagnostic contact sheets after every build:
+ * 1. `review-leaks.png`             — Every unwalled bare-paper boundary spot.
+ * 2. `review-bg-holes.png`          — Every enclosed white space (bg facet not touching canvas border):
+ *                                     catches hair curls, cross-bars, or clothing mistakenly marked as bg,
+ *                                     and semantic occlusion holes (e.g. frosted/glass pane hiding an arm).
+ * 3. `review-silhouette-pockets.png`— Coloured facets along the outer silhouette (touching bg across ink,
+ *                                     <= 6000 px) — catches loose hair-strand air loops, braid loops,
+ *                                     hoop earring holes, and box:-swallowed silhouette bays!
+ * 4. `review-suspect-holes.png`     — Small/medium interior facets bordering >= 2 materials, orphaned/sandwiched
+ *                                     facets (majority of border touches other colours), or box:-assigned facets
+ *                                     touching a different material — catches trapped air pockets AND swallowed
+ *                                     skin/prop slivers (forehead between bangs, earlobe, rim between fingers)!
+ * 5. `review-same-color-loops.png`  — Closed compact ink loops (rivets, buttons, nails, gems, eyes) sharing
+ *                                     their parent's colour: catches missed hardware/nails/small details!
  */
 import type { InkField } from "./ink.ts"
 import type { FacetInfo, FacetMap } from "./segment.ts"
@@ -19,7 +24,7 @@ import { drawLabel } from "./sheet.ts"
 
 export type ReviewCandidate = {
   id: number
-  kind: "bg-hole" | "suspect-hole" | "same-color-loop" | "leak"
+  kind: "bg-hole" | "silhouette-pocket" | "suspect-hole" | "same-color-loop" | "leak"
   x: number
   y: number
   bbox: [number, number, number, number]
@@ -28,10 +33,7 @@ export type ReviewCandidate = {
 }
 
 /**
- * Inspect the finished flatting assignment and automatically detect all high-risk visual review spots:
- * - Enclosed bg holes (might be real hair/wood/cloth)
- * - Multi-colour-bordered interior pockets (might be enclosed air holes!)
- * - Closed compact ink loops sharing their enclosing parent's colour (might be missed rivets/buttons/nails!)
+ * Inspect the finished flatting assignment and automatically detect all high-risk visual review spots.
  */
 export const findReviewCandidates = (
   fm: FacetMap,
@@ -39,8 +41,10 @@ export const findReviewCandidates = (
   labels: Uint16Array,
   facetLabel: Uint16Array,
   audit: AuditReport,
+  assignedByBox?: Uint8Array,
 ): {
   bgHoles: Array<ReviewCandidate>
+  silhouettePockets: Array<ReviewCandidate>
   suspectHoles: Array<ReviewCandidate>
   sameColorLoops: Array<ReviewCandidate>
   leakSpots: Array<ReviewCandidate>
@@ -48,18 +52,50 @@ export const findReviewCandidates = (
   const { w, h, seg, facets, n } = fm
   const baseIdOf = (f: FacetInfo): number => baseFm.seg[f.deepY * w + f.deepX]! || f.id
 
-  // For each facet, find all distinct labels touching it across a 5px halo (crossing ink strokes)
-  // AND compute exact perimeter, same-label share, & compactness to detect closed rivets/buttons/nails!
   const bgHoles: Array<ReviewCandidate> = []
+  const silhouettePockets: Array<ReviewCandidate & { score: number }> = []
   const suspectHoles: Array<ReviewCandidate & { score: number }> = []
   const sameColorLoops: Array<ReviewCandidate> = []
 
-  const probeHaloLabels = (f: FacetInfo): { distinctOther: Set<number>; touchesBg: boolean; perimeter: number; sameShare: number } => {
+  // Fast facet-adjacency graph across <= 6px ink strokes + BFS hop distance from BG
+  // This catches enclosed hair-strand air loops (hopBg === 2 behind a thin outer strand!)
+  // and wide silhouette bays (hopBg === 1 bordering a thin strand) while ignoring normal outer strands.
+  const adj: Array<Set<number>> = Array.from({ length: n + 1 }, () => new Set<number>())
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const a = seg[y * w + x]!
+      if (!a) continue
+      for (const [dx, dy] of [[1, 0], [0, 1]] as const) {
+        for (let step = 1; step <= 6; step++) {
+          const nx = x + dx * step, ny = y + dy * step
+          if (nx >= w || ny >= h) break
+          const b = seg[ny * w + nx]!
+          if (b && b !== a) { adj[a]!.add(b); adj[b]!.add(a); break }
+        }
+      }
+    }
+  }
+  const hopBg = new Int16Array(n + 1).fill(99)
+  const bfsQ: Array<number> = []
+  for (let id = 1; id <= n; id++) {
+    if (facetLabel[id] === BG_LABEL) { hopBg[id] = 0; bfsQ.push(id) }
+  }
+  for (let qi = 0; qi < bfsQ.length; qi++) {
+    const u = bfsQ[qi]!
+    const nextD = hopBg[u]! + 1
+    if (nextD > 3) continue
+    for (const v of adj[u]!) {
+      if (hopBg[v]! > nextD) { hopBg[v] = nextD; bfsQ.push(v) }
+    }
+  }
+
+  const probeHaloLabels = (f: FacetInfo): { distinctOther: Set<number>; touchesBg: boolean; perimeter: number; sameShare: number; bgShare: number } => {
     const [x0, y0, x1, y1] = f.bbox
     const distinctOther = new Set<number>()
     let touchesBg = false
     let perimeter = 0
     let sameHits = 0
+    let bgHits = 0
     let totalHits = 0
     const myLab = facetLabel[f.id]!
     const R = 5
@@ -72,7 +108,6 @@ export const findReviewCandidates = (
           seg[i - 1] !== f.id || seg[i + 1] !== f.id || seg[i - w] !== f.id || seg[i + w] !== f.id
         if (!isEdge) continue
         perimeter++
-        // Sample 4 cardinal rays outward up to R px across ink to find neighboring facet labels
         for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
           for (let step = 1; step <= R; step++) {
             const nx = x + dx * step, ny = y + dy * step
@@ -84,7 +119,7 @@ export const findReviewCandidates = (
                 totalHits++
                 if (nl === myLab) sameHits++
                 else {
-                  if (nl === BG_LABEL) touchesBg = true
+                  if (nl === BG_LABEL) { touchesBg = true; bgHits++ }
                   distinctOther.add(nl)
                 }
               }
@@ -94,14 +129,21 @@ export const findReviewCandidates = (
         }
       }
     }
-    return { distinctOther, touchesBg, perimeter, sameShare: totalHits ? sameHits / totalHits : 0 }
+    return {
+      distinctOther,
+      touchesBg,
+      perimeter,
+      sameShare: totalHits ? sameHits / totalHits : 0,
+      bgShare: totalHits ? bgHits / totalHits : 0,
+    }
   }
 
   for (let id = 1; id <= n; id++) {
     const f = facets[id]!
     const lab = facetLabel[id]!
-    if (!lab || f.area < 20) continue
+    if (!lab || f.area < 10) continue
     const bid = baseIdOf(f)
+    const isBox = assignedByBox ? assignedByBox[id] === 1 : false
 
     // 1. Enclosed non-exterior background holes (area >= 25 px)
     if (lab === BG_LABEL) {
@@ -111,19 +153,59 @@ export const findReviewCandidates = (
       continue
     }
 
-    // Only run halo probes on compact-to-medium facets (< 4000 px) for speed & precision
-    if (f.area > 4000) continue
-    const { distinctOther, touchesBg, perimeter, sameShare } = probeHaloLabels(f)
+    // Only run halo probes on compact-to-medium facets (<= 6000 px) for speed & precision
+    if (f.area > 6000) continue
+    const { distinctOther, touchesBg, perimeter, sameShare, bgShare } = probeHaloLabels(f)
+    const otherFigColors = [...distinctOther].filter((l) => l !== BG_LABEL).length
+    const totalOther = otherFigColors + (touchesBg ? 1 : 0)
 
-    // 2. Suspect enclosed air pockets: compact-to-medium figure facets (35..2500 px) that touch >= 2
-    //    distinct other labels (or touch BG + another figure colour) — classic signature of air trapped
-    //    between limb & prop or between fingers & held object!
-    if (f.area >= 35 && f.area <= 2500 && f.maxDist >= 2.0) {
-      const otherFigColors = [...distinctOther].filter((l) => l !== BG_LABEL).length
-      const totalOther = otherFigColors + (touchesBg ? 1 : 0)
-      if (totalOther >= 2 || (touchesBg && otherFigColors >= 1)) {
-        // Higher score for facets bordering more distinct materials & smaller/medium trapped-pocket size
-        const score = totalOther * 10000 - f.area
+    // 2. Silhouette air-pocket & loose hair-loop detector (hopBg <= 2 behind/beside thin outer strands):
+    //    - Enclosed loops 1 hop behind a thin outer strand (hopBg === 2 && thinBgNbs >= 1)
+    //    - Wide bays directly touching bg beside a thin strand (hopBg === 1 && thinBgNbs >= 1 && (maxDist >= 7.5 || otherFigColors >= 1))
+    //    - Non-box explicit facets only included when enclosed by >= 2 thin bg strands (e.g. hair tail curls)
+    const myHop = hopBg[id]!
+    if (myHop >= 1 && myHop <= 2 && f.area >= 20 && f.area <= 3500 && f.maxDist >= 1.8) {
+      let thinBgNbs = 0
+      for (const v of adj[id]!) {
+        if (hopBg[v] === 1 && facets[v]!.maxDist <= 10.5) thinBgNbs++
+      }
+      const keepHop1 = myHop === 1 && thinBgNbs >= 1 && (f.maxDist >= 7.5 || otherFigColors >= 1)
+      const keepHop2 = myHop === 2 && thinBgNbs >= 1
+      if ((keepHop1 || keepHop2) && (isBox || thinBgNbs >= 2)) {
+        const prominence = f.maxDist * Math.sqrt(f.area)
+        const score =
+          (isBox ? 1600 : 800) +
+          Math.min(thinBgNbs, 3) * 300 +
+          (otherFigColors >= 1 ? 600 : 0) +
+          prominence
+        silhouettePockets.push({
+          id: bid,
+          kind: "silhouette-pocket",
+          x: f.deepX,
+          y: f.deepY,
+          bbox: f.bbox,
+          area: f.area,
+          note: `#${bid} (${f.area}px,h${myHop})`,
+          score,
+        })
+      }
+    }
+
+    // 3. Suspect interior holes & wrong-material slivers (10..2500 px):
+    //    - Multi-border interior pockets (trapped air under elbow / between fingers)
+    //    - Orphan / sandwiched facets whose majority perimeter touches OTHER materials (e.g. wheel strip between fingers)
+    //    - box:-assigned facets bordering another figure colour (e.g. forehead between bangs, earlobe, neck sliver)
+    if (f.area >= 10 && f.area <= 2500 && f.maxDist >= 1.8 && otherFigColors >= 1) {
+      const isOrphan = sameShare < 0.25
+      const isSandwiched = sameShare < 0.45 && totalOther >= 2
+      const isBoxBorder = isBox && f.area <= 1500
+      if (totalOther >= 2 || isOrphan || isBoxBorder) {
+        const score =
+          (isOrphan ? 50000 : 0) +
+          (isBoxBorder ? 25000 : 0) +
+          (isSandwiched ? 15000 : 0) +
+          totalOther * 8000 -
+          f.area
         suspectHoles.push({
           id: bid,
           kind: "suspect-hole",
@@ -131,13 +213,13 @@ export const findReviewCandidates = (
           y: f.deepY,
           bbox: f.bbox,
           area: f.area,
-          note: `#${bid} (${f.area}px, ${totalOther}nb)`,
+          note: `#${bid} (${f.area}px, ${totalOther}nb${isBox ? ",box" : ""})`,
           score,
         })
       }
     }
 
-    // 3. Closed compact ink loops sharing their surrounding parent's colour (missed rivets, buttons, nails, eyes!):
+    // 4. Closed compact ink loops sharing their surrounding parent's colour (missed rivets, buttons, nails, eyes!):
     //    Catches BOTH fully-enclosed loops (rivets/buttons: distinctOther === 0) AND edge-mounted compact ovals
     //    (fingernails on fingertips touching a prop: distinctOther <= 1, sameShare >= 0.45)!
     if (f.area >= 25 && f.area <= 550 && f.borderMask === 0 && perimeter > 0) {
@@ -158,7 +240,7 @@ export const findReviewCandidates = (
     }
   }
 
-  // 4. Every unwalled bare-paper leak spot from audit
+  // 5. Every unwalled bare-paper leak spot from audit
   const leakSpots: Array<ReviewCandidate> = audit.leaks.map((lk, idx) => ({
     id: idx + 1,
     kind: "leak",
@@ -170,10 +252,11 @@ export const findReviewCandidates = (
   }))
 
   bgHoles.sort((a, b) => b.area - a.area)
+  silhouettePockets.sort((a, b) => b.score - a.score)
   suspectHoles.sort((a, b) => b.score - a.score)
   sameColorLoops.sort((a, b) => b.area - a.area)
 
-  return { bgHoles, suspectHoles, sameColorLoops, leakSpots }
+  return { bgHoles, silhouettePockets, suspectHoles, sameColorLoops, leakSpots }
 }
 
 /**

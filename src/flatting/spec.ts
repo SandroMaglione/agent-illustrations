@@ -180,9 +180,10 @@ export const resolveFacetLabels = (
   spec: FlatSpec,
   fm: FacetMap,
   baseFm: FacetMap = fm,
-): { facetLabel: Uint16Array; warnings: Array<string> } => {
+): { facetLabel: Uint16Array; assignedByBox: Uint8Array; warnings: Array<string> } => {
   const { w, h, seg, facets, n } = fm
   const facetLabel = new Uint16Array(n + 1)
+  const assignedByBox = new Uint8Array(n + 1)
   const explicitOwner = new Map<number, string>()
   const warnings: Array<string> = []
 
@@ -215,6 +216,7 @@ export const resolveFacetLabels = (
         }
         explicitOwner.set(id, labelName)
         facetLabel[id] = labelId
+        assignedByBox[id] = 0
         continue
       }
       if (tok.startsWith("@")) {
@@ -226,26 +228,40 @@ export const resolveFacetLabels = (
         }
         explicitOwner.set(id, labelName)
         facetLabel[id] = labelId
+        assignedByBox[id] = 0
         continue
       }
       if (tok.startsWith("box:")) {
         const parts = tok.slice(4).split(":")
         const [x0, y0, x1, y1] = parts[0]!.split(",").map(Number) as [number, number, number, number]
-        let minA = 0, maxA = Infinity
+        let minA = 0, maxA = Infinity, explicitMax = false
         for (const cond of parts.slice(1)) {
-          if (cond.startsWith("<=")) maxA = Number(cond.slice(2))
+          if (cond.startsWith("<=")) { maxA = Number(cond.slice(2)); explicitMax = true }
           else if (cond.startsWith(">=")) minA = Number(cond.slice(2))
         }
+        // Broad box: rules (without an explicit <=maxArea cap) skip tiny trapped pockets <= autoAbsorbMaxArea
+        // so assignAndGrow() absorbs each line-junction speck into its actual surrounding material instead of
+        // scattering stray box-coloured dots inside overlapping goggles, collars, ears, or props!
+        const absorbFloor = spec.autoAbsorbMaxArea ?? 28
+        if (!explicitMax && minA <= absorbFloor) minA = absorbFloor + 1
         for (let id = 1; id <= n; id++) {
           const f = facets[id]!
           if (f.deepX >= x0 && f.deepX <= x1 && f.deepY >= y0 && f.deepY <= y1 && f.area >= minA && f.area <= maxA) {
-            if (!explicitOwner.has(id)) facetLabel[id] = labelId
+            if (!explicitOwner.has(id)) {
+              facetLabel[id] = labelId
+              assignedByBox[id] = 1
+            }
           }
         }
         continue
       }
       if (tok === "unassigned") {
-        for (let id = 1; id <= n; id++) if (!facetLabel[id]) facetLabel[id] = labelId
+        for (let id = 1; id <= n; id++) {
+          if (!facetLabel[id]) {
+            facetLabel[id] = labelId
+            assignedByBox[id] = 1
+          }
+        }
         continue
       }
       warnings.push(`${labelName}: unrecognized token "${tok}"`)
@@ -259,7 +275,7 @@ export const resolveFacetLabels = (
   applyTokens(BG_LABEL, "bg", spec.bgTokens.filter((t) => !isBulk(t)))
   spec.colors.forEach((c, i) => applyTokens(i + 2, c.name, c.tokens.filter((t) => !isBulk(t))))
 
-  return { facetLabel, warnings }
+  return { facetLabel, assignedByBox, warnings }
 }
 
 /**
