@@ -1,123 +1,132 @@
 import assert from "node:assert/strict"
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { createHash } from "node:crypto"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { after, test } from "node:test"
-import Anthropic from "@anthropic-ai/sdk"
-import { decodeAnyPng, toPng } from "../image.ts"
-import { analyze } from "../run.ts"
-import { buildRequest, critique, type Critique } from "../vlm.ts"
+import { decodeAnyPng, encodeJpeg, toPng } from "../image.ts"
+import { analyze, reviewDir } from "../run.ts"
+import type { Critique, ProviderConfig } from "../vlm.ts"
 import { watchFolder } from "../watch.ts"
-import { figure } from "./util.ts"
+import { figure, makeClip } from "./util.ts"
 
 const dir = mkdtempSync(join(tmpdir(), "critic-test-"))
 after(() => rmSync(dir, { recursive: true, force: true }))
+const sha = (p: string): string => createHash("sha256").update(readFileSync(p)).digest("hex")
+const opts = { ai: false, quiet: true, segmenter: "none" } as const
 
-const canned: Critique = {
-  overall: "Readable figure; the lean is the main problem.",
-  stage_readiness: "needs_work",
-  strengths: ["clean outline"],
+const answer: Critique = {
+  summary: "Readable figure; the lean is the main problem.",
   issues: [
-    { title: "Torso leans off balance", category: "gesture", severity: "major", region: { x: 0.3, y: 0.1, w: 0.4, h: 0.5 }, seen_in: "full", observation: "The torso tips right.", why_it_matters: "It reads as falling.", fix_in_csp: "Rotate the upper body with Mesh transformation.", relates_to_measurement: "principal axis 15°", confidence: 0.9 },
-    { title: "Maybe the hands", category: "hands", severity: "major", region: { x: 0.9, y: 0.9, w: 0.5, h: 0.5 }, seen_in: "crop:face", observation: "Hard to tell.", why_it_matters: "", fix_in_csp: "Check hands.", relates_to_measurement: null, confidence: 0.2 },
+    { id: 1, category: "Silhouette", box_2d: [0.1, 0.3, 0.6, 0.7], diagnosis: "The torso tips right.", actionable_fix: "Rotate the upper body." },
+    { id: 2, category: "Value Hierarchy", box_2d: [0.05, 0.05, 0.3, 0.4], diagnosis: "Face and hair share one value.", actionable_fix: "Darken the hair." },
+    { id: 3, category: "Tangent", box_2d: [0.8, 0.1, 0.95, 0.4], diagnosis: "The hand touches the frame edge.", actionable_fix: "Crop wider." },
   ],
-  measurement_disagreements: [],
 }
+const stubVlm = (): ProviderConfig => ({ kind: "openai", baseURL: "http://vlm.test/v1", model: "stub", fetch: (async () => new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(answer) } }] }), { status: 200 })) as unknown as typeof fetch })
 
-/** A real SDK client whose transport is a stub: checks the request the SDK actually serialises, returns a canned answer. */
-const fakeClient = (seen: Array<{ url: string; headers: Headers; body: Record<string, unknown> }>, answer: object = { stop_reason: "end_turn", text: JSON.stringify(canned) }): Anthropic =>
-  new Anthropic({
-    apiKey: "test-key", baseURL: "http://critic.test", maxRetries: 0,
-    fetch: (async (url: string, init: RequestInit) => {
-      seen.push({ url: String(url), headers: new Headers(init.headers), body: JSON.parse(String(init.body)) })
-      const a = answer as { stop_reason: string; text: string }
-      return new Response(JSON.stringify({ id: "msg_test", type: "message", role: "assistant", model: "claude-opus-5-5", content: [{ type: "text", text: a.text }], stop_reason: a.stop_reason, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 10 } }), { status: 200, headers: { "content-type": "application/json" } })
-    }) as unknown as typeof fetch,
-  })
-
-test("end to end without AI: files written, report self-contained, redline at canvas size, deterministic", async () => {
-  const src = join(dir, "lean.png")
+test("defaults: output goes to _review/<filename>/ next to the input, which is left untouched", async () => {
+  const art = join(dir, "art"); mkdirSync(art)
+  const src = join(art, "lean.png")
   writeFileSync(src, toPng(figure({ deg: 15 })))
-  const a = await analyze(src, { stage: "render", out: join(dir, "a"), ai: false, quiet: true, segmenter: "none" })
-  const b = await analyze(src, { stage: "render", out: join(dir, "b"), ai: false, quiet: true, segmenter: "none" })
-  for (const f of ["report.html", "redline.png", "findings.json", "metrics.json", "views/grey.png", "views/notan.png", "views/silhouette.png", "views/flip.png", "views/squint.png", "views/saturation.png"]) assert.ok(a.files[f], `missing ${f}`)
-  const html = readFileSync(a.files["report.html"]!, "utf8")
-  assert.doesNotMatch(html, /(src|href)="(https?:)?\/\//, "the report must not load anything from the network")
-  assert.match(html, /leans right/)
-  const red = decodeAnyPng(readFileSync(a.files["redline.png"]!))
-  assert.deepEqual([red.w, red.h], [300, 420])
-  assert.equal(red.rgba[3], 0, "the redline is transparent where nothing is marked")
+  const before = sha(src)
+  const r = await analyze(src, { stage: "render", ...opts })
+  assert.equal(r.out, join(art, "_review", "lean.png"))
+  assert.equal(reviewDir(src), r.out)
+  for (const f of ["review.html", "ai_redline.png", "findings.json", "metrics.json", "views/grey.png", "views/notan.png", "views/saturation.png", "views/silhouette.png", "views/flip.png", "views/squint.png"]) assert.ok(existsSync(join(r.out, f)), `missing ${f}`)
+  assert.equal(sha(src), before)
+})
+
+test("ai_redline.png matches the input's pixel size exactly, is transparent where nothing is marked, and carries the pins", async () => {
+  const src = join(dir, "wide.jpg")
+  writeFileSync(src, encodeJpeg(figure({ w: 517, h: 333, rx: 60, ry: 140, deg: 15 })))
+  const r = await analyze(src, { stage: "render", ...opts, ai: true, vlm: stubVlm() })
+  const red = decodeAnyPng(readFileSync(r.files["ai_redline.png"]!))
+  assert.deepEqual([red.w, red.h], [517, 333])
+  assert.equal(red.rgba[3], 0)
+  // the edge of AI box 1 (x from 0.3 * 517) is drawn opaque
+  const x = Math.round(0.3 * 517), y = Math.round(0.35 * 333)
+  assert.ok(red.rgba[(y * 517 + x) * 4 + 3]! > 200)
+})
+
+test(".clip input: ai_redline.png is at canvas size even when the stored preview is smaller", async () => {
+  const src = join(dir, "big.clip")
+  writeFileSync(src, makeClip({ w: 600, h: 840 }, toPng(figure())))
+  const before = sha(src)
+  const r = await analyze(src, { stage: "flats", ...opts, ai: true, vlm: stubVlm() })
+  const red = decodeAnyPng(readFileSync(r.files["ai_redline.png"]!))
+  assert.deepEqual([red.w, red.h], [600, 840])
+  assert.deepEqual(r.findings.find((f) => f.label === "1")!.region, { x: 0.3 * 600, y: 0.1 * 840, w: 0.4 * 600, h: 0.5 * 840 })
+  assert.equal(sha(src), before)
+})
+
+test("review.html: self-contained, every view in the viewer, pins synced with cards", async () => {
+  const src = join(dir, "lean2.png")
+  writeFileSync(src, toPng(figure({ deg: 15 })))
+  const r = await analyze(src, { stage: "sketch", ...opts, ai: true, vlm: stubVlm() })
+  const html = readFileSync(r.files["review.html"]!, "utf8")
+  assert.doesNotMatch(html, /(src|href)="(https?:)?\/\//, "nothing loaded from the network")
+  assert.doesNotMatch(html, /<link |@import/)
+  for (const v of ["original", "grey", "notan", "saturation", "silhouette", "flip", "squint"]) assert.match(html, new RegExp(`data-v="${v}"`), v)
+  const data = JSON.parse(html.match(/<script type="application\/json" id="data">(.*?)<\/script>/s)![1]!) as { W: number; H: number; views: Array<{ k: string; src: string | null }>; pins: Array<{ k: string; ai: boolean }> }
+  assert.deepEqual([data.W, data.H], [300, 420])
+  assert.ok(data.views.filter((v) => v.k !== "original").every((v) => v.src!.startsWith("data:image/")))
+  for (const k of ["1", "2", "3"]) { assert.ok(data.pins.some((p) => p.k === k && p.ai)); assert.match(html, new RegExp(`id="c-${k}" data-k="${k}"`)) }
+  const m = data.pins.find((p) => !p.ai)
+  assert.ok(m && /^M\d+$/.test(m.k), "measured findings are pinned as M1, M2, ...")
+  assert.match(html, new RegExp(`id="c-${m!.k}"`))
+  assert.match(html, /Readable figure; the lean is the main problem/)
+  assert.match(html, /Rotate the upper body/)
+})
+
+test("measured findings are deterministic, and the stage changes their weight", async () => {
+  const src = join(dir, "lean3.png")
+  writeFileSync(src, toPng(figure({ deg: 15 })))
+  const a = await analyze(src, { stage: "sketch", ...opts, out: join(dir, "a") }), b = await analyze(src, { stage: "sketch", ...opts, out: join(dir, "b") })
   assert.equal(readFileSync(a.files["findings.json"]!, "utf8"), readFileSync(b.files["findings.json"]!, "utf8"))
-  assert.ok(a.findings.every((f, i) => f.n === i + 1))
-})
-
-test("stage changes the weight: the lean is a note on flats, a finding on sketch", async () => {
-  const src = join(dir, "lean.png")
-  const flats = await analyze(src, { stage: "flats", out: join(dir, "flats"), ai: false, quiet: true, segmenter: "none" })
-  const sketch = await analyze(src, { stage: "sketch", out: join(dir, "sketch"), ai: false, quiet: true, segmenter: "none" })
+  const flats = await analyze(src, { stage: "flats", ...opts, out: join(dir, "c") })
+  assert.notEqual(a.findings.find((f) => /leans/.test(f.title))!.severity, "note")
   assert.equal(flats.findings.find((f) => /leans/.test(f.title))!.severity, "note")
-  assert.notEqual(sketch.findings.find((f) => /leans/.test(f.title))!.severity, "note")
 })
 
-test("AI critique: the SDK request carries images, schema, effort and fallbacks; the answer becomes numbered findings", async () => {
-  const seen: Array<{ url: string; headers: Headers; body: Record<string, unknown> }> = []
-  const r = await analyze("examples/layers/rig.clip", { stage: "render", out: join(dir, "clip"), ai: true, quiet: true, segmenter: "none", client: fakeClient(seen) })
-  assert.equal(seen.length, 1)
-  const body = seen[0]!.body as { model: string; fallbacks: string; output_config: { effort: string; format: { type: string; schema: object } }; messages: Array<{ content: Array<{ type: string }> }> }
-  assert.equal(body.model, "claude-opus-5-5")
-  assert.equal(body.fallbacks, "default")
-  assert.match(seen[0]!.headers.get("anthropic-beta") ?? "", /server-side-fallback-2026-07-01/)
-  assert.equal(body.output_config.format.type, "json_schema")
-  assert.equal(body.output_config.effort, "high")
-  assert.ok(body.messages[0]!.content.filter((c) => c.type === "image").length >= 4, "full, grey, notan and at least one crop")
-  assert.ok(r.ai?.ok)
-  const ai = r.findings.filter((f) => f.source === "ai")
-  assert.equal(ai.length, 2)
-  const lean = ai.find((f) => /Torso/.test(f.title))!
-  assert.deepEqual(lean.region, { x: 0.3 * 1086, y: 0.1 * 1448, w: 0.4 * 1086, h: 0.5 * 1448 })
-  const unsure = ai.find((f) => /hands/.test(f.title))!
-  assert.equal(unsure.severity, "note", "low confidence is demoted")
-  assert.ok(unsure.region!.x + unsure.region!.w <= 1086 + 1e-6, "regions are clamped to the canvas")
-  assert.match(readFileSync(r.files["report.html"]!, "utf8"), /lean is the main problem/)
+test("an output path that would land on the input is refused", async () => {
+  const d = join(dir, "trap"); mkdirSync(d)
+  const src = join(d, "ai_redline.png")
+  writeFileSync(src, toPng(figure()))
+  const before = sha(src)
+  await assert.rejects(analyze(src, { stage: "render", ...opts, out: d }), /refusing to write ai_redline\.png over the input/)
+  assert.equal(sha(src), before)
 })
 
-test("AI critique: refusals, bad answers and missing credentials degrade to a reason, never a crash", async () => {
-  const input = { stage: "render" as const, canvas: { w: 10, h: 10 }, full: figure({ w: 10, h: 10 }), grey: figure({ w: 10, h: 10 }), notan: figure({ w: 10, h: 10 }), crops: [], measured: [], metrics: {} }
-  const refused = await critique(input, { client: fakeClient([], { stop_reason: "refusal", text: "" }) })
-  assert.equal(refused.ok, false)
-  const junk = await critique(input, { client: fakeClient([], { stop_reason: "end_turn", text: "not json" }) })
-  assert.equal(junk.ok, false)
-  const saved = { k: process.env.ANTHROPIC_API_KEY, t: process.env.ANTHROPIC_AUTH_TOKEN }
-  delete process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_AUTH_TOKEN
-  try {
-    const none = await critique(input, { client: new Anthropic({ baseURL: "http://critic.test", maxRetries: 0, fetch: (async () => new Response("{}", { status: 401 })) as unknown as typeof fetch }) })
-    assert.equal(none.ok, false)
-  } finally { if (saved.k) process.env.ANTHROPIC_API_KEY = saved.k; if (saved.t) process.env.ANTHROPIC_AUTH_TOKEN = saved.t }
+test("AI failure keeps the measured review", async () => {
+  const src = join(dir, "lean4.png")
+  writeFileSync(src, toPng(figure({ deg: 15 })))
+  const r = await analyze(src, { stage: "render", ...opts, ai: true, vlm: { kind: "openai", baseURL: "http://vlm.test/v1", model: "m", fetch: (async () => new Response("down", { status: 503 })) as unknown as typeof fetch } })
+  assert.equal(r.ai?.ok, false)
+  assert.ok(r.findings.some((f) => /leans/.test(f.title)))
+  assert.match(readFileSync(r.files["review.html"]!, "utf8"), /AI critique unavailable: HTTP 503/)
 })
 
-test("AI request states crop positions and the measurements", () => {
-  const { content } = buildRequest({ stage: "sketch", canvas: { w: 1000, h: 2000 }, full: figure(), grey: figure(), notan: figure(), crops: [{ name: "face", why: "face", box: { x: 100, y: 200, w: 300, h: 400 }, img: figure({ w: 30, h: 40 }) }], measured: [{ source: "measure", check: "flip", severity: "minor", title: "The figure leans right by 9°", detail: "", evidence: "principal axis 9°" }], metrics: { a: 1 } })
-  const text = content.filter((c) => c.type === "text").map((c) => (c as { text: string }).text).join("\n")
-  assert.match(text, /Stage: SKETCH/)
-  assert.match(text, /crop:face.*x 0\.100, y 0\.100, w 0\.300, h 0\.200/)
-  assert.match(text, /leans right by 9°/)
-})
-
-test("watch: a saved file is reviewed once it settles, an unchanged save is skipped", async () => {
+test("watch: a save is reviewed once it settles; unchanged bytes, other files and _review output are ignored", async () => {
   const wdir = mkdtempSync(join(dir, "watch-"))
   const runs: Array<string> = []
   const w = watchFolder(wdir, async (f) => { runs.push(f) }, { settleMs: 120, pollMs: 100 })
+  const settle = async (): Promise<void> => { await new Promise((r) => setTimeout(r, 600)); await w.idle() }
   try {
     const f = join(wdir, "a.png")
     writeFileSync(f, toPng(figure({ w: 40, h: 40 })))
-    await new Promise((r) => setTimeout(r, 600)); await w.idle()
+    await settle()
     assert.equal(runs.length, 1)
     writeFileSync(f, toPng(figure({ w: 40, h: 40 })))
-    await new Promise((r) => setTimeout(r, 600)); await w.idle()
+    await settle()
     assert.equal(runs.length, 1, "same bytes: no second review")
-    writeFileSync(f, toPng(figure({ w: 40, h: 40, deg: 10 })))
+    mkdirSync(join(wdir, "_review", "a.png"), { recursive: true })
+    writeFileSync(join(wdir, "_review", "a.png", "ai_redline.png"), toPng(figure({ w: 40, h: 40, deg: 20 })))
     writeFileSync(join(wdir, "notes.txt"), "ignored")
-    await new Promise((r) => setTimeout(r, 600)); await w.idle()
+    await settle()
+    assert.equal(runs.length, 1, "our own output never triggers a review")
+    writeFileSync(f, toPng(figure({ w: 40, h: 40, deg: 10 })))
+    await settle()
     assert.equal(runs.length, 2)
   } finally { w.close() }
 })

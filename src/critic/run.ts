@@ -1,15 +1,16 @@
 /**
- * One review: load, measure, optionally critique, and write the report, the redline and the data next to each other.
+ * One review: load, measure, optionally critique, and write everything into `_review/<filename>/` next to the input (or
+ * `--out`). Nothing is ever written to the input file, and no output path may resolve to it.
  *
- *   <out>/report.html     self-contained review (every image embedded)
- *   <out>/redline.png     transparent overlay at canvas size, numbered like the report
- *   <out>/findings.json   every finding, canvas px
- *   <out>/metrics.json    every measurement
- *   <out>/views/*.png     greyscale, notan, saturation, mud, silhouette, flip, squint, saliency, pose
- *   <out>/crops/*.png     high-resolution focal crops
+ *   review.html      self-contained review: viewer with pins, critique cards, palette, metrics (every image embedded)
+ *   ai_redline.png   transparent, exactly the input's pixel size: AI boxes and numbered pins, measured flags, pose skeleton
+ *   findings.json    every finding, in canvas px
+ *   metrics.json     every measurement, and the AI's answer as validated
+ *   views/*.png      greyscale, notan, saturation, mud, silhouette, flip, squint, attention, pose
+ *   crops/*.png      high-resolution focal crops
  */
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { basename, extname, join } from "node:path"
+import { basename, dirname, join, resolve } from "node:path"
 import { focal } from "./checks/focal.ts"
 import { checkKeypoints, loadKeypointsFile, pose, runPoseCommand, type Keypoints } from "./checks/pose.ts"
 import { saturation } from "./checks/saturation.ts"
@@ -21,20 +22,28 @@ import { planes } from "./planes.ts"
 import { redline } from "./redline.ts"
 import { report } from "./report.ts"
 import { PROFILES, weigh, type Finding, type Stage } from "./stages.ts"
-import { critique, DEFAULT_MODEL, type ClientLike, type CritiqueResult } from "./vlm.ts"
+import { critique, resolveProvider, type CritiqueResult, type ProviderConfig } from "./vlm.ts"
+import { REVIEW_DIR } from "./watch.ts"
+
+export { REVIEW_DIR }
+
+/** `<dir of the input>/_review/<filename>/`: next to the art, one folder per file, extension kept so art.png and art.clip do not collide. */
+export const reviewDir = (path: string): string => join(dirname(resolve(path)), REVIEW_DIR, basename(path))
 
 export type Options = {
   stage: Stage
-  out: string
+  /** default: reviewDir(path) */ out?: string
   ai: boolean
+  /** "openai" | "anthropic"; default: openai when API_BASE_URL is set */ provider?: string
   model?: string
+  apiBase?: string
+  /** a ready provider (tests) instead of resolving one from options and environment */ vlm?: ProviderConfig
   mask?: string
   keypoints?: string
   poseCmd?: string
   segmenter?: string
   /** canvas px */ focus?: Box
   /** analysis resolution (long side) */ work?: number
-  client?: ClientLike
   quiet?: boolean
 }
 export type Result = { out: string; findings: Array<Finding>; ai: CritiqueResult | null; files: Record<string, string> }
@@ -80,41 +89,55 @@ export const analyze = async (path: string, o: Options): Promise<Result> => {
 
   let ai: CritiqueResult | null = null
   if (o.ai) {
-    log(`  asking ${o.model ?? DEFAULT_MODEL} for a ${o.stage} critique...`)
-    // metrics for the model: rounded and without the histogram, so they stay short
-    const brief = JSON.parse(JSON.stringify(metrics, (_k, v) => (typeof v === "number" ? Math.round(v * 1000) / 1000 : v)))
-    ai = await critique({ stage: o.stage, canvas, full: flat, grey: val.grey, notan: val.notan, crops: cropsCanvas, measured, metrics: brief, note: src.notes.join(" ") }, { model: o.model, client: o.client })
+    const vlm = o.vlm ?? resolveProvider({ provider: o.provider, model: o.model, apiBase: o.apiBase })
+    if ("error" in vlm) ai = { ok: false, reason: vlm.error }
+    else {
+      log(`  asking ${vlm.kind === "openai" ? `${vlm.model} at ${vlm.baseURL}` : vlm.model} for a ${o.stage} critique...`)
+      // metrics for the model: rounded and without the histogram, so they stay short
+      const brief = JSON.parse(JSON.stringify(metrics, (_k, v) => (typeof v === "number" ? Math.round(v * 1000) / 1000 : v)))
+      ai = await critique({ stage: o.stage, canvas, original: flat, notan: val.notan, saturation: sat.heatmap, crops: cropsCanvas, measured, metrics: brief, note: src.notes.join(" ") }, vlm)
+    }
     if (!ai.ok) log(`  AI critique unavailable: ${ai.reason}`)
+    else for (const w of ai.warnings) log(`  note: ${w}`)
   }
-  const all = [...measured, ...(ai?.ok ? ai.findings : [])].sort((a, b) => RANK[a.severity] - RANK[b.severity])
-  all.forEach((f, i) => { f.n = i + 1 })
+  // pins: the AI's priorities are 1..5, measured findings M1, M2, ... in order of severity
+  measured.forEach((f, i) => { f.label = `M${i + 1}` })
+  const aiFindings = ai?.ok ? ai.findings : []
+  const all = [...aiFindings, ...measured]
 
-  // eye flow: the focus first, then the attractors by strength
+  const kpCanvas = kp ? { kp, scale: toCanvas } : null
+  const red = redline(canvas.w, canvas.h, all, { keypoints: kpCanvas?.kp, keypointScale: kpCanvas?.scale })
+  // eye flow and main axis are drawn only in the HTML viewer, where they can be switched off
   const peaks = [...foc.metrics.peaks].sort((a, b) => Number(b.inFocus) - Number(a.inFocus) || b.value - a.value)
-  const red = redline(canvas.w, canvas.h, all, {
-    focus: foc.metrics.focus && { x: foc.metrics.focus.x * toCanvas, y: foc.metrics.focus.y * toCanvas, w: foc.metrics.focus.w * toCanvas, h: foc.metrics.focus.h * toCanvas },
+  const guides = {
     flow: peaks.map((p) => ({ x: p.x * toCanvas, y: p.y * toCanvas })),
-    axis: sil.metrics.reliable && sil.metrics.box && !sil.metrics.cropped.top && !sil.metrics.cropped.bottom ? { x: sil.metrics.centroid.x * toCanvas, y: sil.metrics.centroid.y * toCanvas, tilt: sil.metrics.axisTilt, length: sil.metrics.box.h * toCanvas } : undefined,
-  })
+    focus: foc.metrics.focus && { x: foc.metrics.focus.x * toCanvas, y: foc.metrics.focus.y * toCanvas, w: foc.metrics.focus.w * toCanvas, h: foc.metrics.focus.h * toCanvas },
+    axis: sil.metrics.reliable && sil.metrics.box && !sil.metrics.cropped.top && !sil.metrics.cropped.bottom ? { x: sil.metrics.centroid.x * toCanvas, y: sil.metrics.centroid.y * toCanvas, tilt: sil.metrics.axisTilt, length: sil.metrics.box.h * toCanvas } : null,
+  }
 
-  const views: Record<string, Img> = { grey: val.grey, notan: val.notan, saturation: sat.heatmap, mud: val.mud, silhouette: sil.image, flip: sq.flipped, squint: sq.blurred, saliency: foc.saliency }
+  const views: Record<string, Img> = { grey: val.grey, notan: val.notan, saturation: sat.heatmap, silhouette: sil.image, flip: sq.flipped, squint: sq.blurred, mud: val.mud, saliency: foc.saliency }
   if (po.overlay) views.pose = po.overlay
-  rmSync(join(o.out, "crops"), { recursive: true, force: true })
-  mkdirSync(join(o.out, "views"), { recursive: true }); mkdirSync(join(o.out, "crops"), { recursive: true })
+  const out = resolve(o.out ?? reviewDir(path)), input = resolve(path)
+  rmSync(join(out, "crops"), { recursive: true, force: true })
+  mkdirSync(join(out, "views"), { recursive: true }); mkdirSync(join(out, "crops"), { recursive: true })
   const files: Record<string, string> = {}
-  const put = (rel: string, data: Buffer | string): void => { writeFileSync(join(o.out, rel), data); files[rel] = join(o.out, rel) }
+  const put = (rel: string, data: Buffer | string): void => {
+    const target = join(out, rel)
+    if (resolve(target) === input) throw new Error(`refusing to write ${rel} over the input file`)
+    writeFileSync(target, data); files[rel] = target
+  }
   for (const [k, v] of Object.entries(views)) put(`views/${k}.png`, toPng(v))
   for (const c of foc.crops) put(`crops/${c.name}.png`, toPng(c.img))
-  put("redline.png", toPng(red))
+  put("ai_redline.png", toPng(red))
   put("findings.json", JSON.stringify(all, null, 2))
-  put("metrics.json", JSON.stringify({ ...metrics, ai: ai?.ok ? { model: ai.model, critique: ai.critique, usage: ai.usage } : ai ? { error: ai.reason } : { skipped: "--no-ai" } }, null, 2))
-  put("report.html", report({ title: basename(path, extname(path)), path, stage: o.stage, profile: PROFILES[o.stage], canvas, notes: src.notes, original: work.img, views, red, crops: cropsCanvas, findings: all, val: val.metrics, sat: sat.metrics, sil: sil.metrics, sq: sq.metrics, foc: foc.metrics, pose: po.metrics, poseSkipped: po.skipped, ai }))
-  return { out: o.out, findings: all, ai, files }
+  put("metrics.json", JSON.stringify({ ...metrics, ai: ai?.ok ? { provider: ai.provider, model: ai.model, critique: ai.critique, warnings: ai.warnings } : ai ? { error: ai.reason } : { skipped: "--no-ai" } }, null, 2))
+  put("review.html", report({ title: basename(path), path, stage: o.stage, profile: PROFILES[o.stage], canvas, notes: src.notes, original: work.img, views, crops: cropsCanvas, findings: all, guides, val: val.metrics, sat: sat.metrics, sil: sil.metrics, sq: sq.metrics, foc: foc.metrics, pose: po.metrics, poseSkipped: po.skipped, ai }))
+  return { out, findings: all, ai, files }
 }
 
 export const summary = (r: Result): string => {
   const c = { major: 0, minor: 0, note: 0 }
   for (const f of r.findings) c[f.severity]++
-  const top = r.findings.filter((f) => f.severity !== "note").slice(0, 5).map((f) => `  ${f.n}. [${f.severity}${f.source === "ai" ? ", AI" : ""}] ${f.title}`)
-  return [`  ${c.major} major, ${c.minor} minor, ${c.note} notes${r.ai ? (r.ai.ok ? " (with AI critique)" : " (AI critique unavailable)") : " (measurements only)"}`, ...top, `  report:  ${r.files["report.html"]}`, `  redline: ${r.files["redline.png"]}`].join("\n")
+  const top = r.findings.filter((f) => f.severity !== "note").slice(0, 6).map((f) => `  ${f.label!.padStart(3)}  ${f.source === "ai" ? `[AI · ${f.category}]` : `[${f.severity}]`} ${f.title}`)
+  return [`  ${c.major} major, ${c.minor} minor, ${c.note} notes${r.ai ? (r.ai.ok ? ` (with AI critique by ${r.ai.provider})` : " (AI critique unavailable)") : " (measurements only)"}`, ...top, `  review:  ${r.files["review.html"]}`, `  redline: ${r.files["ai_redline.png"]}`].join("\n")
 }

@@ -9,7 +9,9 @@ export type CheckId = "values" | "saturation" | "palette" | "silhouette" | "flip
 
 export type Severity = "major" | "minor" | "note"
 export type Finding = {
-  /** 1-based, matches the number on the redline */ n?: number
+  /** the pin on the redline and in the report: "1".."5" for the AI's priorities, "M1".. for measured findings */ label?: string
+  /** AI issues: 1 = most important */ priority?: number
+  /** AI issues: the category the model gave */ category?: string
   source: "measure" | "ai"
   check: CheckId | "ai"
   severity: Severity

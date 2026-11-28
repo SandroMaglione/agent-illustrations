@@ -8,13 +8,17 @@ import { existsSync, readdirSync, readFileSync, statSync, watch, type FSWatcher 
 import { join, resolve, sep } from "node:path"
 import { isSupported } from "./image.ts"
 
+/** The folder reviews are written to; watch mode never looks inside one. Kept here so watch.ts does not import the pipeline. */
+export const REVIEW_DIR = "_review"
+
 export type WatchOptions = { settleMs?: number; pollMs?: number; ignore?: Array<string>; initial?: boolean; onError?: (file: string, e: Error) => void }
 
 export const watchFolder = (dir: string, run: (file: string) => Promise<void>, o: WatchOptions = {}): { close: () => void; idle: () => Promise<void> } => {
   const root = resolve(dir), settle = o.settleMs ?? 700, ignore = (o.ignore ?? []).map((p) => resolve(p))
   const last = new Map<string, string>(), timers = new Map<string, NodeJS.Timeout>(), queue: Array<string> = []
   let busy: Promise<void> = Promise.resolve(), pending = 0
-  const skip = (f: string): boolean => !isSupported(f) || ignore.some((p) => f === p || f.startsWith(p + sep)) || /(^|[\\/])\.|~$|\.tmp$/i.test(f.slice(root.length))
+  // never review our own output: _review folders, anything under --out, hidden and temporary files
+  const skip = (f: string): boolean => !isSupported(f) || ignore.some((p) => f === p || f.startsWith(p + sep)) || f.slice(root.length).split(/[\\/]/).includes(REVIEW_DIR) || /(^|[\\/])\.|~$|\.tmp$/i.test(f.slice(root.length))
   const stamp = (f: string): string | null => { try { const s = statSync(f); return s.isFile() ? `${s.size}:${s.mtimeMs}` : null } catch { return null } }
   const hash = (f: string): string => createHash("sha1").update(readFileSync(f)).digest("hex")
   const enqueue = (f: string): void => {
@@ -43,7 +47,7 @@ export const watchFolder = (dir: string, run: (file: string) => Promise<void>, o
   catch { watchers.push(watch(root, (_e, name) => { if (name) touch(join(root, name.toString())) })) }
   // a slow poll as well: some file systems (network drives, some sync folders) drop change events
   const seen = new Map<string, string>()
-  const walk = (d: string, out: Array<string>): Array<string> => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = join(d, e.name); if (e.isDirectory()) { if (!e.name.startsWith(".") && !ignore.some((i) => p === i || p.startsWith(i + sep))) walk(p, out) } else out.push(p) } return out }
+  const walk = (d: string, out: Array<string>): Array<string> => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = join(d, e.name); if (e.isDirectory()) { if (!e.name.startsWith(".") && e.name !== REVIEW_DIR && !ignore.some((i) => p === i || p.startsWith(i + sep))) walk(p, out) } else out.push(p) } return out }
   for (const f of walk(root, [])) { const s = stamp(f); if (s) seen.set(f, s); if (o.initial && !skip(f)) enqueue(f) }
   const poll = setInterval(() => { for (const f of walk(root, [])) { const s = stamp(f); if (s && seen.get(f) !== s) { seen.set(f, s); touch(f) } } }, o.pollMs ?? 2000)
   return {

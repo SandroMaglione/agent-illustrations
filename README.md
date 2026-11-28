@@ -74,18 +74,20 @@ node scripts/flats.ts diff before.clip after.clip output/flats/diff --lineart pu
 
 Open the `.clip` files: [`examples/flats/`](examples/flats/README.md). Full process, algorithms, and Quality Gate: [`docs/flats.md`](docs/flats.md).
 
-## Critic: a review of any CSP picture (standalone)
+## Critic: review and redline for any CSP picture (standalone)
 
-For an illustrator's own work at any stage: point it at a `.png`, `.jpg` or `.clip` (read only, never written), or watch a folder, and get a self-contained HTML review and a transparent redline to import as a layer in CLIP STUDIO PAINT. The checks are deterministic: perceptual greyscale and a 3-value map, muddy mid-tones, a saturation heatmap and palette, silhouette, lean and balance, flip and squint, eye flow against the focus, full-resolution focal crops, and optional pose metrics. A stage-aware AI critique by Claude can be added on top; `--no-ai` needs no key.
+For an illustrator's own work at any stage. Point it at a `.png`, `.jpg` or `.clip` (read only, never written), or watch a folder. You get `_review/<filename>/review.html`, a self-contained viewer with pins linked to the critique, and `ai_redline.png`, a transparent overlay you place once in CLIP STUDIO PAINT as a file object and refresh with a key.
+
+The checks are deterministic: perceptual greyscale and a 3-value map, muddy mid-tones, a saturation heatmap and palette, silhouette, lean and balance, flip and squint, eye flow against the focus, full-resolution focal crops, and optional pose metrics. A stage-aware AI critique can be added on top, from any vision model: a local one (Ollama, llama.cpp) or a cloud one through `API_BASE_URL` / `API_KEY` / `MODEL`, or Claude. `--no-ai` needs nothing.
 
 ```sh
 node scripts/critic.ts art.clip --stage flats --no-ai
-node scripts/critic.ts --watch ~/Pictures/wip --stage sketch
+API_BASE_URL=http://localhost:11434/v1 MODEL=qwen2.5vl:7b node scripts/critic.ts --watch ~/Pictures/wip --stage sketch
 ```
 
 ![Critic on Visor: the redline, 3-value map, silhouette, saturation, squint and flip](gallery/critic.jpg)
 
-Options, every check and its thresholds, and what it gets wrong: [`docs/critic.md`](docs/critic.md).
+Install, options, the CSP setup, every check and what it gets wrong: [`src/critic/README.md`](src/critic/README.md).
 
 ## A second drawing
 
@@ -162,7 +164,7 @@ node scripts/clipcheck.ts file.clip --tree                          # read a .cl
 node scripts/flats.ts analyze lineart.png output/flats/a            # standalone 1:1 flat colours: numbered facets & gap proposals
 node scripts/flats.ts build lineart.png spec.flats.txt output/flats # build Base 50% Grey + clipped [Flats] .clip/.psd + 5 review sheets
 node scripts/flats.ts diff before.clip after.clip output/flats/diff # exact layer-by-layer pixel & facet diff from a CSP-edited .clip
-node scripts/critic.ts art.clip --stage render [--no-ai]           # review any picture: report.html + redline.png to import in CSP
+node scripts/critic.ts art.clip --stage render [--no-ai]           # review any picture: _review/<file>/review.html + ai_redline.png
 ```
 
 | Query | Shows |
@@ -200,7 +202,7 @@ Then follow [`docs/process.md`](docs/process.md) and, for the blockout and shado
 - [`docs/lessons.md`](docs/lessons.md): every note on a result, sorted by cause
 - [`docs/tools.md`](docs/tools.md): how shapes are said, placed and checked
 - [`docs/flats.md`](docs/flats.md): standalone pixel-exact flat-colours pipeline, Quality Gate, auto-review sheets, and `.clip` diffing
-- [`docs/critic.md`](docs/critic.md): the critic, a review and redline for any CSP picture, measured checks plus an optional AI critique
+- [`src/critic/README.md`](src/critic/README.md): the critic, a review and redline for any CSP picture, measured checks plus an optional AI critique
 - [`docs/layers.md`](docs/layers.md): the layered file, how it is structured
 - [`docs/layers-internals.md`](docs/layers-internals.md): how it is made, the `.clip` format, measurements
 - [`docs/findings.md`](docs/findings.md): what works, what does not, numbers

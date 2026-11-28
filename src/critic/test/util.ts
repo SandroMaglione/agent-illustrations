@@ -1,4 +1,8 @@
 /** Test helpers: synthetic pictures and a PNG writer for every colour type the decoder must read. */
+import { mkdtempSync, readFileSync, rmSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+import { DatabaseSync } from "node:sqlite"
 import { deflateSync } from "node:zlib"
 import { blank, type Img } from "../image.ts"
 
@@ -51,4 +55,23 @@ export const figure = (o: { w?: number; h?: number; fill?: [number, number, numb
 
 export const fillRect = (img: Img, x0: number, y0: number, w: number, h: number, c: [number, number, number]): void => {
   for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) img.rgba.set([...c, 255], (y * img.w + x) * 4)
+}
+
+/**
+ * A minimal `.clip` container around a SQLite database holding only what the preview reader looks at: `Canvas` and
+ * `CanvasPreview`. `preview` null leaves CanvasPreview empty.
+ */
+export const makeClip = (canvas: { w: number; h: number }, preview: Buffer | null): Buffer => {
+  const dir = mkdtempSync(join(tmpdir(), "critic-mkclip-")), db = join(dir, "db")
+  try {
+    const d = new DatabaseSync(db)
+    d.exec("CREATE TABLE Canvas (CanvasWidth INTEGER, CanvasHeight INTEGER); CREATE TABLE CanvasPreview (ImageWidth INTEGER, ImageHeight INTEGER, ImageData BLOB)")
+    d.prepare("INSERT INTO Canvas VALUES (?, ?)").run(canvas.w, canvas.h)
+    if (preview) d.prepare("INSERT INTO CanvasPreview VALUES (?, ?, ?)").run(preview.readUInt32BE(16), preview.readUInt32BE(20), preview)
+    d.close()
+    const sql = readFileSync(db), u64 = (v: number): Buffer => { const b = Buffer.alloc(8); b.writeBigUInt64BE(BigInt(v)); return b }
+    const chunk = (t: string, body: Buffer): Buffer => Buffer.concat([Buffer.from(t, "latin1"), u64(body.length), body])
+    const body = Buffer.concat([chunk("CHNKHead", Buffer.alloc(40)), chunk("CHNKSQLi", sql), chunk("CHNKFoot", Buffer.alloc(0))])
+    return Buffer.concat([Buffer.from("CSFCHUNK", "latin1"), u64(24 + body.length), u64(24), body])
+  } finally { rmSync(dir, { recursive: true, force: true }) }
 }

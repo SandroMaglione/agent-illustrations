@@ -2,8 +2,11 @@ import assert from "node:assert/strict"
 import { createHash } from "node:crypto"
 import { readFileSync, statSync } from "node:fs"
 import { test } from "node:test"
-import { decodeAnyPng, decodeJpeg, encodeJpeg, fit, flipH, loadSource, resize } from "../image.ts"
-import { figure, px, writePng } from "./util.ts"
+import { mkdtempSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+import { decodeAnyPng, decodeJpeg, encodeJpeg, fit, flipH, loadSource, resize, toPng } from "../image.ts"
+import { figure, makeClip, px, writePng } from "./util.ts"
 
 test("PNG: 8-bit grey", () => {
   const img = decodeAnyPng(writePng(3, 2, 0, 8, (x, y) => [x * 100 + y]))
@@ -68,4 +71,28 @@ test(".clip: the preview is read and the file is left byte-for-byte untouched", 
 
 test(".clip: a file that is not a .clip is refused", () => {
   assert.throws(() => loadSource("examples/layers/stack.json"), /unsupported/)
+})
+
+test(".clip: a synthetic file is read, with a canvas larger than its preview noted", () => {
+  const dir = mkdtempSync(join(tmpdir(), "critic-clip-")), path = join(dir, "small.clip")
+  writeFileSync(path, makeClip({ w: 600, h: 840 }, toPng(figure({ w: 300, h: 420 }))))
+  const src = loadSource(path)
+  assert.deepEqual([src.img.w, src.img.h, src.canvas.w, src.canvas.h], [300, 420, 600, 840])
+  assert.ok(src.notes.some((n) => /smaller than the canvas/.test(n)))
+})
+
+test(".clip errors: no preview, not a .clip, truncated, a corrupt preview: each a clear error, the file untouched", () => {
+  const dir = mkdtempSync(join(tmpdir(), "critic-clip-")), file = (name: string, b: Buffer): string => { const p = join(dir, name); writeFileSync(p, b); return p }
+  const hashOf = (p: string): string => createHash("sha256").update(readFileSync(p)).digest("hex")
+  const cases: Array<[string, Buffer, RegExp]> = [
+    ["empty.clip", makeClip({ w: 10, h: 10 }, null), /no stored preview/],
+    ["fake.clip", Buffer.from("this is not a clip studio file at all"), /not a \.clip file/],
+    ["cut.clip", makeClip({ w: 10, h: 10 }, toPng(figure({ w: 10, h: 10 }))).subarray(0, 200), /could not be (read|opened).*truncated/],
+    ["badpng.clip", makeClip({ w: 10, h: 10 }, Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47]), Buffer.alloc(40)])), /preview stored in this \.clip is not a readable PNG/],
+  ]
+  for (const [name, bytes, re] of cases) {
+    const p = file(name, bytes), before = hashOf(p)
+    assert.throws(() => loadSource(p), re, name)
+    assert.equal(hashOf(p), before, `${name} must not be modified`)
+  }
 })

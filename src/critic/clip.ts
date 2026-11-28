@@ -14,16 +14,20 @@ import { parse } from "../layers/clip.ts"
 import { decodeAnyPng, type Img } from "./image.ts"
 
 export const readClipPreview = (raw: Buffer): { img: Img; canvas: { w: number; h: number } } => {
-  const sqlite = parse(raw).sqlite
+  if (raw.toString("latin1", 0, 8) !== "CSFCHUNK") throw new Error("not a .clip file (no CSFCHUNK header)")
+  let sqlite: Buffer
+  try { sqlite = parse(raw).sqlite } catch (e) { throw new Error(`this .clip could not be read, it may be truncated or still being saved (${(e as Error).message})`) }
   const dir = mkdtempSync(join(tmpdir(), "critic-clip-"))
   try {
     writeFileSync(join(dir, "db"), sqlite)
-    const db = new DatabaseSync(join(dir, "db"), { readOnly: true })
+    let db: DatabaseSync
+    try { db = new DatabaseSync(join(dir, "db"), { readOnly: true }); db.prepare("SELECT 1 FROM Canvas LIMIT 1").get() } catch (e) { throw new Error(`the database inside this .clip could not be opened, it may be truncated or still being saved (${(e as Error).message})`) }
     try {
       const c = db.prepare("SELECT CanvasWidth w, CanvasHeight h FROM Canvas").get() as { w: number; h: number } | undefined
       const p = db.prepare("SELECT ImageData d FROM CanvasPreview ORDER BY ImageWidth * ImageHeight DESC LIMIT 1").get() as { d: Uint8Array } | undefined
       if (!p?.d) throw new Error("this .clip has no stored preview (CanvasPreview is empty): save it once in CSP, or export a PNG")
-      const img = decodeAnyPng(p.d)
+      let img: Img
+      try { img = decodeAnyPng(p.d) } catch (e) { throw new Error(`the preview stored in this .clip is not a readable PNG (${(e as Error).message})`) }
       return { img, canvas: c ? { w: Number(c.w), h: Number(c.h) } : { w: img.w, h: img.h } }
     } finally { db.close() }
   } finally { rmSync(dir, { recursive: true, force: true }) }

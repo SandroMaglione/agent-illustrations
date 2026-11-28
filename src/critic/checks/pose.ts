@@ -92,6 +92,21 @@ export const checkKeypoints = (kp: Keypoints, fg: Uint8Array | null, w: number, 
   return { kp: { ...kp, points: pts }, dropped: why.length ? why.join("; ") : null }
 }
 
+const BONES: Array<[string, string]> = [["left_shoulder", "right_shoulder"], ["left_hip", "right_hip"], ["left_shoulder", "left_hip"], ["right_shoulder", "right_hip"], ["left_shoulder", "left_elbow"], ["left_elbow", "left_wrist"], ["right_shoulder", "right_elbow"], ["right_elbow", "right_wrist"], ["left_hip", "left_knee"], ["left_knee", "left_ankle"], ["right_hip", "right_knee"], ["right_knee", "right_ankle"], ["left_ankle", "left_heel"], ["right_ankle", "right_heel"], ["nose", "left_eye"], ["nose", "right_eye"], ["left_eye", "left_ear"], ["right_eye", "right_ear"]]
+
+/**
+ * Bones and joints of the confident keypoints, `scale` from keypoint px to `img` px. Blue is the figure's left, red its
+ * right. With `outline`, every stroke gets a dark edge so it reads on any canvas (the redline).
+ */
+export const drawSkeleton = (img: Img, kp: Keypoints, scale: number, t: number, outline: boolean): void => {
+  const P = (n: string): Point | null => { const p = kp.points[n]; return p && p.score >= 0.3 ? { x: p.x * scale, y: p.y * scale, score: p.score } : null }
+  const left: RGBA = [40, 130, 255, 235], right: RGBA = [255, 70, 50, 235], mid: RGBA = [30, 200, 120, 235], dark: RGBA = [10, 10, 15, 170]
+  const segs = BONES.map(([a, b]) => [P(a), P(b), a.startsWith("left") && b.startsWith("left") ? left : a.startsWith("right") && b.startsWith("right") ? right : mid] as const).filter((s): s is readonly [Point, Point, RGBA] => !!s[0] && !!s[1])
+  if (outline) for (const [p, q] of segs) line(img, p.x, p.y, q.x, q.y, t + 2 * Math.max(1, t / 3), dark)
+  for (const [p, q, c] of segs) line(img, p.x, p.y, q.x, q.y, t, c)
+  for (const n of Object.keys(kp.points)) { const p = P(n); if (p) { disc(img, p.x, p.y, t * 1.6, outline ? dark : [255, 255, 255, 255]); disc(img, p.x, p.y, t, [255, 255, 255, 255]) } }
+}
+
 export type PoseMetrics = {
   source: string
   shoulderTilt: number | null; hipTilt: number | null
@@ -105,7 +120,7 @@ const tilt = (a: Point, b: Point): number => { const [p, q] = a.x <= b.x ? [a, b
 const d = (a: Point, b: Point): number => Math.hypot(a.x - b.x, a.y - b.y)
 
 export const pose = (kp: Keypoints | null, base: Img, figureBottom: number | null): { metrics: PoseMetrics | null; overlay: Img | null; findings: Array<Finding>; skipped?: string } => {
-  if (!kp) return { metrics: null, overlay: null, findings: [], skipped: "no pose estimator configured (use --keypoints file.json or --pose-cmd; see docs/critic.md)" }
+  if (!kp) return { metrics: null, overlay: null, findings: [], skipped: "no pose estimator configured (use --keypoints file.json or --pose-cmd; see src/critic/README.md)" }
   const P = (n: string): Point | null => { const p = kp.points[n]; return p && p.score >= 0.3 ? p : null }
   const mid = (a: Point | null, b: Point | null): Point | null => (a && b ? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, score: Math.min(a.score, b.score) } : a ?? b)
   const ls = P("left_shoulder"), rs = P("right_shoulder"), lh = P("left_hip"), rh = P("right_hip")
@@ -145,10 +160,8 @@ export const pose = (kp: Keypoints | null, base: Img, figureBottom: number | nul
   // skeleton over a dimmed copy
   const ov: Img = { w: base.w, h: base.h, rgba: new Uint8Array(base.rgba) }
   for (let i = 0; i < ov.w * ov.h; i++) for (let c = 0; c < 3; c++) ov.rgba[i * 4 + c] = Math.round(ov.rgba[i * 4 + c]! * 0.45 + 140)
-  const bones: Array<[string, string]> = [["left_shoulder", "right_shoulder"], ["left_hip", "right_hip"], ["left_shoulder", "left_hip"], ["right_shoulder", "right_hip"], ["left_shoulder", "left_elbow"], ["left_elbow", "left_wrist"], ["right_shoulder", "right_elbow"], ["right_elbow", "right_wrist"], ["left_hip", "left_knee"], ["left_knee", "left_ankle"], ["right_hip", "right_knee"], ["right_knee", "right_ankle"], ["nose", "left_eye"], ["nose", "right_eye"], ["left_eye", "left_ear"], ["right_eye", "right_ear"]]
-  const t = Math.max(2, Math.round(Math.max(base.w, base.h) / 300)), left: RGBA = [40, 120, 255, 255], right: RGBA = [255, 70, 50, 255], mid_: RGBA = [30, 190, 120, 255]
-  for (const [a, b] of bones) { const p = P(a), q = P(b); if (p && q) line(ov, p.x, p.y, q.x, q.y, t, a.startsWith("left") && b.startsWith("left") ? left : a.startsWith("right") && b.startsWith("right") ? right : mid_) }
-  for (const p of Object.values(kp.points)) if (p.score >= 0.3) disc(ov, p.x, p.y, t * 1.6, [255, 255, 255, 255]), disc(ov, p.x, p.y, t, [20, 20, 20, 255])
+  drawSkeleton(ov, kp, 1, Math.max(2, Math.round(Math.max(base.w, base.h) / 300)), false)
+  const t = Math.max(2, Math.round(Math.max(base.w, base.h) / 300))
   if (chin) disc(ov, chin.x, chin.y, t * 1.4, [255, 200, 0, 255])
   return { metrics: m, overlay: ov, findings }
 }
