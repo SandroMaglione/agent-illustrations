@@ -74,6 +74,19 @@ node scripts/flats.ts diff before.clip after.clip output/flats/diff --lineart pu
 
 Open the `.clip` files: [`examples/flats/`](examples/flats/README.md). Full process, algorithms, and Quality Gate: [`docs/flats.md`](docs/flats.md).
 
+## Critic: a review of any CSP picture (standalone)
+
+For an illustrator's own work at any stage: point it at a `.png`, `.jpg` or `.clip` (read only, never written), or watch a folder, and get a self-contained HTML review and a transparent redline to import as a layer in CLIP STUDIO PAINT. The checks are deterministic: perceptual greyscale and a 3-value map, muddy mid-tones, a saturation heatmap and palette, silhouette, lean and balance, flip and squint, eye flow against the focus, full-resolution focal crops, and optional pose metrics. A stage-aware AI critique by Claude can be added on top; `--no-ai` needs no key.
+
+```sh
+node scripts/critic.ts art.clip --stage flats --no-ai
+node scripts/critic.ts --watch ~/Pictures/wip --stage sketch
+```
+
+![Critic on Visor: the redline, 3-value map, silhouette, saturation, squint and flip](gallery/critic.jpg)
+
+Options, every check and its thresholds, and what it gets wrong: [`docs/critic.md`](docs/critic.md).
+
 ## A second drawing
 
 The same process on other line art, the headphones drawing, from zero:
@@ -149,6 +162,7 @@ node scripts/clipcheck.ts file.clip --tree                          # read a .cl
 node scripts/flats.ts analyze lineart.png output/flats/a            # standalone 1:1 flat colours: numbered facets & gap proposals
 node scripts/flats.ts build lineart.png spec.flats.txt output/flats # build Base 50% Grey + clipped [Flats] .clip/.psd + 5 review sheets
 node scripts/flats.ts diff before.clip after.clip output/flats/diff # exact layer-by-layer pixel & facet diff from a CSP-edited .clip
+node scripts/critic.ts art.clip --stage render [--no-ai]           # review any picture: report.html + redline.png to import in CSP
 ```
 
 | Query | Shows |
@@ -186,6 +200,7 @@ Then follow [`docs/process.md`](docs/process.md) and, for the blockout and shado
 - [`docs/lessons.md`](docs/lessons.md): every note on a result, sorted by cause
 - [`docs/tools.md`](docs/tools.md): how shapes are said, placed and checked
 - [`docs/flats.md`](docs/flats.md): standalone pixel-exact flat-colours pipeline, Quality Gate, auto-review sheets, and `.clip` diffing
+- [`docs/critic.md`](docs/critic.md): the critic, a review and redline for any CSP picture, measured checks plus an optional AI critique
 - [`docs/layers.md`](docs/layers.md): the layered file, how it is structured
 - [`docs/layers-internals.md`](docs/layers-internals.md): how it is made, the `.clip` format, measurements
 - [`docs/findings.md`](docs/findings.md): what works, what does not, numbers
