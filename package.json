@@ -10,12 +10,19 @@
     "shots": "node scripts/shots.ts",
     "single": "vite build && node scripts/single.ts",
     "check": "node scripts/check.ts",
-    "snap": "node scripts/snap.ts"
+    "snap": "node scripts/snap.ts",
+    "critic": "node scripts/critic.ts",
+    "test:critic": "node --test src/critic/test/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "25.5.0",
     "playwright": "1.64.0",
     "typescript": "7.0.2",
     "vite": "8.3.1"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.14.0",
+    "jpeg-js": "0.4.4",
+    "zod": "4.6.7"
   }
 }
